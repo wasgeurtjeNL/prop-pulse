@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { HomeIcon, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import Link from "next/link";
 
 const Header = () => {
@@ -32,10 +32,12 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center gap-4">
-          <Button variant="ghost" className="hidden sm:flex">
-            Sign In
+          <Button variant="ghost" className="hidden sm:flex" asChild>
+            <Link href="/sign-in">Sign In</Link>
           </Button>
-          <Button className="hidden sm:flex">Get Started</Button>
+          <Button className="hidden sm:flex" asChild>
+            <Link href="/sign-up">Get Started</Link>
+          </Button>
           <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle menu</span>
