@@ -2,6 +2,15 @@
 
 import { unstable_cache } from "next/cache";
 import prisma from "../prisma";
+import { PropertyType, Status } from "../generated/prisma/enums";
+
+export interface PropertyFilterParams {
+  query?: string;
+  type?: string;
+  beds?: string;
+  baths?: string;
+  amenities?: string | string[];
+}
 
 export const getFeaturedProperties = unstable_cache(
   async () => {
@@ -46,4 +55,58 @@ export async function getPropertyDetails(slug: string) {
   });
 
   return property;
+}
+
+export async function getProperties(params: PropertyFilterParams) {
+  try {
+    const { query, type, beds, baths, amenities } = params;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {
+      status: Status.ACTIVE,
+    };
+
+    if (query) {
+      where.OR = [
+        { title: { contains: query, mode: "insensitive" } },
+        { location: { contains: query, mode: "insensitive" } },
+      ];
+    }
+
+    if (type && type !== "all") {
+      where.type =
+        type === "buy" ? PropertyType.FOR_SALE : PropertyType.FOR_RENT;
+    }
+
+    if (beds && beds !== "Any") {
+      const bedsNum = parseInt(beds);
+      where.beds = { gte: bedsNum };
+    }
+
+    if (baths && baths !== "Any") {
+      const bathsNum = parseInt(baths);
+      where.baths = { gte: bathsNum };
+    }
+
+    if (amenities) {
+      const amenitiesList = Array.isArray(amenities)
+        ? amenities
+        : amenities.split(",");
+      if (amenitiesList.length > 0) {
+        where.amenities = {
+          hasEvery: amenitiesList,
+        };
+      }
+    }
+
+    const properties = await prisma.property.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+    });
+
+    return properties;
+  } catch (error) {
+    console.error("Database Error:", error);
+    return [];
+  }
 }
