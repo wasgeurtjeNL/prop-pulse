@@ -21,6 +21,10 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { PropertyType, Status } from "@/lib/generated/prisma/enums";
+import { formatType } from "@/lib/utils";
+import { deleteProperty } from "@/lib/actions/property.actions";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 interface AgentProperty {
   id: string;
@@ -35,6 +39,8 @@ interface AgentProperty {
 }
 
 export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
+  const { data: session } = authClient.useSession();
+
   return (
     <div className="rounded-md border bg-white dark:bg-slate-900">
       <Table>
@@ -77,10 +83,7 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
                 </Badge>
               </TableCell>
               <TableCell>
-                {/* Format Enum FOR_SALE -> For Sale */}
-                <span className="capitalize">
-                  {property.type.toLowerCase().replace("_", " ")}
-                </span>
+                <span className="capitalize">{formatType(property.type)}</span>
               </TableCell>
               <TableCell>{property.price}</TableCell>
               <TableCell className="text-right">
@@ -102,7 +105,30 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
                         <Edit className="mr-2 h-4 w-4" /> Edit
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={async () => {
+                        if (!session?.user) return;
+                        if (
+                          confirm(
+                            "Are you sure you want to delete this property?"
+                          )
+                        ) {
+                          try {
+                            await deleteProperty(
+                              property.id,
+                              session?.user.id as string
+                            );
+                          } catch (error) {
+                            toast.error(
+                              error instanceof Error
+                                ? error.message
+                                : String(error)
+                            );
+                          }
+                        }
+                      }}
+                    >
                       <Trash className="mr-2 h-4 w-4" /> Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>

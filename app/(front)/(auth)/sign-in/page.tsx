@@ -28,7 +28,7 @@ export default async function SignInPage() {
           <div className="mt-4 text-center text-sm">
             {"Don't have an account?"}{" "}
             <Link
-              href="/signup"
+              href="/sign-up"
               className="underline font-medium text-primary hover:text-primary/80"
             >
               Sign up

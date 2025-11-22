@@ -224,3 +224,32 @@ export async function createProperty(data: CreatePropertyArgs) {
   revalidatePath("/dashboard");
   revalidatePath("/properties");
 }
+
+export async function deleteProperty(propertyId: string, userId: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session || session.user.id !== userId) {
+    throw new Error("Unauthorized");
+  }
+
+  const property = await prisma.property.findUnique({
+    where: { id: propertyId },
+  });
+
+  if (!property) {
+    throw new Error("Property not found");
+  }
+
+  if (property.userId !== userId) {
+    throw new Error("You do not have permission to delete this property");
+  }
+
+  await prisma.property.delete({
+    where: { id: propertyId },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/properties");
+}

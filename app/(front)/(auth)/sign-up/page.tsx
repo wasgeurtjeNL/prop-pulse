@@ -28,7 +28,7 @@ export default async function SignUpPage() {
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
             <Link
-              href="/login"
+              href="/sign-in"
               className="underline font-medium text-primary hover:text-primary/80"
             >
               Sign in
