@@ -1,8 +1,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import SignInForm from "@/components/shared/forms/sign-in-form";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (session) redirect("/");
+
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
       <div className="flex items-center justify-center py-12">
@@ -30,7 +39,7 @@ export default function SignInPage() {
 
       <div className="hidden bg-muted lg:block relative h-full max-h-screen overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=1600&auto=format&fit=crop"
+          src="/signin-image.avif"
           alt="Luxury Real Estate"
           fill
           className="object-cover brightness-[0.85]"

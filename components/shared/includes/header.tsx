@@ -1,8 +1,15 @@
 import { Button } from "@/components/ui/button";
+import { auth } from "@/lib/auth";
 import { Menu } from "lucide-react";
+import { headers } from "next/headers";
 import Link from "next/link";
+import UserDropdown from "../user/user-dropdown";
 
-const Header = () => {
+const Header = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -31,18 +38,22 @@ const Header = () => {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" className="hidden sm:flex" asChild>
-            <Link href="/sign-in">Sign In</Link>
-          </Button>
-          <Button className="hidden sm:flex" asChild>
-            <Link href="/sign-up">Get Started</Link>
-          </Button>
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle menu</span>
-          </Button>
-        </div>
+        {session ? (
+          <UserDropdown />
+        ) : (
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" className="hidden sm:flex" asChild>
+              <Link href="/sign-in">Sign In</Link>
+            </Button>
+            <Button className="hidden sm:flex" asChild>
+              <Link href="/sign-up">Get Started</Link>
+            </Button>
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+          </div>
+        )}
       </div>
     </header>
   );

@@ -1,8 +1,17 @@
 import Link from "next/link";
 import Image from "next/image";
 import SignUpForm from "@/components/shared/forms/sign-up-form";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function SignUpPage() {
+export default async function SignUpPage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (session) redirect("/");
+
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
       <div className="flex items-center justify-center py-12">
@@ -31,7 +40,7 @@ export default function SignUpPage() {
       {/* --- RIGHT: IMAGE SECTION --- */}
       <div className="hidden bg-muted lg:block relative h-full max-h-screen overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=1600&auto=format&fit=crop"
+          src="/signup-image.avif"
           alt="Modern Architecture"
           fill
           className="object-cover brightness-[0.85]"
