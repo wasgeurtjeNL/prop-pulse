@@ -50,16 +50,6 @@ export default async function PropertiesPage({
             </div>
 
             <PropertyFeed properties={properties} />
-
-            <div className="mt-12 flex justify-center gap-2">
-              <Button variant="outline" disabled>
-                Previous
-              </Button>
-              <Button variant="secondary">1</Button>
-              <Button variant="ghost">2</Button>
-              <Button variant="ghost">3</Button>
-              <Button variant="outline">Next</Button>
-            </div>
           </main>
         </div>
       </div>
