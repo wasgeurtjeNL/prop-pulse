@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { LogOut, User2, BriefcaseBusiness, Loader2 } from "lucide-react";
+import {
+  LogOut,
+  User2,
+  BriefcaseBusiness,
+  Loader2,
+  LayoutDashboard, // 1. Import Dashboard Icon
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -89,8 +95,8 @@ const UserDropdown = () => {
                w-full flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all cursor-pointer
                ${
                  isAgent
-                   ? "bg-slate-100 text-slate-700"
-                   : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white"
+                   ? "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                   : "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:opacity-90"
                }
              `}
           >
@@ -108,19 +114,20 @@ const UserDropdown = () => {
           </button>
         </div>
 
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem asChild>
-          <Link
-            href="/profile"
-            className="flex items-center py-2.5 cursor-pointer"
-          >
-            <User2 className="mr-2 h-4 w-4 text-muted-foreground" />
-            My Profile
-          </Link>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
+        {isAgent && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link
+                href="/dashboard"
+                className="flex items-center py-2.5 cursor-pointer font-medium text-indigo-600 focus:text-indigo-700 focus:bg-indigo-50"
+              >
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Agent Dashboard
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
 
         <DropdownMenuItem
           className="flex items-center text-red-600 focus:text-red-600 focus:bg-red-50 py-2.5 cursor-pointer"

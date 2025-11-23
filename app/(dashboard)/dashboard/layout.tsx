@@ -2,12 +2,27 @@ import Link from "next/link";
 import { LayoutDashboard, PlusCircle, List, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AgentProfileCard from "@/components/shared/dashboard/agent-profile-card";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect("/sign-in");
+  }
+
+  if (session.user.role !== "AGENT") {
+    redirect("/");
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <aside className="hidden w-64 flex-col border-r bg-white dark:bg-slate-900 md:flex">

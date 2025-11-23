@@ -253,6 +253,7 @@ export async function deleteProperty(propertyId: string, userId: string) {
 
   revalidatePath("/dashboard");
   revalidatePath("/properties");
+  revalidateTag("featured-properties", { expire: 0 });
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
