@@ -20,7 +20,7 @@ const Featured = async () => {
             </p>
           </div>
           <Button variant="outline" asChild className="hidden sm:flex">
-            <Link href="/listings">
+            <Link href="/properties">
               View All <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -34,7 +34,7 @@ const Featured = async () => {
 
         <div className="mt-8 sm:hidden">
           <Button variant="outline" asChild className="w-full">
-            <Link href="/listings">View All Listings</Link>
+            <Link href="/properties">View All Listings</Link>
           </Button>
         </div>
       </div>
