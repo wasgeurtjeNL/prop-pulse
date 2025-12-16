@@ -100,7 +100,7 @@ async function main() {
       emailVerified: true,
       createdAt: new Date(),
       updatedAt: new Date(),
-      role: "admin",
+      role: "ADMIN",
       accounts: {
         create: {
           id: `${TEST_USER.id}-account`,

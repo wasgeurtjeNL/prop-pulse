@@ -38,7 +38,7 @@ export default async function DashboardLayout({
   }
 
   // Check role - render access denied instead of redirecting
-  const allowedRoles = ["AGENT", "admin"];
+  const allowedRoles = ["AGENT", "ADMIN"];
   const hasAccess = allowedRoles.includes(session.user.role || "");
   
   if (!hasAccess) {

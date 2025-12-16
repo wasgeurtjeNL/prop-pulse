@@ -197,6 +197,32 @@ export default function BlogGeneratorPage() {
     }
   };
 
+  // Save and redirect to edit page
+  const handleSaveAndEdit = async () => {
+    if (!generatedContent) return;
+
+    setIsSaving(true);
+    try {
+      const result = await createBlog({
+        title: generatedContent.title,
+        excerpt: generatedContent.excerpt,
+        content: generatedContent.content,
+        metaTitle: generatedContent.seoTitle,
+        metaDescription: generatedContent.metaDescription,
+        tag: generatedContent.suggestedKeywords?.[0] || undefined,
+        published: false,
+      });
+
+      toast.success("Blog opgeslagen! Doorsturen naar editor...");
+      router.push(`/dashboard/blogs/edit/${result.blog.id}`);
+    } catch (error) {
+      console.error("Save error:", error);
+      toast.error("Kon blog niet opslaan");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Update outline section
   const updateSection = (index: number, field: keyof Section, value: string | string[]) => {
     if (!outline) return;
@@ -616,7 +642,7 @@ export default function BlogGeneratorPage() {
                 Opslaan als Concept
               </Button>
               <Button
-                onClick={handleSaveAsDraft}
+                onClick={handleSaveAndEdit}
                 disabled={isSaving}
                 className="gap-2"
               >

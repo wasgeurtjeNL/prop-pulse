@@ -322,7 +322,7 @@ export async function POST(request: NextRequest) {
 
     // Get admin user for property ownership (first admin user)
     const adminUser = await prisma.user.findFirst({
-      where: { role: "admin" },
+      where: { role: "ADMIN" },
     });
 
     if (!adminUser) {

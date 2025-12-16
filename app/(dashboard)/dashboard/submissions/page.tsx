@@ -27,7 +27,7 @@ export default async function PropertySubmissionsPage() {
   }
 
   // Check if user has dashboard access (AGENT or admin)
-  const allowedRoles = ["AGENT", "admin"];
+  const allowedRoles = ["AGENT", "ADMIN"];
   if (!allowedRoles.includes(session.user.role || "")) {
     redirect("/dashboard");
   }

@@ -547,10 +547,10 @@ STRUCTURE YOUR RESPONSE:
   
   "contentHtml": "Professional HTML ${isRental ? "rental" : "sales"} copy with this structure:
     
-    <h3>🏠 [Compelling Property Headline - Not just the name]</h3>
+    <h2>[Compelling Property Headline - Not just the name]</h2>
     <p>[HOOK - Emotional opening that paints the dream. What lifestyle does this ${isRental ? "rental" : "property"} offer?]</p>
     
-    <h3>✨ What Makes This ${isRental ? "Rental" : "Property"} Special</h3>
+    <h3>What Makes This ${isRental ? "Rental" : "Property"} Special</h3>
     <p>[Detailed paragraph about the property's standout features. Be specific and sensory.]</p>
     <ul>
       <li><strong>[Feature]:</strong> [Benefit-focused description]</li>
@@ -559,14 +559,14 @@ STRUCTURE YOUR RESPONSE:
       <li><strong>[Feature]:</strong> [Benefit-focused description]</li>
     </ul>
     
-    <h3>📍 Location & Lifestyle</h3>
+    <h3>Location & Lifestyle</h3>
     <p>[What's the area like? What's nearby? Beaches, dining, activities? Why is this location desirable? For international ${isRental ? "renters" : "buyers"}: mention expat community, safety, infrastructure.]</p>
     
-    ${isRental ? `<h3>💰 Why Rent Here?</h3>
-    <p>[Emphasize flexibility, affordability, no maintenance hassles, included services, ideal for expats/digital nomads/professionals.]</p>` : `<h3>💎 Investment Opportunity</h3>
+    ${isRental ? `<h3>Why Rent Here?</h3>
+    <p>[Emphasize flexibility, affordability, no maintenance hassles, included services, ideal for expats/digital nomads/professionals.]</p>` : `<h3>Investment Opportunity</h3>
     <p>[Why is this a smart purchase? Rental potential? Growing area? Value for money? Future development?]</p>`}
     
-    <p><strong>🔑 Ready to ${isRental ? "move in" : "make this your new home"}?</strong> <em>${isRental ? "This rental won't last long" : "Properties like this are rare"} in ${area}. Contact us today for a private viewing${isRental ? " or to secure your lease" : " before it's gone"}.</em></p>",
+    <p><strong>Ready to ${isRental ? "move in" : "make this your new home"}?</strong> <em>${isRental ? "This rental won't last long" : "Properties like this are rare"} in ${area}. Contact us today for a private viewing${isRental ? " or to secure your lease" : " before it's gone"}.</em></p>",
     
   "descriptionParagraphs": ["Same content as HTML but in plain text format, 4-5 paragraphs"],
   
@@ -591,6 +591,8 @@ CRITICAL RULES:
 - Include specific details about ${area} and ${region} lifestyle
 - Write for international ${isRental ? "renters and expats" : "buyers and investors"}
 - Create an emotional connection to the property
+- DO NOT use any emoji characters - use plain text only
+- Headers should be clean text without symbols like emojis
 ${isRental ? "- Emphasize the MONTHLY price and flexibility of renting" : ""}
 
 Return ONLY valid JSON, no markdown code blocks.`;

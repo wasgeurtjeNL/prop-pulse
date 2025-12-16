@@ -26,7 +26,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     headers: await headers(),
   });
 
-  const allowedRoles = ["AGENT", "admin"];
+  const allowedRoles = ["AGENT", "ADMIN"];
   if (!session || !allowedRoles.includes(session.user.role || "")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -54,7 +54,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     headers: await headers(),
   });
 
-  const allowedRoles = ["AGENT", "admin"];
+  const allowedRoles = ["AGENT", "ADMIN"];
   if (!session || !allowedRoles.includes(session.user.role || "")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -160,10 +160,10 @@ STRUCTURE YOUR RESPONSE:
   
   "contentHtml": "Professional HTML sales copy with this structure:
     
-    <h3>🏠 [Compelling Property Headline - Not just the name]</h3>
+    <h2>[Compelling Property Headline - Not just the name]</h2>
     <p>[HOOK - Emotional opening that paints the dream. What lifestyle does this property offer?]</p>
     
-    <h3>✨ What Makes This Property Special</h3>
+    <h3>What Makes This Property Special</h3>
     <p>[Detailed paragraph about the property's standout features. Be specific and sensory.]</p>
     <ul>
       <li><strong>[Feature]:</strong> [Benefit-focused description]</li>
@@ -172,13 +172,13 @@ STRUCTURE YOUR RESPONSE:
       <li><strong>[Feature]:</strong> [Benefit-focused description]</li>
     </ul>
     
-    <h3>📍 Location & Lifestyle</h3>
+    <h3>Location & Lifestyle</h3>
     <p>[What's the area like? What's nearby? Beaches, dining, activities? Why is this location desirable? For international buyers: mention expat community, safety, infrastructure.]</p>
     
-    <h3>💎 Investment Opportunity</h3>
+    <h3>Investment Opportunity</h3>
     <p>[Why is this a smart purchase? Rental potential? Growing area? Value for money? Future development?]</p>
     
-    <p><strong>🔑 Ready to make this your new home?</strong> <em>Properties like this are rare in ${area}. Contact us today for a private viewing before it's gone.</em></p>",
+    <p><strong>Ready to make this your new home?</strong> <em>Properties like this are rare in ${area}. Contact us today for a private viewing before it's gone.</em></p>",
     
   "propertyFeatures": [
     {"title": "[Unique Selling Point 1]", "description": "[Benefit-focused, emotional description]", "icon": "[relevant-icon]"},
@@ -200,6 +200,8 @@ CRITICAL RULES:
 - Include specific details about ${area} and ${region} lifestyle
 - Write for international buyers and investors
 - Create an emotional connection to the property
+- DO NOT use any emoji characters - use plain text only
+- Headers should be clean text without symbols like emojis
 
 Return ONLY valid JSON, no markdown code blocks.`;
 

@@ -236,7 +236,7 @@ export async function updateBlog(id: string, data: BlogFormData) {
     }
 
     // Check if user has permission (author or admin)
-    const isAdmin = session.user.role === "admin";
+    const isAdmin = session.user.role === "ADMIN";
     const isAuthor = existingBlog.authorId === session.user.id;
 
     if (!isAdmin && !isAuthor) {
@@ -368,7 +368,7 @@ export async function deleteBlog(id: string) {
     }
 
     // Check if user has permission (author or admin)
-    const isAdmin = session.user.role === "admin";
+    const isAdmin = session.user.role === "ADMIN";
     const isAuthor = blog.authorId === session.user.id;
 
     if (!isAdmin && !isAuthor) {
@@ -409,7 +409,7 @@ export async function toggleBlogPublished(id: string) {
     }
 
     // Check if user has permission (author or admin)
-    const isAdmin = session.user.role === "admin";
+    const isAdmin = session.user.role === "ADMIN";
     const isAuthor = blog.authorId === session.user.id;
 
     if (!isAdmin && !isAuthor) {

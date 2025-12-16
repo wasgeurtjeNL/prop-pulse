@@ -14,7 +14,15 @@ export default function HTMLContent({ content, className = "" }: HTMLContentProp
   useEffect(() => {
     if (contentRef.current) {
       const root = contentRef.current;
-      const sanitized = DOMPurify.sanitize(content, {
+      
+      // Clean up corrupted emoji characters (displayed as "????")
+      // This fixes content that was saved with encoding issues
+      const cleanedContent = content
+        .replace(/\?{2,}/g, '') // Remove sequences of 2+ question marks (corrupted emojis)
+        .replace(/^\s*\?+\s*/gm, '') // Remove lines starting with question marks
+        .trim();
+      
+      const sanitized = DOMPurify.sanitize(cleanedContent, {
         ALLOWED_TAGS: [
           // Basic text formatting
           "p",

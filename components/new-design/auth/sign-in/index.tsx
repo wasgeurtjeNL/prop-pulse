@@ -4,12 +4,15 @@ import { useState } from "react";
 import SocialSignIn from "../SocialSignIn";
 import toast, { Toaster } from 'react-hot-toast';
 import Logo from "../../layout/header/brand-logo/Logo";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { validateEmail, validatePassword } from "@/lib/validation";
 import { authClient } from "@/lib/auth-client";
 
 const Signin = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  
   const [loginData, setLoginData] = useState({
     email: "",
     password: "",
@@ -57,8 +60,8 @@ const Signin = () => {
         toast.success("Successfully signed in!", {
           id: loadingToast,
         });
-        router.push("/dashboard");
-        router.refresh();
+        // Use window.location for a full page reload to ensure session is recognized
+        window.location.href = callbackUrl;
       }
     } catch (error) {
       toast.error("An error occurred. Please try again.", {
