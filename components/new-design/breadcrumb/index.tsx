@@ -56,7 +56,7 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ items, className = '' }) => {
         className={`w-full ${className}`}
       >
         <ol 
-          className="flex items-center flex-wrap justify-center gap-1 text-sm md:text-base"
+          className="flex items-center flex-wrap justify-center gap-0.5 text-xs"
           itemScope 
           itemType="https://schema.org/BreadcrumbList"
         >
@@ -82,7 +82,7 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ items, className = '' }) => {
                       {isFirst && (
                         <Icon
                           icon="ph:house-simple-fill"
-                          className="w-4 h-4 flex-shrink-0"
+                          className="w-3 h-3 flex-shrink-0"
                           aria-hidden="true"
                         />
                       )}
@@ -93,7 +93,7 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ items, className = '' }) => {
                     {/* Separator */}
                     <Icon
                       icon="ph:caret-right"
-                      className="w-4 h-4 mx-1 text-dark/40 dark:text-white/40 flex-shrink-0"
+                      className="w-3 h-3 mx-0.5 text-dark/40 dark:text-white/40 flex-shrink-0"
                       aria-hidden="true"
                     />
                   </>

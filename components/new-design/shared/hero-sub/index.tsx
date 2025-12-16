@@ -12,32 +12,15 @@ interface HeroSubProps {
 
 const HeroSub: FC<HeroSubProps> = ({ title, description, badge, breadcrumbs }) => {
     return (
-        <section className="text-center bg-cover pt-20 lg:pt-24 pb-2 relative overflow-x-hidden">
-            {/* Breadcrumbs */}
-            {breadcrumbs && breadcrumbs.length > 0 && (
-                <div className="container mx-auto px-4 mb-6">
-                    <Breadcrumb items={breadcrumbs} />
-                </div>
-            )}
-            
-            <div className='flex gap-2.5 items-center justify-center'>
-                <span>
-                    <Icon
-                        icon={'ph:house-simple-fill'}
-                        width={20}
-                        height={20}
-                        className='text-primary'
-                    />
-                </span>
-                <p className='text-base font-semibold text-dark/75 dark:text-white/75'>
-                    {badge}
-                </p>
+        <div className="text-center container mx-auto px-4">
+            {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
+            <div className='flex gap-1 items-center justify-center'>
+                <Icon icon={'ph:house-simple-fill'} width={12} height={12} className='text-primary' />
+                <span className='text-[10px] font-semibold text-dark/60 dark:text-white/60'>{badge}</span>
             </div>
-            <h1 className="text-dark text-52 relative font-bold dark:text-white">{title}</h1>
-            <p className="text-lg text-dark/50 dark:text-white/50 font-normal w-full mx-auto">
-                {description}
-            </p>
-        </section>
+            <h1 className="text-dark text-base sm:text-lg md:text-xl font-bold dark:text-white leading-none mt-2">{title}</h1>
+            <p className="text-[10px] sm:text-xs text-dark/40 dark:text-white/40 leading-none">{description}</p>
+        </div>
     );
 };
 

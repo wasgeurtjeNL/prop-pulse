@@ -79,10 +79,10 @@ const PropertiesWithFilters: React.FC = () => {
         breadcrumbs={breadcrumbs}
       />
       
-      <section className='py-6 sm:py-8'>
+      <section className='pb-6 sm:pb-8'>
         <div className='container max-w-8xl mx-auto px-5 2xl:px-0'>
           {/* Filter Toggle Button */}
-          <div className='mb-6 flex items-center justify-between'>
+          <div className='flex items-center justify-between'>
             <h2 className='text-2xl font-semibold dark:text-white'>
               {propertyHomes.length > 0 && !isLoading && (
                 <span className='text-muted-foreground text-lg font-normal ml-2'>

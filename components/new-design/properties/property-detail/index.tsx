@@ -87,11 +87,11 @@ export default function Details() {
     ] : [];
 
     return (
-        <section className="pt-2 sm:pt-4 md:pt-6 pb-8 sm:pb-12 md:pb-16 lg:pb-20 relative overflow-x-hidden" >
+        <section className="pt-2 sm:pt-3 pb-8 sm:pb-12 md:pb-16 lg:pb-20 relative overflow-x-hidden" >
             <div className="container mx-auto max-w-8xl px-3 sm:px-4 md:px-5 2xl:px-0">
                 {/* Breadcrumbs */}
                 {item && (
-                    <div className="mb-2 sm:mb-3 md:mb-4">
+                    <div className="mb-1 sm:mb-2">
                         <Breadcrumb items={breadcrumbs} />
                     </div>
                 )}
