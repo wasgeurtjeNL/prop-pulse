@@ -6,6 +6,8 @@ import { PropertyType, PropertyCategory, Status } from "@/lib/generated/prisma/c
 import { z } from "zod";
 import sharp from "sharp";
 import { notifyMatchingAlerts } from "@/lib/actions/property-alerts.actions";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 // Schema for imported property data
 const importSchema = z.object({
@@ -250,18 +252,38 @@ async function downloadAndUploadImage(
 
 export async function POST(request: NextRequest) {
   try {
-    // Check API key (skip in dev mode if no key is configured)
+    // Check authentication: either API key OR logged-in admin/agent user
     const apiKey = request.headers.get('X-API-Key');
-    if (API_KEY && apiKey !== API_KEY) {
-      return NextResponse.json(
-        { error: "Unauthorized: Invalid API key" },
-        { status: 401 }
-      );
+    let isAuthenticated = false;
+
+    // Method 1: API Key authentication
+    if (API_KEY && apiKey === API_KEY) {
+      isAuthenticated = true;
     }
-    if (!IS_DEV && !API_KEY) {
+
+    // Method 2: Session-based authentication (for dashboard users)
+    if (!isAuthenticated) {
+      try {
+        const session = await auth.api.getSession({
+          headers: await headers(),
+        });
+        
+        if (session?.user) {
+          const allowedRoles = ["AGENT", "ADMIN"];
+          if (allowedRoles.includes(session.user.role || "")) {
+            isAuthenticated = true;
+          }
+        }
+      } catch {
+        // Session check failed, continue to check other auth methods
+      }
+    }
+
+    // If no valid authentication found
+    if (!isAuthenticated) {
       return NextResponse.json(
-        { error: "Server configuration error: No API key configured" },
-        { status: 500 }
+        { error: "Unauthorized: Please log in or provide a valid API key" },
+        { status: 401 }
       );
     }
 
