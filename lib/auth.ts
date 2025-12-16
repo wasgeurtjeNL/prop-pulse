@@ -12,9 +12,33 @@ import prisma from "./prisma";
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://prop-pulse-nine.vercel.app",
+    "https://prop-pulse.vercel.app",
+    "https://prop-pulse-wasgeurtjes-projects.vercel.app",
+    // Allow all Vercel preview deployments
+    /^https:\/\/prop-pulse-.*\.vercel\.app$/,
+  ],
+  advanced: {
+    // Use secure cookies in production
+    useSecureCookies: process.env.NODE_ENV === "production",
+    // Cookie configuration for cross-origin requests
+    cookies: {
+      session_token: {
+        name: "better-auth.session_token",
+        options: {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          secure: process.env.NODE_ENV === "production",
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
-    autoSignIn: false,
+    autoSignIn: true, // Auto sign in after successful authentication
   },
   socialProviders: {
     google: {
@@ -37,7 +61,7 @@ export const auth = betterAuth({
     additionalFields: {
       role: {
         type: "string",
-        defaultValue: "AGENT", // 🔑 Default role for new users!
+        defaultValue: "AGENT", // Default role for new users!
         required: false,
       },
     },
