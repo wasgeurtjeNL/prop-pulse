@@ -682,3 +682,66 @@ export async function togglePropertyHighlight(propertyId: string) {
     throw new Error(`Failed to toggle property highlight: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
+
+/**
+ * Backfill listing numbers for all properties that don't have one
+ * Returns the count of properties updated
+ */
+export async function backfillListingNumbers(): Promise<{ updated: number; total: number }> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized - Admin access required");
+  }
+  
+  // Type assertion for role field added via Better Auth additionalFields
+  const userRole = (session.user as { role?: string })?.role;
+  if (userRole !== "ADMIN") {
+    throw new Error("Unauthorized - Admin access required");
+  }
+
+  try {
+    // Find all properties without a listing number
+    const propertiesWithoutListingNumber = await prisma.property.findMany({
+      where: {
+        OR: [
+          { listingNumber: null },
+          { listingNumber: "" },
+        ],
+      },
+      select: {
+        id: true,
+      },
+      orderBy: {
+        createdAt: "asc", // Oldest first to maintain chronological order
+      },
+    });
+
+    const total = propertiesWithoutListingNumber.length;
+    let updated = 0;
+
+    // Update each property with a new listing number
+    for (const property of propertiesWithoutListingNumber) {
+      const listingNumber = await generateListingNumber();
+      
+      await prisma.property.update({
+        where: { id: property.id },
+        data: { listingNumber },
+      });
+      
+      updated++;
+    }
+
+    // Revalidate cache
+    revalidateTag("properties");
+    revalidatePath("/dashboard");
+    revalidatePath("/properties");
+
+    return { updated, total };
+  } catch (error) {
+    console.error("Error backfilling listing numbers:", error);
+    throw new Error(`Failed to backfill listing numbers: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
