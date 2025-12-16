@@ -410,8 +410,10 @@ const Header: React.FC = () => {
       <div
         ref={sideMenuRef}
         className={cn(
-          "fixed top-0 right-0 h-full w-full max-w-2xl bg-gradient-to-b from-dark via-dark to-dark/95 shadow-2xl transition-transform duration-500 ease-out z-50 overflow-hidden",
-          navbarOpen ? "translate-x-0" : "translate-x-full"
+          "fixed top-0 right-0 h-full w-full max-w-2xl bg-gradient-to-b from-dark via-dark to-dark/95 shadow-2xl transition-all duration-500 ease-out z-50 overflow-hidden",
+          navbarOpen 
+            ? "translate-x-0 opacity-100 visible" 
+            : "translate-x-full opacity-0 invisible pointer-events-none"
         )}
       >
         {/* Decorative Background Elements */}

@@ -69,35 +69,35 @@ const Properties: React.FC = () => {
   }
 
   return (
-    <section>
-      <div className='container max-w-8xl mx-auto px-4 sm:px-5 2xl:px-0'>
-        <div className='mb-16 flex flex-col gap-3 '>
-          <div className='flex gap-2.5 items-center justify-center'>
+    <section className="!py-12 sm:!py-16 lg:!py-24">
+      <div className='w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-0'>
+        <div className='mb-8 sm:mb-12 lg:mb-16 flex flex-col gap-2 sm:gap-3'>
+          <div className='flex gap-2 items-center justify-center'>
             <span>
               <Icon
                 icon={'ph:house-simple-fill'}
-                width={20}
-                height={20}
-                className='text-primary'
+                width={18}
+                height={18}
+                className='text-primary sm:w-5 sm:h-5'
               />
             </span>
-            <p className='text-base font-semibold text-dark/75 dark:text-white/75'>
+            <p className='text-sm sm:text-base font-semibold text-dark/75 dark:text-white/75'>
               Properties
             </p>
           </div>
-          <h2 className='text-3xl sm:text-4xl lg:text-52 font-medium text-black dark:text-white text-center tracking-tight leading-tight sm:leading-11 mb-2'>
+          <h2 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium text-black dark:text-white text-center tracking-tight leading-tight mb-1 sm:mb-2'>
             Discover inspiring designed homes.
           </h2>
-          <p className='text-base sm:text-xm font-normal text-black/50 dark:text-white/50 text-center'>
+          <p className='text-sm sm:text-base font-normal text-black/50 dark:text-white/50 text-center px-4'>
             Curated homes where elegance, style, and comfort unite.
           </p>
           
           {/* Filter Tabs */}
-          <div className='flex justify-center mt-6'>
-            <div className='inline-flex items-center gap-1 p-1.5 bg-gray-100 dark:bg-white/10 rounded-full'>
+          <div className='flex justify-center mt-4 sm:mt-6 px-2'>
+            <div className='inline-flex flex-wrap justify-center items-center gap-1 p-1 sm:p-1.5 bg-gray-100 dark:bg-white/10 rounded-full'>
               <button
                 onClick={() => setActiveFilter('all')}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
                   activeFilter === 'all'
                     ? 'bg-primary text-white shadow-md'
                     : 'text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
@@ -107,24 +107,24 @@ const Properties: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveFilter('FOR_SALE')}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 flex items-center gap-1.5 sm:gap-2 ${
                   activeFilter === 'FOR_SALE'
                     ? 'bg-primary text-white shadow-md'
                     : 'text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
                 }`}
               >
-                <Icon icon="solar:tag-price-bold" width={16} height={16} />
+                <Icon icon="solar:tag-price-bold" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 For Sale
               </button>
               <button
                 onClick={() => setActiveFilter('FOR_RENT')}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 flex items-center gap-1.5 sm:gap-2 ${
                   activeFilter === 'FOR_RENT'
                     ? 'bg-primary text-white shadow-md'
                     : 'text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
                 }`}
               >
-                <Icon icon="solar:key-bold" width={16} height={16} />
+                <Icon icon="solar:key-bold" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 For Rent
               </button>
             </div>
@@ -173,9 +173,9 @@ const Properties: React.FC = () => {
             )}
 
             {/* Properties Grid */}
-            <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 xl:gap-10'>
               {currentProperties.map((item: any, index: number) => (
-                <div key={`${item.slug}-${index}`} className=''>
+                <div key={`${item.slug}-${index}`}>
                   <PropertyCard item={item} />
                 </div>
               ))}
@@ -240,10 +240,10 @@ const Properties: React.FC = () => {
         )}
 
         {filteredProperties.length > 6 && (
-          <div className="flex justify-center mt-12">
+          <div className="flex justify-center mt-8 sm:mt-10 lg:mt-12">
             <Link 
               href={`/properties${activeFilter !== 'all' ? `?type=${activeFilter}` : ''}`}
-              className="py-4 px-8 bg-primary hover:bg-dark duration-300 rounded-full text-white"
+              className="py-3 sm:py-3.5 lg:py-4 px-6 sm:px-7 lg:px-8 bg-primary hover:bg-dark duration-300 rounded-full text-white text-sm sm:text-base font-semibold w-full xs:w-auto text-center"
             >
               View All {activeFilter === 'FOR_RENT' ? 'Rentals' : activeFilter === 'FOR_SALE' ? 'Properties for Sale' : 'Properties'}
             </Link>

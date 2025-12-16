@@ -45,9 +45,9 @@ const FeaturedProperty: React.FC = () => {
 
 
   return (
-    <section>
-      <div className="container max-w-8xl mx-auto px-4 sm:px-5 2xl:px-0">
-        <div className="grid lg:grid-cols-2 gap-10">
+    <section className="!py-12 sm:!py-16 lg:!py-24">
+      <div className="w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
           <div className="relative">
             <Carousel
               setApi={setApi}
@@ -80,28 +80,27 @@ const FeaturedProperty: React.FC = () => {
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-10">
+          <div className="flex flex-col gap-5 sm:gap-6 lg:gap-10">
             <div>
-              <p className="text-dark/75 dark:text-white/75 text-base font-semibold flex gap-2">
-                <Icon icon="ph:house-simple-fill" className="text-2xl text-primary " />
+              <p className="text-dark/75 dark:text-white/75 text-sm sm:text-base font-semibold flex items-center gap-2">
+                <Icon icon="ph:house-simple-fill" className="text-xl sm:text-2xl text-primary" />
                 Featured Property
               </p>
-              <h2 className="text-3xl sm:text-4xl lg:text-52 font-medium text-dark dark:text-white">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium text-dark dark:text-white mt-1">
                 Beachfront Luxury Villa
               </h2>
-              <div className="flex items-center gap-2.5">
-                <Icon icon="ph:map-pin" width={28} height={26} className="text-dark/50 dark:text-white/50" />
-                <p className="text-dark/50 dark:text-white/50 text-base">
+              <div className="flex items-center gap-2 mt-2">
+                <Icon icon="ph:map-pin" className="w-5 h-5 sm:w-6 sm:h-6 text-dark/50 dark:text-white/50 flex-shrink-0" />
+                <p className="text-dark/50 dark:text-white/50 text-sm sm:text-base">
                   Patong Beach, Phuket, Thailand
                 </p>
               </div>
             </div>
-            <p className="text-base text-dark/50 dark:text-white/50">
+            <p className="text-sm sm:text-base text-dark/50 dark:text-white/50 leading-relaxed">
               Experience ultimate tropical luxury at this stunning beachfront villa in Patong Beach, Phuket. This 560 m² architectural masterpiece offers 4 spacious 
-              bedrooms, 3 designer bathrooms, infinity pool with Andaman Sea views, and premium finishes throughout. Perfect for families or as a high-yield investment 
-              property with strong rental potential. Complete property management services available.
+              bedrooms, 3 designer bathrooms, infinity pool with Andaman Sea views, and premium finishes throughout.
             </p>
-            <div className="grid grid-cols-1 xs:grid-cols-2 gap-6 sm:gap-10">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:gap-10">
               <div className="flex items-center gap-4">
                 <div className="bg-dark/5 dark:bg-white/5 p-2.5 rounded-[6px]">
                   <Image
@@ -187,15 +186,15 @@ const FeaturedProperty: React.FC = () => {
                 <h6 className="">2 Bar areas</h6>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-6 sm:gap-10 items-start sm:items-center">
-              <Link href="/contactus" className="w-full sm:w-auto text-center py-4 px-6 sm:px-8 bg-primary hover:bg-dark duration-300 rounded-full text-white">
+            <div className="flex flex-col xs:flex-row gap-4 sm:gap-6 lg:gap-10 items-start xs:items-center">
+              <Link href="/contactus" className="w-full xs:w-auto text-center py-3 sm:py-3.5 lg:py-4 px-5 sm:px-6 lg:px-8 bg-primary hover:bg-dark duration-300 rounded-full text-white text-sm sm:text-base font-semibold">
                 Schedule Viewing
               </Link>
               <div>
-                <h4 className="text-2xl sm:text-3xl text-dark dark:text-white font-medium">
+                <h4 className="text-xl sm:text-2xl lg:text-3xl text-dark dark:text-white font-medium">
                   ฿58,500,000
                 </h4>
-                <p className="text-sm sm:text-base text-dark/50">
+                <p className="text-xs sm:text-sm lg:text-base text-dark/50">
                   Approx. $1,650,500 USD
                 </p>
               </div>

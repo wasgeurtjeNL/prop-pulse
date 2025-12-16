@@ -35,10 +35,10 @@ const PropertyCard: React.FC<{ item: PropertyCardItem; priority?: boolean }> = (
   return (
     <>
       <div>
-        <div className='relative rounded-2xl border border-dark/10 dark:border-white/10 group hover:shadow-3xl duration-300 dark:hover:shadow-white/20'>
-          <div className='overflow-hidden rounded-t-2xl'>
+        <div className='relative rounded-xl sm:rounded-2xl border border-dark/10 dark:border-white/10 group hover:shadow-3xl duration-300 dark:hover:shadow-white/20'>
+          <div className='overflow-hidden rounded-t-xl sm:rounded-t-2xl'>
             <Link href={`/properties/${slug}`}>
-              <div className='relative w-full h-[300px]'>
+              <div className='relative w-full h-[220px] sm:h-[260px] md:h-[300px]'>
                 {mainImage && (
                   <Image
                     src={mainImage}
@@ -91,47 +91,46 @@ const PropertyCard: React.FC<{ item: PropertyCardItem; priority?: boolean }> = (
               />
             </div>
           </div>
-          <div className='p-6'>
-            <div className='flex flex-col mobile:flex-row gap-5 mobile:gap-0 justify-between mb-6'>
-              <div>
+          <div className='p-4 sm:p-5 lg:p-6'>
+            <div className='flex flex-col xs:flex-row gap-3 xs:gap-0 justify-between mb-4 sm:mb-5 lg:mb-6'>
+              <div className='flex-1 min-w-0'>
                 <Link href={`/properties/${slug}`}>
-                  <h3 className='text-xl font-medium text-black dark:text-white duration-300 group-hover:text-primary'>
+                  <h3 className='text-base sm:text-lg lg:text-xl font-medium text-black dark:text-white duration-300 group-hover:text-primary truncate'>
                     {name}
                   </h3>
                 </Link>
-                <p className='text-base font-normal text-black/50 dark:text-white/50'>
+                <p className='text-sm sm:text-base font-normal text-black/50 dark:text-white/50 truncate'>
                   {location}
                 </p>
               </div>
-              <div className='flex flex-col items-end'>
-                <button className='text-base font-normal text-primary px-5 py-2 rounded-full bg-primary/10'>
+              <div className='flex flex-col items-start xs:items-end flex-shrink-0'>
+                <span className='text-sm sm:text-base font-medium text-primary px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 rounded-full bg-primary/10'>
                   ${rate}
-                </button>
+                </span>
                 {isRental && (
                   <span className='text-xs text-primary font-medium mt-1'>Monthly</span>
                 )}
               </div>
             </div>
-            <div className='flex gap-4'>
-              <div className='flex flex-col gap-2 flex-1'>
-                <Icon icon={'solar:bed-linear'} width={20} height={20} />
-                <p className='text-xs sm:text-sm mobile:text-base font-normal text-black dark:text-white whitespace-nowrap'>
-                  {beds} Bedrooms
+            <div className='flex gap-2 sm:gap-3 lg:gap-4'>
+              <div className='flex flex-col gap-1.5 sm:gap-2 flex-1 min-w-0'>
+                <Icon icon={'solar:bed-linear'} className="w-4 h-4 sm:w-5 sm:h-5 text-dark/70 dark:text-white/70" />
+                <p className='text-xs sm:text-sm font-normal text-black dark:text-white'>
+                  {beds} Beds
                 </p>
               </div>
-              <div className='flex flex-col gap-2 border-x border-black/10 dark:border-white/20 px-3 sm:px-4 flex-1'>
-                <Icon icon={'solar:bath-linear'} width={20} height={20} />
-                <p className='text-xs sm:text-sm mobile:text-base font-normal text-black dark:text-white whitespace-nowrap'>
-                  {baths} Bathrooms
+              <div className='flex flex-col gap-1.5 sm:gap-2 border-x border-black/10 dark:border-white/20 px-2 sm:px-3 lg:px-4 flex-1 min-w-0'>
+                <Icon icon={'solar:bath-linear'} className="w-4 h-4 sm:w-5 sm:h-5 text-dark/70 dark:text-white/70" />
+                <p className='text-xs sm:text-sm font-normal text-black dark:text-white'>
+                  {baths} Baths
                 </p>
               </div>
-              <div className='flex flex-col gap-2 flex-1'>
+              <div className='flex flex-col gap-1.5 sm:gap-2 flex-1 min-w-0'>
                 <Icon
                   icon={'lineicons:arrow-all-direction'}
-                  width={20}
-                  height={20}
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-dark/70 dark:text-white/70"
                 />
-                <p className='text-xs sm:text-sm mobile:text-base font-normal text-black dark:text-white whitespace-nowrap'>
+                <p className='text-xs sm:text-sm font-normal text-black dark:text-white'>
                   {area}m<sup>2</sup>
                 </p>
               </div>

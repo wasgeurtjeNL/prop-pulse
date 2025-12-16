@@ -4,32 +4,32 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '..
 
 const FAQ: React.FC = () => {
     return (
-        <section id='faqs'>
-            <div className='container max-w-8xl mx-auto px-5 2xl:px-0'>
-                <div className="grid lg:grid-cols-2 gap-10 ">
-                    <div className='lg:mx-0 mx-auto'>
+        <section id='faqs' className='!py-12 sm:!py-16 lg:!py-24'>
+            <div className='w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-0'>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
+                    <div className='order-2 lg:order-1 mx-auto lg:mx-0'>
                         <Image
                             src="/images/faqs/faq-image.png"
-                            alt='image'
+                            alt='FAQ illustration'
                             width={680}
                             height={644}
-                            className='lg:w-full'
+                            className='w-full max-w-md lg:max-w-none'
                             unoptimized={true}
                         />
                     </div>
-                    <div className='lg:px-12'>
-                        <p className="text-dark/75 dark:text-white/75 text-base font-semibold flex gap-2">
-                            <Icon icon="ph:house-simple-fill" className="text-2xl text-primary " />
+                    <div className='order-1 lg:order-2 lg:px-8 xl:px-12'>
+                        <p className="text-dark/75 dark:text-white/75 text-sm sm:text-base font-semibold flex items-center gap-2">
+                            <Icon icon="ph:house-simple-fill" className="text-xl sm:text-2xl text-primary" />
                             FAQs
                         </p>
-                        <h2 className='lg:text-52 text-40 leading-[1.2] font-medium text-dark dark:text-white'>
+                        <h2 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight font-medium text-dark dark:text-white mt-2'>
                             Your Thailand Property Questions Answered
                         </h2>
-                        <p className='text-dark/50 dark:text-white/50 pr-20'>
+                        <p className='text-sm sm:text-base text-dark/50 dark:text-white/50 mt-3 sm:mt-4'>
                             Investing in Thai real estate as an expat can seem complex. Here are answers to the most common questions about buying, owning, and managing properties in Phuket and Pattaya.
                         </p>
-                        <div className="my-8">
-                            <Accordion type="single" defaultValue="item-1" collapsible className="w-full flex flex-col gap-6">
+                        <div className="my-6 sm:my-8">
+                            <Accordion type="single" defaultValue="item-1" collapsible className="w-full flex flex-col gap-3 sm:gap-4 lg:gap-6">
                                 <AccordionItem value="item-1">
                                     <AccordionTrigger>1. Can foreigners own property in Thailand?</AccordionTrigger>
                                     <AccordionContent>
