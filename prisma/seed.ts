@@ -1,83 +1,123 @@
-import { PropertyType, Status } from "@/lib/generated/prisma/enums";
+import { PropertyType, Status } from "@/lib/generated/prisma/client";
 import prisma from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+import bcrypt from "bcrypt";
+
+// Test user credentials for development
+const TEST_USER = {
+  id: "In0C25ONqtTF3m5eAZDP49XlUYoSMMFO",
+  name: "Test Agent",
+  email: "agent@test.com",
+  password: "password123", // Will be hashed
+};
 
 const RAW_PROPERTIES = [
   {
-    title: "Modern Highland Villa",
-    location: "Beverly Hills, CA",
-    price: "$3,250,000",
-    beds: 4,
-    baths: 3.5,
-    sqft: 3200,
+    title: "Luxury Beachfront Villa Kamala",
+    location: "Kamala Beach, Phuket",
+    price: "฿45,000,000",
+    beds: 5,
+    baths: 5,
+    sqft: 4500,
     image:
-      "https://images.unsplash.com/photo-1600596542815-2750aa5cbe96?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=800&auto=format&fit=crop",
     type: "For Sale",
-    tag: "New",
+    tag: "Beachfront",
   },
   {
-    title: "Urban Loft Apartment",
-    location: "SoHo, New York",
-    price: "$8,500 / mo",
+    title: "Modern Sea View Condo",
+    location: "Patong, Phuket",
+    price: "฿85,000 / mo",
     beds: 2,
     baths: 2,
-    sqft: 1450,
+    sqft: 1200,
     image:
       "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=800&auto=format&fit=crop",
     type: "For Rent",
-    tag: "Featured",
+    tag: "Sea View",
   },
   {
-    title: "Seaside Retreat",
-    location: "Malibu, CA",
-    price: "$5,900,000",
-    beds: 5,
+    title: "Tropical Pool Villa Rawai",
+    location: "Rawai, Phuket",
+    price: "฿28,500,000",
+    beds: 4,
     baths: 4,
-    sqft: 4100,
+    sqft: 3200,
     image:
-      "https://images.unsplash.com/photo-1512915922686-57c11dde9b6b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?q=80&w=800&auto=format&fit=crop",
     type: "For Sale",
-    tag: "Luxury",
+    tag: "Pool Villa",
   },
   {
-    title: "Glass House Estate",
-    location: "Austin, TX",
-    price: "$2,100,000",
+    title: "Pattaya Beach Condo",
+    location: "Jomtien Beach, Pattaya",
+    price: "฿12,500,000",
     beds: 3,
-    baths: 3,
-    sqft: 2800,
+    baths: 2,
+    sqft: 1800,
     image:
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=800&auto=format&fit=crop",
     type: "For Sale",
-    tag: "Price Drop",
+    tag: "Investment",
   },
   {
-    title: "Minimalist Cabin",
-    location: "Aspen, CO",
-    price: "$1,850,000",
-    beds: 2,
-    baths: 1,
-    sqft: 1200,
+    title: "Bang Tao Luxury Residence",
+    location: "Bang Tao, Phuket",
+    price: "฿52,000,000",
+    beds: 6,
+    baths: 6,
+    sqft: 5000,
     image:
-      "https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=800&auto=format&fit=crop",
     type: "For Sale",
-    tag: "Cozy",
+    tag: "Ultra Luxury",
   },
   {
-    title: "Downtown Penthouse",
-    location: "Chicago, IL",
-    price: "$12,000 / mo",
+    title: "Pratumnak Hill Penthouse",
+    location: "Pratumnak, Pattaya",
+    price: "฿120,000 / mo",
     beds: 3,
-    baths: 3.5,
-    sqft: 2500,
+    baths: 3,
+    sqft: 2200,
     image:
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=800&auto=format&fit=crop",
     type: "For Rent",
-    tag: "Luxury",
+    tag: "Penthouse",
   },
 ];
 
 async function main() {
+  // 1. Create test user first
+  const hashedPassword = await bcrypt.hash(TEST_USER.password, 10);
+  
+  const user = await prisma.user.upsert({
+    where: { id: TEST_USER.id },
+    update: {},
+    create: {
+      id: TEST_USER.id,
+      name: TEST_USER.name,
+      email: TEST_USER.email,
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      role: "admin",
+      accounts: {
+        create: {
+          id: `${TEST_USER.id}-account`,
+          accountId: TEST_USER.id,
+          providerId: "credential",
+          password: hashedPassword,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      },
+    },
+  });
+  console.log(`✓ Created user: ${user.email}`);
+  console.log(`  Email: ${TEST_USER.email}`);
+  console.log(`  Password: ${TEST_USER.password}`);
+
+  // 2. Create properties
   for (const p of RAW_PROPERTIES) {
     const slug = slugify(p.title);
 
@@ -98,23 +138,30 @@ async function main() {
         type: propertyType,
         tag: p.tag,
         image: p.image,
-        userId: "In0C25ONqtTF3m5eAZDP49XlUYoSMMFO",
+        userId: TEST_USER.id,
         status: Status.ACTIVE,
 
-        content: `Experience luxury living in this beautiful ${p.title}. Located in the heart of ${p.location}, this property features state-of-the-art amenities and breathtaking views.`,
+        content: `<h2>Tropical Paradise Awaits</h2><p>Experience luxurious Thailand living in this stunning ${p.title}. Perfectly located in ${p.location}, this exceptional property offers the ultimate blend of modern comfort and tropical elegance.</p><p><strong>Prime Location Benefits:</strong></p><ul><li>Easy access to pristine beaches</li><li>Close to international restaurants and shopping</li><li>Excellent rental investment potential</li><li>Expat-friendly community</li></ul><p>Whether you're seeking a permanent residence, holiday home, or investment property, this is your gateway to the Thai lifestyle.</p>`,
 
         amenities: [
+          "Infinity Pool",
+          "Ocean/Mountain Views",
+          "24/7 Security",
+          "Covered Parking",
+          "Fully Furnished",
+          "High-Speed WiFi",
+          "Modern Kitchen",
           "Air Conditioning",
-          "Smart Home System",
-          "Swimming Pool",
-          "Private Parking",
         ],
       },
     });
-    console.log(`Created property: ${property.title}`);
+    console.log(`✓ Created property: ${property.title}`);
   }
 
-  console.log(`Seeding finished.`);
+  console.log(`\n🎉 Seeding finished!`);
+  console.log(`\n📝 You can now login with:`);
+  console.log(`   Email: ${TEST_USER.email}`);
+  console.log(`   Password: ${TEST_USER.password}`);
 }
 
 main()

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { PropertyType } from "@/lib/generated/prisma/enums";
+import { PropertyType } from "@/lib/generated/prisma/client";
 import PropertyListCard from "./property-list-card";
 import PropertyCard from "./property-card";
 

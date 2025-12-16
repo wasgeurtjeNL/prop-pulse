@@ -13,18 +13,39 @@ import {
 } from "@/components/ui/select";
 import Image from "next/image";
 import ContactForm from "@/components/shared/forms/contact-form";
+import { Metadata } from "next";
+import Breadcrumb from "@/components/new-design/breadcrumb";
+
+export const metadata: Metadata = {
+  title: "Contact Us - Get In Touch with Our Team",
+  description: "Questions about buying, selling, or managing property in Thailand? Our expert team in Phuket and Pattaya is ready to assist you. Contact us today for personalized property solutions.",
+  keywords: "contact, real estate Phuket, property management Pattaya, contact form, customer service",
+  openGraph: {
+    title: "Contact Us | Real Estate Pulse",
+    description: "Get in touch with our expert team in Phuket and Pattaya. We're here to help with all your property needs.",
+  },
+};
 
 export default function ContactPage() {
+  const breadcrumbs = [
+    { name: 'Contact', href: '/contact' }
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 md:py-20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumbs */}
+        <div className="mb-8">
+          <Breadcrumb items={breadcrumbs} />
+        </div>
+        
         <div className="text-center max-w-2xl mx-auto mb-12">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-            Get in Touch
+            Contact PSM Phuket
           </h1>
           <p className="text-muted-foreground text-lg">
-            Have a question about a property or want to list your home? Our team
-            is ready to help you 24/7.
+            Questions about buying, selling, or managing property in Thailand? 
+            Our expert team in Phuket and Pattaya is ready to assist you.
           </p>
         </div>
 
@@ -36,11 +57,11 @@ export default function ContactPage() {
                   <MapPin className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Headquarters</h3>
+                  <h3 className="font-semibold text-lg">Office Locations</h3>
                   <p className="text-muted-foreground mt-1">
-                    123 Innovation Blvd,
+                    Phuket Office: Patong Beach
                     <br />
-                    Tech District, CA 90210
+                    Pattaya Office: Central Pattaya
                   </p>
                 </div>
               </CardContent>
@@ -54,10 +75,10 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-semibold text-lg">Phone</h3>
                   <p className="text-muted-foreground mt-1">
-                    +1 (555) 000-0000
+                    +66 (0)81 234 5678
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Mon-Fri from 8am to 6pm
+                    Available 7 days a week, 9am - 7pm Thailand time
                   </p>
                 </div>
               </CardContent>
@@ -71,10 +92,10 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-semibold text-lg">Email</h3>
                   <p className="text-muted-foreground mt-1">
-                    hello@proppulse.com
+                    info@psmphuket.com
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    support@proppulse.com
+                    sales@psmphuket.com
                   </p>
                 </div>
               </CardContent>

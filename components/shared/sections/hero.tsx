@@ -25,8 +25,8 @@ const Hero = () => {
     <section className="relative flex min-h-[600px] flex-col items-center justify-center text-center text-white">
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1920&auto=format&fit=crop"
-          alt="Luxury Home Background"
+          src="https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=1920&auto=format&fit=crop"
+          alt="Luxury Villa Phuket Thailand"
           fill
           priority
           className="object-cover"
@@ -39,15 +39,16 @@ const Hero = () => {
           variant="secondary"
           className="mb-4 px-4 py-1 text-sm font-medium uppercase tracking-wider text-primary"
         >
-          Real Estate Reimagined
+          Premium Property Management Thailand
         </Badge>
         <h1 className="mb-6 text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-          Find Your Pulse in the <br className="hidden md:block" />
-          <span className="text-primary-foreground/90">Perfect Home</span>
+          Your Gateway to <br className="hidden md:block" />
+          <span className="text-primary-foreground/90">Luxury Living in Thailand</span>
         </h1>
         <p className="mx-auto mb-10 max-w-2xl text-lg text-gray-200 sm:text-xl">
-          PropPulse connects you with the most exclusive properties in top
-          locations. Buy, rent, or sell with confidence and speed.
+          PSM Phuket specializes in premium villas, condos, and investment properties 
+          across Phuket and Pattaya. Experience world-class property management and 
+          find your tropical paradise.
         </p>
 
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 rounded-lg bg-white p-2 shadow-2xl sm:flex-row sm:items-center">
@@ -55,7 +56,7 @@ const Hero = () => {
             <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="City, Neighborhood, or Address"
+              placeholder="Search Phuket, Pattaya, or Property Type"
               className="border-0 bg-transparent py-6 pl-10 text-black focus-visible:ring-0 focus-visible:ring-offset-0"
               onChange={(e) => setQuery(e.target.value)}
             />

@@ -20,11 +20,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
 import Link from "next/link";
-import { PropertyType, Status } from "@/lib/generated/prisma/enums";
+import { PropertyType, Status } from "@/lib/generated/prisma/client";
 import { formatType } from "@/lib/utils";
 import { deleteProperty } from "@/lib/actions/property.actions";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { Building2, ExternalLink } from "lucide-react";
+import ViewLiveButton from "./view-live-button";
 
 interface AgentProperty {
   id: string;
@@ -40,6 +42,18 @@ interface AgentProperty {
 
 export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
   const { data: session } = authClient.useSession();
+
+  if (data.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
+        <h3 className="text-lg font-medium">Geen properties gevonden</h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          Probeer andere zoektermen of filters te gebruiken.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-md border bg-white dark:bg-slate-900">
@@ -87,12 +101,24 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
               </TableCell>
               <TableCell>{property.price}</TableCell>
               <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
+                <div className="flex items-center justify-end gap-1">
+                  {/* Direct View Live Button */}
+                  <ViewLiveButton href={`/properties/${property.slug}`} variant="icon" />
+                  
+                  {/* Edit Button */}
+                  <Link href={`/dashboard/edit/${property.id}`}>
+                    <Button variant="ghost" size="icon" title="Edit Property">
+                      <Edit className="h-4 w-4" />
                     </Button>
-                  </DropdownMenuTrigger>
+                  </Link>
+                  
+                  {/* More Actions */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuItem asChild>
@@ -133,6 +159,7 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                </div>
               </TableCell>
             </TableRow>
           ))}

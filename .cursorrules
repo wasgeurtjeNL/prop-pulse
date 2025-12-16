@@ -1,0 +1,394 @@
+# PropPulse - Cursor AI Rules
+
+Dit is een Next.js 16 real estate platform met focus op SEO en performance.
+
+## 🚫 Belangrijke Verboden
+
+- **NOOIT** `npm run dev` uitvoeren - de gebruiker start dit zelf
+- **NOOIT** nieuwe functies/APIs aanmaken als er al bestaande zijn - ALTIJD eerst zoeken naar bestaande implementaties
+- **NOOIT** TypeScript errors negeren - alle types moeten correct zijn
+
+---
+
+## 📂 Project Structuur & Conventies
+
+### Tech Stack
+- **Framework**: Next.js 16 (App Router)
+- **React**: 19
+- **Database**: Prisma met PostgreSQL  
+- **Auth**: Better Auth
+- **Styling**: Tailwind CSS 4
+- **Images**: ImageKit.io
+- **Animaties**: Framer Motion
+
+### Folder Structuur
+```
+app/
+  (front)/       → Publieke pagina's
+  (dashboard)/   → Admin dashboard
+  api/           → API routes
+components/
+  ui/            → Basis UI componenten (shadcn/ui)
+  new-design/    → Feature-specifieke componenten
+  shared/        → Herbruikbare componenten
+lib/
+  actions/       → Server Actions (CRUD operaties)
+  utils/         → Utility functies
+  validations/   → Zod schemas
+```
+
+---
+
+## 🔄 Hergebruik van Bestaande Code
+
+### ALTIJD eerst controleren of functionaliteit al bestaat:
+
+#### Server Actions (lib/actions/)
+- `blog.actions.ts` - Blog CRUD operaties
+- `property.actions.ts` - Property CRUD operaties  
+- `upload.actions.ts` - File upload naar ImageKit
+- `user.actions.ts` - User management
+
+#### Utility Functies (lib/)
+- `lib/utils.ts` - `cn()`, `formatType()`, `getUserInitials()`, `slugify()`
+- `lib/url.ts` - URL helpers
+- `lib/validation.ts` - Validatie helpers
+- `lib/imagekit.ts` - ImageKit configuratie
+
+#### SEO Utils (lib/utils/)
+- `structured-data.ts` - Schema.org JSON-LD generators:
+  - `generatePropertySchema()` - Voor property pagina's
+  - `generateOrganizationSchema()` - Voor bedrijfsinfo
+  - `generateBreadcrumbSchema()` - Voor breadcrumbs
+  - `generateFAQSchema()` - Voor FAQ secties
+  - `generateArticleSchema()` - Voor blog posts
+  - `renderJsonLd()` - Helper voor script rendering
+
+#### UI Componenten (components/ui/)
+Gebruik ALTIJD de bestaande shadcn/ui componenten:
+- Button, Card, Input, Select, Dialog, Form, etc.
+
+---
+
+## 🚀 Performance & PageSpeed Optimalisatie
+
+### Images
+```tsx
+// ✅ GOED - Gebruik Next.js Image met optimalisatie
+import Image from 'next/image'
+
+<Image 
+  src={url}
+  alt="Beschrijvende alt tekst"  // ALTIJD alt tekst voor SEO
+  width={800}
+  height={600}
+  loading="lazy"                  // Lazy load voor below-the-fold
+  priority                        // Alleen voor above-the-fold images
+  sizes="(max-width: 768px) 100vw, 50vw"  // Responsive sizes
+  quality={75}                    // Balans tussen kwaliteit en grootte
+  placeholder="blur"              // Blur placeholder voor betere UX
+/>
+```
+
+### Code Splitting & Lazy Loading
+```tsx
+// ✅ GOED - Dynamic imports voor zware componenten
+import dynamic from 'next/dynamic'
+
+const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
+  loading: () => <Skeleton />,
+  ssr: false  // Als niet nodig voor SEO
+})
+```
+
+### Server vs Client Components
+```tsx
+// Standaard = Server Component (beter voor SEO & performance)
+// Gebruik 'use client' ALLEEN wanneer nodig:
+// - Event handlers (onClick, onChange, etc.)
+// - useState, useEffect, andere hooks
+// - Browser APIs (window, document)
+```
+
+### Fonts
+```tsx
+// ✅ GOED - Gebruik next/font voor optimale loading
+import { Inter } from 'next/font/google'
+const inter = Inter({ subsets: ['latin'], display: 'swap' })
+```
+
+### Caching & Revalidation
+```tsx
+// In Server Components / fetch calls
+fetch(url, { 
+  next: { 
+    revalidate: 3600  // Cache voor 1 uur
+  }
+})
+
+// Voor statische pagina's
+export const revalidate = 3600
+```
+
+---
+
+## 🔍 SEO Best Practices
+
+### Metadata (Elke pagina MOET dit hebben)
+```tsx
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Pagina Titel | PropPulse',
+  description: 'Unieke beschrijving van 150-160 karakters...',
+  keywords: ['vastgoed', 'dubai', 'investeren'],
+  openGraph: {
+    title: 'Titel voor social media',
+    description: 'Beschrijving voor social media',
+    images: ['/og-image.jpg'],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
+  alternates: {
+    canonical: 'https://proppulse.com/pagina',
+  },
+}
+
+// OF dynamisch:
+export async function generateMetadata({ params }): Promise<Metadata> {
+  // Fetch data en return metadata
+}
+```
+
+### Structured Data (JSON-LD)
+```tsx
+// Importeer bestaande helpers!
+import { 
+  generatePropertySchema, 
+  generateBreadcrumbSchema,
+  renderJsonLd 
+} from '@/lib/utils/structured-data'
+
+// In je component:
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={renderJsonLd(generatePropertySchema({
+    name: property.title,
+    price: property.price,
+    // ... etc
+  }))}
+/>
+```
+
+### Semantic HTML
+```tsx
+// ✅ GOED - Gebruik semantische elementen
+<header>...</header>
+<main>...</main>
+<article>...</article>
+<section>...</section>
+<nav>...</nav>
+<footer>...</footer>
+<h1>...</h1>  // Slechts 1 per pagina!
+```
+
+### Links
+```tsx
+// ✅ GOED - Interne links
+import Link from 'next/link'
+<Link href="/properties" prefetch>Properties</Link>
+
+// ✅ GOED - Externe links
+<a href="https://..." target="_blank" rel="noopener noreferrer">
+```
+
+---
+
+## 💾 Database (Prisma)
+
+### ⚠️ Bij Database Errors - EERST Diagnose, DAN Oplossing
+
+Bij Prisma errors zoals "Server has closed the connection" (P1017):
+
+1. **NOOIT direct code aanpassen** - Eerst de configuratie controleren!
+2. **Controleer DATABASE_URL in .env**:
+   - Gebruik `127.0.0.1` in plaats van `localhost` (IPv6/IPv4 issues op Windows)
+   - Controleer de poort (Supabase lokaal = `5432`, niet `5433`)
+   - Controleer de database naam
+3. **Controleer Docker containers**:
+   ```bash
+   docker ps --filter "name=supabase" --format "table {{.Names}}\t{{.Ports}}"
+   ```
+4. **Test database bereikbaarheid**:
+   ```bash
+   docker exec supabase_db_my-platform psql -U postgres -c "SELECT 1;"
+   ```
+5. **Na .env wijzigingen**: 
+   - Dev server herstarten
+   - `npx prisma db push` als tabellen ontbreken
+
+### Correcte DATABASE_URL formaat (lokale Supabase):
+```
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/real_estate_pulse"
+```
+
+### Queries
+```tsx
+// ✅ GOED - Selecteer alleen wat je nodig hebt
+const properties = await prisma.property.findMany({
+  select: {
+    id: true,
+    title: true,
+    slug: true,
+    // Niet de hele entity als je niet alles nodig hebt
+  },
+  take: 10,  // Limiteer resultaten
+})
+
+// ✅ GOED - Gebruik includes efficiënt
+const property = await prisma.property.findUnique({
+  where: { slug },
+  include: {
+    images: {
+      select: { url: true, alt: true },
+      take: 5,
+    },
+  },
+})
+```
+
+### Server Actions Pattern
+```tsx
+// In lib/actions/[entity].actions.ts
+'use server'
+
+export async function getProperties(filters: PropertyFilters) {
+  try {
+    const properties = await prisma.property.findMany({...})
+    return { success: true, data: properties }
+  } catch (error) {
+    console.error('Error:', error)
+    return { success: false, error: 'Fout bij ophalen properties' }
+  }
+}
+```
+
+---
+
+## 🎨 Styling Conventies
+
+### Tailwind Classes
+```tsx
+// ✅ GOED - Gebruik cn() voor conditionele classes
+import { cn } from '@/lib/utils'
+
+<div className={cn(
+  'base-classes',
+  isActive && 'active-classes',
+  className  // Props doorgeven
+)}>
+```
+
+### Responsive Design
+```tsx
+// Mobile-first approach
+<div className="
+  px-4 py-2           // Mobile (default)
+  md:px-6 md:py-4     // Tablet
+  lg:px-8 lg:py-6     // Desktop
+">
+```
+
+---
+
+## ✅ Component Checklist
+
+Bij het maken van een nieuwe component, check:
+
+- [ ] Bestaat er al een vergelijkbare component?
+- [ ] Server of Client component? (Server = default)
+- [ ] Heeft het goede TypeScript types?
+- [ ] Is het responsive (mobile-first)?
+- [ ] Zijn images geoptimaliseerd met next/image?
+- [ ] Heeft het accessibility attributen (aria-*, alt, etc.)?
+- [ ] Is er lazy loading toegepast waar nodig?
+
+---
+
+## 🚨 Code Review Checklist
+
+Voordat je code commit:
+
+- [ ] Geen duplicate functies/APIs gemaakt
+- [ ] Alle pagina's hebben correcte metadata
+- [ ] Images gebruiken next/image met alt tekst
+- [ ] Geen console.log statements in productie code
+- [ ] TypeScript errors zijn opgelost
+- [ ] Grote componenten zijn lazy loaded
+- [ ] Server Components waar mogelijk
+
+---
+
+## 📝 Voorbeelden
+
+### Nieuwe Property Pagina (compleet voorbeeld)
+```tsx
+// app/(front)/properties/[slug]/page.tsx
+import { Metadata } from 'next'
+import Image from 'next/image'
+import { notFound } from 'next/navigation'
+import { getPropertyBySlug } from '@/lib/actions/property.actions'
+import { generatePropertySchema, renderJsonLd } from '@/lib/utils/structured-data'
+
+interface Props {
+  params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const property = await getPropertyBySlug(slug)
+  
+  if (!property) return { title: 'Not Found' }
+  
+  return {
+    title: `${property.title} | PropPulse`,
+    description: property.description?.slice(0, 160),
+    openGraph: {
+      images: [property.images[0]?.url || '/default-og.jpg'],
+    },
+  }
+}
+
+export default async function PropertyPage({ params }: Props) {
+  const { slug } = await params
+  const property = await getPropertyBySlug(slug)
+  
+  if (!property) notFound()
+  
+  const schema = generatePropertySchema({
+    name: property.title,
+    price: property.price,
+    beds: property.beds,
+    baths: property.baths,
+    location: property.location,
+    slug: property.slug,
+    image: property.images.map(i => i.url),
+  })
+  
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={renderJsonLd(schema)}
+      />
+      <main>
+        <h1>{property.title}</h1>
+        {/* Rest van de component */}
+      </main>
+    </>
+  )
+}
+```
+

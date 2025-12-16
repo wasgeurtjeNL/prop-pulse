@@ -1,0 +1,10 @@
+{
+  "crons": [
+    {
+      "path": "/api/smart-blog/process-scheduled",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}
+
+

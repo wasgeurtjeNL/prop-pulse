@@ -1,6 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# ===================
+# Dependencies
+# ===================
 /node_modules
 /.pnp
 .pnp.*
@@ -10,34 +12,110 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# ===================
+# Testing
+# ===================
 /coverage
 
-# next.js
+# ===================
+# Next.js
+# ===================
 /.next/
 /out/
+next-env.d.ts
 
-# production
+# ===================
+# Production
+# ===================
 /build
+/dist
 
-# misc
+# ===================
+# Environment Variables
+# ===================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Keep .env.example for documentation
+!.env.example
+
+# ===================
+# Vercel
+# ===================
+.vercel
+
+# ===================
+# Prisma
+# ===================
+/lib/generated/prisma
+
+# ===================
+# IDE & Editors
+# ===================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ===================
+# OS Files
+# ===================
 .DS_Store
-*.pem
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# debug
+# ===================
+# Debug & Logs
+# ===================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
+# ===================
+# TypeScript
+# ===================
 *.tsbuildinfo
-next-env.d.ts
 
-/lib/generated/prisma
+# ===================
+# Security & Keys
+# ===================
+*.pem
+*.key
+*.cert
+*.p12
+
+# ===================
+# Misc
+# ===================
+.cache/
+*.bak
+*.tmp
+*.temp
+
+# ===================
+# Development Scripts (local only)
+# ===================
+fix-env.ps1
+migrate-now.bat
+update-user-role.ps1
+
+# ===================
+# Documentation (optional - remove if you want to commit these)
+# ===================
+# AUTHENTICATION_CHANGES.md
+# AUTH_SETUP.md
+# DATABASE_UPGRADE_PLAN.md
+# DESIGN_MIGRATION.md
+# ENV_SETUP.md
+# IMPLEMENTATION_SUMMARY.md
+# MIGRATIE_COMPLEET.md
+# SEO_IMPLEMENTATION.md

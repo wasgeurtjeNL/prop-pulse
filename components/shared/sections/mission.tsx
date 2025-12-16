@@ -8,35 +8,36 @@ const Mission = () => {
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-24 items-center">
           <div>
             <h2 className="text-3xl font-bold tracking-tight mb-6">
-              Our Mission
+              Your Trusted Property Partner in Thailand
             </h2>
             <p className="text-muted-foreground text-lg mb-6">
-              At PropPulse, we dont just sell properties; we engineer
-              lifestyles. Our mission is to democratize access to premium real
-              estate data while providing white-glove service to every client,
-              regardless of budget.
+              At PSM Phuket, we specialize in premium property management and real estate 
+              services across Thailand's most sought-after coastal destinations. From luxury beachfront 
+              villas with Andaman Sea views in Phuket to modern high-rise condominiums in vibrant Pattaya, 
+              we help international clients and investors navigate Thai real estate with confidence - finding 
+              their perfect tropical retreat or maximizing returns on investment properties.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
               {[
                 {
                   icon: Trophy,
-                  title: "Award Winning",
-                  desc: "Recognized globally for excellence.",
+                  title: "Local Market Expertise",
+                  desc: "15+ years experience in Phuket & Pattaya real estate markets.",
                 },
                 {
                   icon: Users,
-                  title: "Client Focus",
-                  desc: "Over 10,000 happy families settled.",
+                  title: "Expat-Focused Service",
+                  desc: "Multilingual team specializing in international client needs.",
                 },
                 {
                   icon: Globe,
-                  title: "Wide Network",
-                  desc: "Listings across 50+ major cities.",
+                  title: "Complete Property Management",
+                  desc: "End-to-end services: sales, rentals, maintenance & legal support.",
                 },
                 {
                   icon: CheckCircle2,
-                  title: "Transparency",
-                  desc: "No hidden fees, ever.",
+                  title: "Investment Excellence",
+                  desc: "Proven track record of high-ROI properties and expert guidance.",
                 },
               ].map((item, i) => (
                 <div key={i} className="flex gap-4 items-start">

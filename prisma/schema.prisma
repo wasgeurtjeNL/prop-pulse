@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../lib/generated/prisma"
 }
 
@@ -63,6 +63,9 @@ model User {
   accounts      Account[]
 
   properties    Property[]
+  investorLeads InvestorLead[]
+  rentalLeads   RentalLead[]   @relation("RentalLeadAssignee")
+  blogs         Blog[]
 
   @@map("user")
 }
@@ -79,26 +82,66 @@ model Verification {
 }
 
 model Property {
-  id          String      @id @default(cuid())
-  title       String
-  slug        String    @unique
-  location    String
-  price       String
-  beds        Int
-  baths       Float
-  sqft        Int
-  type        PropertyType
-  tag         String
-  image       String
-  content     String
-  amenities   String[]
-  status      Status    @default(ACTIVE)
+  id       String @id @default(cuid())
+  title    String
+  slug     String @unique
+  location String
+  price    String
+  beds     Int
+  baths    Float
+  sqft     Int
 
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Property classification
+  type     PropertyType
+  category PropertyCategory @default(RESIDENTIAL_HOME)
+  tag      String?
+  status   Status           @default(ACTIVE)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  // Images - Main image kept for backward compatibility
+  image  String
+  images PropertyImage[]
+
+  // Content
+  shortDescription      String? @db.Text
+  descriptionParagraphs Json? // Array of description paragraphs
+
+  // Property highlights/features
+  propertyFeatures Json? // Array of {title, description, icon}
+
+  // Amenities (kept as string array for now, can add relation later)
+  amenities          String[]
+  amenitiesWithIcons Json? // Array of {name, icon}
+
+  // Additional metadata
+  content   String  @db.Text // Kept for backward compatibility
+  yearBuilt Int?
+  mapUrl    String?
+
+  // Relations
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  viewingRequests ViewingRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("property")
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  url      String? // Nullable - null means slot is empty, filled means image is uploaded
+  position Int // 1=hero (large left), 2=top-right, 3=bottom-left, 4=bottom-right
+  alt      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([propertyId, position])
+  @@map("property_image")
 }
 
 enum PropertyType {
@@ -106,9 +149,749 @@ enum PropertyType {
   FOR_RENT
 }
 
+enum PropertyCategory {
+  LUXURY_VILLA
+  APARTMENT
+  RESIDENTIAL_HOME
+  OFFICE_SPACES
+}
+
 enum Status {
   ACTIVE
   INACTIVE
   SOLD
   RENTED
+}
+
+model ViewingRequest {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  // Request details
+  requestType RequestType
+  viewingDate DateTime? // Optional, only for SCHEDULE_VIEWING
+
+  // Contact information
+  name        String
+  email       String
+  phone       String
+  countryCode String  @default("+66")
+  language    String?
+  message     String? @db.Text
+
+  // Offer details (only for MAKE_OFFER type)
+  offerAmount   String?  // The offered price (e.g., "15500000" or "฿15,500,000")
+  offerCurrency String?  @default("THB")
+
+  // Request status
+  status RequestStatus @default(PENDING)
+
+  // Agent tracking
+  confirmedBy     String? // User ID of agent who confirmed
+  confirmedByName String? // Name of agent who confirmed
+  confirmedAt     DateTime? // When it was confirmed
+  completedBy     String? // User ID of agent who marked as complete
+  completedByName String? // Name of agent who marked as complete
+  completedAt     DateTime? // When it was completed
+  cancelledBy     String? // User ID of agent who cancelled
+  cancelledByName String? // Name of agent who cancelled
+  cancelledAt     DateTime? // When it was cancelled
+
+  // Metadata
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("viewing_request")
+}
+
+enum RequestType {
+  SCHEDULE_VIEWING
+  MAKE_OFFER
+}
+
+enum RequestStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model InvestorLead {
+  id String @id @default(cuid())
+
+  // Personal Information
+  name        String
+  email       String
+  phone       String
+  countryCode String @default("+66")
+  currency    String @default("EUR") // EUR, USD, GBP, THB, AUD
+
+  // Investment Profile
+  investmentBudget String // Range: 50k-200k, 200k-500k, 500k-1m, 1m+
+  investmentGoal   String // buy-hold, fix-flip, rental-income, vacation-home, diversification
+  timeline         String // immediate, 3-6months, 6-12months, 12+months
+  preferredAreas   String? // Comma-separated: phuket, pattaya, bangkok, etc.
+  propertyType     String? // villa, apartment, commercial, land
+
+  // Additional Context
+  experience String? // first-time, 1-3properties, 4-10properties, 10+properties
+  financing  String? // cash, mortgage, mixed
+  message    String? @db.Text
+
+  // Marketing Consent
+  newsletter Boolean @default(true)
+
+  // Lead Status & Tracking
+  status       LeadStatus @default(NEW)
+  assignedToId String?
+  assignedTo   User?      @relation(fields: [assignedToId], references: [id])
+
+  // Metadata
+  ipAddress String?
+  userAgent String?
+  source    String? // landing-page, blog, referral, etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+  @@map("investor_lead")
+}
+
+model RentalLead {
+  id String @id @default(cuid())
+
+  // Personal Information
+  name        String
+  email       String
+  phone       String
+  countryCode String @default("+66")
+
+  // Rental Requirements
+  propertyType   String // villa, apartment, condo, house
+  bedrooms       String // 1, 2, 3, 4, 5+
+  budget         String // Range: under-20k, 20k-40k, 40k-60k, 60k-100k, 100k+
+  rentalDuration String // short-term, 6-12months, 1-2years, 2+years
+  preferredAreas String? // Comma-separated: rawai, kata, patong, etc.
+
+  // Additional Requirements
+  moveInDate String? // immediate, 1month, 2-3months, flexible
+  furnished  String? // yes, no, partial
+  pets       String? // yes, no
+  message    String? @db.Text
+
+  // Marketing Consent
+  newsletter Boolean @default(true)
+
+  // Lead Status & Tracking
+  status       RentalLeadStatus @default(NEW)
+  assignedToId String?
+  assignedTo   User?            @relation("RentalLeadAssignee", fields: [assignedToId], references: [id])
+
+  // Metadata
+  ipAddress String?
+  userAgent String?
+  source    String? // rental-page, property-detail, referral, etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+  @@map("rental_lead")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL_SENT
+  CONVERTED
+  NOT_INTERESTED
+  LOST
+}
+
+enum RentalLeadStatus {
+  NEW
+  CONTACTED
+  VIEWING_SCHEDULED
+  OFFER_MADE
+  RENTED
+  NOT_INTERESTED
+  LOST
+}
+
+model Blog {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  excerpt         String    @db.Text
+  content         String    @db.Text
+  coverImage      String?
+  coverImageAlt   String?   // Alt text for cover image (SEO)
+  tag             String?
+
+  // SEO fields
+  metaTitle       String?
+  metaDescription String?   @db.Text
+
+  // Category (for SEO structure)
+  categoryId      String?
+  category        BlogCategory? @relation(fields: [categoryId], references: [id])
+
+  // Status
+  published       Boolean   @default(false)
+  publishedAt     DateTime?
+
+  // Link Optimization (for retroactive linking)
+  originalContent     String?   @db.Text  // Backup of content before link optimization
+  linkOptimizedAt     DateTime?           // When links were last optimized
+  internalLinkCount   Int       @default(0) // Number of internal links in content
+  
+  // Link usage tracking
+  linkUsages          LinkUsage[]
+
+  // Author relation
+  authorId        String
+  author          User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([published])
+  @@index([createdAt])
+  @@index([categoryId])
+  @@index([linkOptimizedAt])
+  @@map("blog")
+}
+
+// Blog Categories - For structured content organization (SEO)
+model BlogCategory {
+  id              String   @id @default(cuid())
+  
+  // Basic info
+  name            String   // Display name (e.g., "Investment Guide")
+  slug            String   @unique // URL slug (e.g., "investment-guide")
+  description     String?  @db.Text // Category description for SEO
+  
+  // Hierarchy (tree structure)
+  parentId        String?
+  parent          BlogCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children        BlogCategory[] @relation("CategoryTree")
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?  @db.Text
+  
+  // Display
+  icon            String?  // Lucide icon name or emoji
+  color           String?  // Hex color for UI
+  order           Int      @default(0) // Display order
+  
+  // Status
+  isActive        Boolean  @default(true)
+  
+  // Relations
+  blogs           Blog[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([parentId])
+  @@index([isActive])
+  @@map("blog_category")
+}
+
+// Property Owner Submissions - for owners who want to list their property
+model PropertySubmission {
+  id String @id @default(cuid())
+
+  // Owner Information
+  ownerName       String
+  ownerEmail      String
+  ownerPhone      String
+  ownerCountryCode String @default("+66")
+  
+  // Access token for owner to view/edit their submission (no login required)
+  accessToken     String  @unique @default(cuid())
+  
+  // Property Details
+  propertyTitle    String
+  propertyCategory PropertyCategory
+  propertyType     PropertyType     // FOR_SALE or FOR_RENT
+  location         String
+  askingPrice      String
+  beds             Int
+  baths            Float
+  sqft             Int
+  description      String           @db.Text
+  
+  // Property Images (URLs - added after approval)
+  images           String[]         // Array of image URLs
+  
+  // Listing Agreement
+  exclusiveRights     Boolean        @default(false)
+  commissionRate      Float          @default(3.0)  // Standard 3%, Exclusive 15%+
+  agreementAccepted   Boolean        @default(false)
+  
+  // Submission Status
+  status              SubmissionStatus @default(PENDING_REVIEW)
+  
+  // Admin Review
+  reviewNotes         String?          @db.Text
+  reviewedBy          String?
+  reviewedByName      String?
+  reviewedAt          DateTime?
+  
+  // Images Approval
+  imagesApprovedAt    DateTime?
+  imagesApprovedBy    String?
+  
+  // Final Publication
+  publishedAt         DateTime?
+  publishedBy         String?
+  
+  // Converted to Property (when published)
+  convertedPropertyId String?
+  
+  // Metadata
+  ipAddress String?
+  userAgent String?
+  source    String?   // website, referral, etc.
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerEmail])
+  @@index([status])
+  @@index([accessToken])
+  @@index([createdAt])
+  @@map("property_submission")
+}
+
+enum SubmissionStatus {
+  PENDING_REVIEW      // Initial submission, waiting for admin review
+  UNDER_REVIEW        // Admin is reviewing
+  INFO_REQUESTED      // Admin requested more info from owner
+  APPROVED            // Approved - owner can now upload images
+  IMAGES_UPLOADED     // Owner has uploaded images, waiting for final approval
+  READY_TO_PUBLISH    // All approved, ready to be published
+  PUBLISHED           // Live on the website
+  REJECTED            // Rejected by admin
+}
+
+// Site Settings - for storing configuration like SMTP, etc.
+model SiteSettings {
+  id        String   @id @default("default") // Single row with id "default"
+  
+  // SMTP Configuration
+  smtpHost       String?
+  smtpPort       Int?       @default(587)
+  smtpSecure     Boolean    @default(false)
+  smtpUser       String?
+  smtpPassword   String?    // Encrypted in production
+  smtpFromName   String?    @default("Real Estate Pulse")
+  smtpFromEmail  String?
+  
+  // General Settings
+  siteName       String?    @default("Real Estate Pulse")
+  siteEmail      String?    // Contact email for the site
+  
+  // Admin Notifications
+  adminNotifyEmail    String?  // Email to notify when new submissions arrive
+  notifyOnSubmission  Boolean  @default(true)
+  notifyOnImageUpload Boolean  @default(true)
+  
+  // AI Content Generation Settings
+  companyDescription  String?   @db.Text  // Detailed description of the company
+  companyTone         String?   @default("professional") // professional, friendly, luxury, casual
+  companyUSPs         String?   @db.Text  // Unique Selling Points (JSON array)
+  targetAudience      String?   @db.Text  // Target audience description
+  brandKeywords       String?   @db.Text  // Keywords to include often (comma-separated)
+  avoidTopics         String?   @db.Text  // Topics to avoid mentioning
+  
+  // Website Scanner Settings
+  websiteUrl          String?   // Main website URL to scan
+  lastScannedAt       DateTime? // When the website was last scanned
+  scannedPagesCount   Int?      // Number of pages analyzed
+  scanConfidence      Float?    // AI confidence score (0-1)
+  detectedThemes      String?   @db.Text  // JSON array of detected content themes
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+// Internal Links for Blog Posts - URLs that can be linked to in generated content
+model InternalLink {
+  id          String   @id @default(cuid())
+  
+  url         String   // Full URL path (e.g., /properties/luxury-villa-kata)
+  title       String   // Anchor text suggestion
+  description String?  @db.Text // What this page is about
+  
+  // Enhanced categorization
+  category    String?  // Category: property, service, page, blog, location, guide
+  subCategory String?  // Sub-category for more specific linking (e.g., "buying", "selling", "rental")
+  
+  keywords    String?  @db.Text // Keywords this link is relevant for (comma-separated)
+  anchorTexts String?  @db.Text // JSON array of suggested anchor text variations
+  priority    Int      @default(1) // 1-5, higher = more important to link to
+  
+  isActive    Boolean  @default(true)
+  usageCount  Int      @default(0) // Track how often this link is used
+  
+  // Page existence validation
+  pageExists   Boolean   @default(true)  // Whether the target page actually exists
+  lastChecked  DateTime? // When the page was last validated
+  
+  // Relations
+  usages       LinkUsage[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([url])
+  @@index([category])
+  @@index([isActive])
+  @@index([pageExists])
+  @@map("internal_link")
+}
+
+// Track where internal links are used in blogs
+model LinkUsage {
+  id          String   @id @default(cuid())
+  
+  // Link reference
+  linkId      String
+  link        InternalLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  
+  // Blog reference
+  blogId      String
+  blog        Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  
+  // Usage details
+  anchorText  String   // The anchor text that was used
+  context     String?  @db.Text // Surrounding text for context (50 chars before/after)
+  position    Int?     // Approximate position in content (character index)
+  
+  // Tracking
+  wasAutoInserted Boolean @default(false) // Whether inserted by retroactive system
+  insertedAt      DateTime @default(now())
+  
+  createdAt   DateTime @default(now())
+
+  @@index([linkId])
+  @@index([blogId])
+  @@map("link_usage")
+}
+
+// Suggestions for landing pages that should be created
+model LandingPageSuggestion {
+  id              String   @id @default(cuid())
+  
+  // Suggested page details
+  suggestedUrl    String   // /diensten/dubai-investment-guide
+  suggestedTitle  String   // "Dubai Investment Guide"
+  description     String?  @db.Text // What this page should contain
+  
+  // Categorization
+  category        String   // service, guide, location, faq
+  
+  // Why this page is needed
+  reason          String?  @db.Text // AI explanation of why this page would be valuable
+  
+  // Tracking frequency
+  mentionCount    Int      @default(1)  // How often this topic appears in blogs
+  sourceBlogs     String?  @db.Text     // JSON array of blog IDs where this topic is mentioned
+  
+  // Status workflow
+  status          LandingPageStatus @default(PENDING)
+  
+  // When the page was actually created
+  createdPageUrl  String?  // Actual URL if page was created
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([suggestedUrl])
+  @@index([status])
+  @@index([mentionCount])
+  @@map("landing_page_suggestion")
+}
+
+enum LandingPageStatus {
+  PENDING     // Suggested but not reviewed
+  APPROVED    // Approved for creation
+  CREATED     // Landing page has been created
+  DISMISSED   // Dismissed as not needed
+}
+
+// Generated Landing Pages - DB-backed pages created from AI suggestions
+model LandingPage {
+  id              String   @id @default(cuid())
+
+  // Full path including leading slash (e.g. /diensten/legal-advisory-thailand)
+  url             String   @unique
+
+  // Content & SEO
+  title           String
+  category        String   // service|guide|location|faq (or custom)
+  metaTitle       String?
+  metaDescription String?  @db.Text
+  content         String   @db.Text // sanitized on render via HTMLContent
+  faq             Json?    // Array<{question, answer}> for FAQ schema
+
+  // Publication
+  published       Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([category])
+  @@index([published])
+  @@map("landing_page")
+}
+
+// Company Profile - Detailed company information for AI content generation
+model CompanyProfile {
+  id          String   @id @default("default")
+  
+  // Basic Info
+  companyName     String?
+  tagline         String?
+  description     String?  @db.Text
+  
+  // Brand Voice
+  tone            String?  @default("professional") // professional, friendly, luxury, educational
+  writingStyle    String?  @db.Text // Additional writing style notes
+  
+  // Target Market
+  targetAudience  String?  @db.Text
+  targetLocations String?  @db.Text // Geographic focus (JSON array)
+  
+  // USPs & Differentiators
+  usps            String?  @db.Text // JSON array of unique selling points
+  expertise       String?  @db.Text // Areas of expertise
+  
+  // Content Strategy
+  contentThemes   String?  @db.Text // JSON array of main content themes
+  brandKeywords   String?  @db.Text // Keywords to always include
+  avoidTopics     String?  @db.Text // Topics to never mention
+  competitors     String?  @db.Text // Competitors to be aware of
+  
+  // Website Analysis Results
+  websiteUrl      String?
+  lastAnalyzedAt  DateTime?
+  analysisData    String?  @db.Text // Full JSON of analysis results
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("company_profile")
+}
+
+// Blog Schedule Settings - Separate table for scheduling configuration
+model BlogScheduleSettings {
+  id                  String   @id @default("default")
+  
+  // SEO-based limits (from research: 1-3 posts/week optimal for small/medium sites)
+  maxBlogsPerWeek     Int      @default(3)    // Max blogs allowed per week
+  minDaysBetweenPosts Int      @default(2)    // Minimum days between posts
+  preferredPostTime   String?  @default("09:00") // Preferred time to auto-publish (HH:mm)
+  preferredPostDays   String?  @db.Text       // JSON array of preferred days ["Monday", "Wednesday", "Friday"]
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("blog_schedule_settings")
+}
+
+// Topic Suggestions - Store generated topics with usage tracking
+model TopicSuggestion {
+  id              String   @id @default(cuid())
+  
+  // Topic content
+  title           String
+  description     String?  @db.Text
+  category        String?  // investment, lifestyle, legal, market, guide, news
+  priority        String?  // trending, evergreen, seasonal
+  difficulty      String?  // easy, medium, hard
+  estimatedImpact String?  // high, medium, low
+  language        String   @default("en")
+  
+  // Status tracking
+  status          TopicStatus @default(AVAILABLE)
+  usedAt          DateTime?   // When topic was used to generate a blog
+  generatedBlogId String?     // Reference to the blog if generated
+  
+  // Generation batch tracking
+  batchId         String?     // Group topics from same generation
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([batchId])
+  @@index([language])
+  @@map("topic_suggestion")
+}
+
+enum TopicStatus {
+  AVAILABLE       // Not yet used
+  SCHEDULED       // Scheduled for future blog
+  USED            // Already generated into a blog
+  SKIPPED         // Manually skipped by user
+}
+
+// Scheduled Blogs - For calendar scheduling and auto-publishing
+model ScheduledBlog {
+  id              String   @id @default(cuid())
+  
+  // Content (either from topic or custom)
+  topicId         String?  // Reference to TopicSuggestion if from discover
+  topicTitle      String   // Title/topic for the blog
+  
+  // Generation settings (stored for when blog is generated)
+  language        String   @default("en")
+  length          String   @default("medium") // short, medium, long
+  tone            String   @default("professional")
+  includeResearch Boolean  @default(true)
+  
+  // Scheduling
+  scheduledFor    DateTime // When to auto-publish
+  scheduledBy     String   // User ID who scheduled
+  
+  // Status
+  status          ScheduledBlogStatus @default(SCHEDULED)
+  
+  // Generated blog reference
+  generatedBlogId String?  // Blog ID after generation
+  
+  // Processing tracking
+  processingStartedAt DateTime?
+  processedAt         DateTime?
+  errorMessage        String?   @db.Text
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([scheduledFor])
+  @@index([status])
+  @@map("scheduled_blog")
+}
+
+enum ScheduledBlogStatus {
+  SCHEDULED       // Waiting to be processed
+  PROCESSING      // Currently being generated
+  COMPLETED       // Successfully generated and published
+  FAILED          // Generation failed
+  CANCELLED       // Manually cancelled
+}
+
+// Property Alerts - Users can subscribe to be notified when new properties match their criteria
+model PropertyAlert {
+  id              String   @id @default(cuid())
+  
+  // Contact Information
+  email           String
+  name            String?
+  phone           String?
+  countryCode     String   @default("+66")
+  
+  // Optional user relation (if logged in when creating)
+  userId          String?
+  
+  // Filter Criteria
+  propertyType    PropertyType?           // FOR_SALE or FOR_RENT (null = both)
+  category        PropertyCategory?       // LUXURY_VILLA, APARTMENT, etc. (null = all)
+  
+  // Location Filter
+  locations       String?  @db.Text       // JSON array of location strings ["Rawai", "Kata", "Patong"]
+  
+  // Price Range (stored as numbers for comparison)
+  minPrice        Int?                    // Minimum price in THB
+  maxPrice        Int?                    // Maximum price in THB
+  
+  // Bedrooms Filter
+  minBeds         Int?
+  maxBeds         Int?
+  
+  // Bathrooms Filter
+  minBaths        Int?
+  maxBaths        Int?
+  
+  // Size Filter (sqm)
+  minSqft         Int?
+  maxSqft         Int?
+  
+  // Notification Preferences
+  notifyImmediately Boolean @default(true)   // Notify as soon as property is added
+  notifyDigest      Boolean @default(false)  // Weekly digest of matching properties
+  digestDay         String? @default("Monday") // Day for weekly digest
+  
+  // Status & Tracking
+  isActive          Boolean  @default(true)
+  lastNotifiedAt    DateTime?                 // When last notification was sent
+  matchCount        Int      @default(0)      // Total properties matched
+  notificationCount Int      @default(0)      // Total notifications sent
+  
+  // Verification (for non-logged-in users)
+  verificationToken String?  @unique
+  isVerified        Boolean  @default(false)
+  verifiedAt        DateTime?
+  
+  // Unsubscribe token
+  unsubscribeToken  String   @unique @default(cuid())
+  
+  // Metadata
+  ipAddress         String?
+  userAgent         String?
+  source            String?  // property-page, search-page, footer, etc.
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([email])
+  @@index([isActive])
+  @@index([propertyType])
+  @@index([createdAt])
+  @@map("property_alert")
+}
+
+// Property Alert Notifications - Track sent notifications
+model PropertyAlertNotification {
+  id              String   @id @default(cuid())
+  
+  // Alert reference
+  alertId         String
+  
+  // Properties matched
+  propertyIds     String   @db.Text  // JSON array of property IDs included
+  propertyCount   Int                // Number of properties in this notification
+  
+  // Email details
+  emailSent       Boolean  @default(false)
+  emailSentAt     DateTime?
+  emailError      String?  @db.Text
+  
+  // Tracking
+  opened          Boolean  @default(false)
+  openedAt        DateTime?
+  clicked         Boolean  @default(false)
+  clickedAt       DateTime?
+  
+  createdAt       DateTime @default(now())
+
+  @@index([alertId])
+  @@index([createdAt])
+  @@map("property_alert_notification")
 }

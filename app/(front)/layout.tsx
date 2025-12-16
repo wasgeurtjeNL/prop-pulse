@@ -1,5 +1,6 @@
-import Header from "@/components/shared/includes/header";
-import Footer from "@/components/shared/includes/footer";
+import Header from "@/components/new-design/layout/header";
+import Footer from "@/components/new-design/layout/footer";
+import ScrollToTop from "@/components/new-design/scroll-to-top";
 
 export default function FrontLayout({
   children,
@@ -7,12 +8,16 @@ export default function FrontLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1">
-        <Header />
+    <>
+      <Header />
+      <div
+        className="min-h-screen"
+        style={{ paddingTop: "var(--pp-header-offset, 0px)" }}
+      >
         {children}
-        <Footer />
-      </main>
-    </div>
+      </div>
+      <Footer />
+      <ScrollToTop />
+    </>
   );
 }

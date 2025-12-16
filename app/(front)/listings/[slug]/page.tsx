@@ -17,8 +17,10 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import HTMLContent from "@/components/ui/html-content";
 import { formatType, getUserInitials } from "@/lib/utils";
 import { getPropertyDetails } from "@/lib/actions/property.actions";
+import Breadcrumb from "@/components/new-design/breadcrumb";
 
 interface PropertyWithUser {
   id: string;
@@ -55,16 +57,16 @@ export default async function PropertyDetailsPage({
 
   const isSold = property.status === "SOLD" || property.status === "RENTED";
 
+  const breadcrumbs = [
+    { name: 'Listings', href: '/listings' },
+    { name: property.title, href: `/listings/${slug}` }
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
       <div className="bg-white border-b dark:bg-slate-900">
         <div className="container mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <Link
-            href="/properties"
-            className="flex items-center text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Listings
-          </Link>
+          <Breadcrumb items={breadcrumbs} className="justify-start" />
           <div className="flex gap-2">
             <Button variant="outline" size="sm">
               <Heart className="mr-2 h-4 w-4" /> Save
@@ -137,13 +139,10 @@ export default async function PropertyDetailsPage({
 
             <section>
               <h2 className="text-2xl font-semibold mb-4">About this home</h2>
-              <div className="prose prose-slate max-w-none dark:prose-invert text-muted-foreground leading-relaxed">
-                {property.content.split("\n").map((paragraph, i) => (
-                  <p key={i} className="mb-4">
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
+              <HTMLContent
+                content={property.content}
+                className="prose prose-slate max-w-none dark:prose-invert text-muted-foreground leading-relaxed"
+              />
             </section>
 
             <Separator />

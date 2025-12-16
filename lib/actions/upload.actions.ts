@@ -2,7 +2,7 @@
 
 import { imagekit } from "@/lib/imagekit";
 
-export async function uploadToImageKit(formData: FormData) {
+export async function uploadToImageKit(formData: FormData, folder: string = "/properties") {
   const file = formData.get("file") as File;
 
   if (!file) {
@@ -16,7 +16,7 @@ export async function uploadToImageKit(formData: FormData) {
     const uploaded = await imagekit.upload({
       file: buffer,
       fileName: file.name,
-      folder: "/properties",
+      folder: folder,
     });
 
     return uploaded.url;
@@ -24,4 +24,9 @@ export async function uploadToImageKit(formData: FormData) {
     console.error("ImageKit Upload Error:", error);
     throw new Error("Failed to upload image");
   }
+}
+
+// Specific function for blog images
+export async function uploadBlogImage(formData: FormData) {
+  return uploadToImageKit(formData, "/blogs");
 }

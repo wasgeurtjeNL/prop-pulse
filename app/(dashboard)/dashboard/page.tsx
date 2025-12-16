@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Plus, ArrowUpRight, DollarSign, Home, Users } from "lucide-react";
+import { Plus } from "lucide-react";
+import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,18 +10,22 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import PropertiesTableWrapper from "@/components/shared/dashboard/properties-table-wrapper";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { PropertySearch } from "@/components/shared/dashboard/property-search";
 import StatsProperties from "@/components/shared/dashboard/stats-properties";
+import PropertiesTableSkeleton from "@/components/shared/dashboard/properties-table-skeleton";
 
-export default async function DashboardPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+interface DashboardPageProps {
+  searchParams: Promise<{
+    search?: string;
+    status?: string;
+    type?: string;
+    page?: string;
+  }>;
+}
 
-  if (!session) redirect("/");
-
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const params = await searchParams;
+  
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -37,15 +42,26 @@ export default async function DashboardPage() {
 
       <StatsProperties />
 
+      {/* Properties Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Properties</CardTitle>
-          <CardDescription>
-            Manage your latest real estate listings.
-          </CardDescription>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle>Properties</CardTitle>
+              <CardDescription>
+                Beheer je vastgoed listings.
+              </CardDescription>
+            </div>
+          </div>
+          <PropertySearch />
         </CardHeader>
         <CardContent>
-          <PropertiesTableWrapper />
+          <Suspense 
+            key={JSON.stringify(params)} 
+            fallback={<PropertiesTableSkeleton />}
+          >
+            <PropertiesTableWrapper searchParams={params} />
+          </Suspense>
         </CardContent>
       </Card>
     </div>

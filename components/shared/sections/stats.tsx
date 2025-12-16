@@ -1,7 +1,7 @@
 const STATS = [
-  { label: "Active Listings", value: "2,500+" },
-  { label: "Sold Properties", value: "850+" },
-  { label: "Satisfied Clients", value: "98%" },
+  { label: "Properties Managed", value: "500+" },
+  { label: "International Clients", value: "1,200+" },
+  { label: "Client Satisfaction", value: "98%" },
 ];
 
 const Stats = () => {

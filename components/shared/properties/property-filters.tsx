@@ -61,7 +61,8 @@ export default function PropertyFilters() {
     }, 1000);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [debouncedQuery, router, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery]);
 
   const handleAmenityChange = (amenity: string, checked: boolean) => {
     const current = searchParams.get("amenities")?.split(",") || [];
@@ -105,10 +106,31 @@ export default function PropertyFilters() {
       <Separator />
 
       <div className="space-y-3">
+        <Label>Property Category</Label>
+        <Select
+          defaultValue={searchParams.get("category") || "all"}
+          onValueChange={(val) => updateFilter("category", val === "all" ? null : val)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent className="w-full">
+            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="luxury-villa">Luxury Villa</SelectItem>
+            <SelectItem value="apartment">Apartment</SelectItem>
+            <SelectItem value="residential-home">Residential Home</SelectItem>
+            <SelectItem value="office-spaces">Office Spaces</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
         <Label>Listing Status</Label>
         <Select
           defaultValue={searchParams.get("type") || "all"}
-          onValueChange={(val) => updateFilter("type", val)}
+          onValueChange={(val) => updateFilter("type", val === "all" ? null : val)}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select status" />

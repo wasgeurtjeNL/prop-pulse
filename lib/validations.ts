@@ -23,6 +23,7 @@ export const signInSchema = z.object({
 export const propertySchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   type: z.enum(["FOR_SALE", "FOR_RENT"]),
+  category: z.enum(["LUXURY_VILLA", "APARTMENT", "RESIDENTIAL_HOME", "OFFICE_SPACES"]),
   status: z.enum(["ACTIVE", "INACTIVE", "SOLD", "RENTED"]),
   price: z.string().min(1, "Price is required"),
   location: z.string().min(5, "Address is required"),
@@ -30,10 +31,13 @@ export const propertySchema = z.object({
   baths: z.coerce.number().min(0),
   sqft: z.coerce.number().min(0),
   content: z.string().min(20, "Description must be longer"),
+  shortDescription: z.string().optional(),
   amenities: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "Select at least one amenity",
   }),
   tag: z.string().optional(),
+  yearBuilt: z.coerce.number().optional(),
+  mapUrl: z.string().url().optional().or(z.literal("")),
   image: z.any().refine((val) => {
     if (typeof val === "string" && val.length > 0) return true;
     if (val instanceof FileList) return val.length > 0;

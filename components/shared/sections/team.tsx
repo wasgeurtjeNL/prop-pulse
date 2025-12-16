@@ -11,25 +11,25 @@ const TEAM_MEMBERS = [
   {
     name: "Sarah Jenkins",
     role: "Founder & CEO",
-    bio: "Former architect turned real estate mogul with 15+ years in luxury markets.",
+    bio: "15+ years in Thai luxury real estate. Expert in expat property services across Phuket & Pattaya.",
     image: "/sarah-jenkins.avif",
   },
   {
     name: "David Chen",
-    role: "Head of Sales",
-    bio: "Top-performing broker in NY for 5 consecutive years. Expert in negotiation.",
+    role: "Sales Director",
+    bio: "Specialist in international property investment. Fluent in English, Chinese & Thai.",
     image: "/david-chen.avif",
   },
   {
     name: "Elena Rodriguez",
-    role: "Chief Technology Officer",
-    bio: "Leading our AI valuation initiatives to bring transparency to pricing.",
+    role: "Client Relations Manager",
+    bio: "Dedicated to providing seamless service for our international clients and investors.",
     image: "/elena-rodriguez.avif",
   },
   {
     name: "Marcus Johnson",
-    role: "Senior Property Manager",
-    bio: "Ensuring every property under our care is maintained to perfection.",
+    role: "Property Management Director",
+    bio: "Overseeing maintenance and rental operations across our entire Phuket & Pattaya portfolio.",
     image: "/marcus-johnson.avif",
   },
 ];
@@ -40,10 +40,10 @@ const Team = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl font-bold tracking-tight mb-4">
-            Meet the Board
+            Meet Our Leadership Team
           </h2>
           <p className="text-muted-foreground">
-            The industry veterans and tech innovators behind the platform.
+            Experienced professionals dedicated to excellence in Thailand's luxury real estate market.
           </p>
         </div>
 

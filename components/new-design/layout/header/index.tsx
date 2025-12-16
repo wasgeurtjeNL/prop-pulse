@@ -1,0 +1,587 @@
+'use client'
+import { Icon } from '@iconify/react'
+import Link from 'next/link'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { useTheme } from 'next-themes'
+import { usePathname } from 'next/navigation'
+import Image from 'next/image'
+import NavLink from './navigation/NavLink'
+import { authClient } from '@/lib/auth-client'
+import LanguageToggle from '../language-toggle'
+import { cn } from '@/lib/utils'
+import type { NavLinks } from '@/types/navlink'
+
+// Social media links
+const socialLinks = [
+  { icon: 'ri:facebook-fill', href: 'https://facebook.com/psmphuket', label: 'Facebook' },
+  { icon: 'ri:instagram-line', href: 'https://instagram.com/psmphuket', label: 'Instagram' },
+  { icon: 'ri:linkedin-fill', href: 'https://linkedin.com/company/psmphuket', label: 'LinkedIn' },
+  { icon: 'ri:youtube-fill', href: 'https://youtube.com/@psmphuket', label: 'YouTube' },
+  { icon: 'ri:line-fill', href: 'https://line.me/ti/p/psmphuket', label: 'Line' },
+]
+
+const Header: React.FC = () => {
+  const { data: session } = authClient.useSession();
+  const [navLinks, setNavLinks] = useState<NavLinks[] | null>(null);
+  const [sticky, setSticky] = useState(false)
+  const [navbarOpen, setNavbarOpen] = useState(false)
+  const { theme, setTheme } = useTheme()
+  const pathname = usePathname()
+
+  const sideMenuRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLElement | null>(null)
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (sideMenuRef.current && !sideMenuRef.current.contains(event.target as Node)) {
+      setNavbarOpen(false)
+    }
+  }
+
+  const handleScroll = useCallback(() => {
+    setSticky(window.scrollY >= 50)
+  }, [])
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch('/api/layout-data')
+        if (!res.ok) throw new Error('Failed to fetch')
+        const data = await res.json()
+        setNavLinks(data?.navLinks)
+      } catch (error) {
+        console.error('Error fetching services:', error)
+      }
+    }
+    fetchData()
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll)
+    document.addEventListener('mousedown', handleClickOutside)
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [pathname, handleScroll])
+
+  // Expose a CSS var with the exact header "bottom" offset so pages can reserve space
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+
+    const update = () => {
+      const rect = el.getBoundingClientRect()
+      const bottom = Math.max(0, Math.ceil(rect.bottom))
+      document.documentElement.style.setProperty('--pp-header-offset', `${bottom}px`)
+    }
+
+    update()
+
+    const ro = new ResizeObserver(() => {
+      requestAnimationFrame(update)
+    })
+    ro.observe(el)
+
+    window.addEventListener('resize', update)
+
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [sticky, navbarOpen, pathname])
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (navbarOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [navbarOpen])
+
+  const isHomepage = pathname === '/'
+
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/sign-in";
+        },
+      },
+    });
+  };
+
+  return (
+    <header ref={headerRef} className={cn(
+      "fixed z-50 w-full transition-all duration-500 ease-out",
+      sticky ? "top-2 sm:top-2.5 px-2 sm:px-3" : "top-0 px-0"
+    )}>
+      {/* Top Bar - Only visible on desktop when not sticky */}
+      <div className={cn(
+        "hidden lg:block transition-all duration-500 overflow-hidden",
+        sticky ? "max-h-0 opacity-0" : "max-h-10 opacity-100"
+      )}>
+        <div className="container mx-auto max-w-8xl">
+          <div className={cn(
+            "flex items-center justify-between py-1.5 px-6 text-sm border-b transition-colors",
+            isHomepage 
+              ? "text-white/80 border-white/10" 
+              : "text-dark/70 dark:text-white/80 border-dark/10 dark:border-white/10"
+          )}>
+            <div className="flex items-center gap-6">
+              <Link 
+                href="mailto:info@psmphuket.com" 
+                className="flex items-center gap-2 hover:text-primary transition-colors"
+              >
+                <Icon icon="ph:envelope" className="w-4 h-4" />
+                info@psmphuket.com
+              </Link>
+              <Link 
+                href="tel:+66812345678" 
+                className="flex items-center gap-2 hover:text-primary transition-colors"
+              >
+                <Icon icon="ph:phone" className="w-4 h-4" />
+                +66 (0)81 234 5678
+              </Link>
+            </div>
+            <div className="flex items-center gap-4">
+              {socialLinks.slice(0, 4).map((social, index) => (
+                <Link 
+                  key={index}
+                  href={social.href} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className="hover:text-primary transition-colors"
+                >
+                  <Icon icon={social.icon} className="w-4 h-4" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Navigation */}
+      <nav className={cn(
+        "container mx-auto max-w-8xl flex items-center justify-between transition-all duration-500",
+        sticky 
+          ? "shadow-xl bg-white/95 dark:bg-dark/95 backdrop-blur-md rounded-full py-1.5 px-4 sm:px-5" 
+          : "shadow-none py-2.5 sm:py-3 px-4 sm:px-5"
+      )}>
+        {/* Left: Logo */}
+        <div className="flex items-center gap-5 lg:gap-6">
+          <Link href='/' className="transition-transform duration-300 hover:scale-105">
+            <Image
+              src='https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?updatedAt=1765040666333'
+              alt='PSM Phuket Real Estate Logo'
+              width={80}
+              height={36}
+              unoptimized={true}
+              className={cn(
+                "transition-all duration-300",
+                sticky 
+                  ? 'w-[36px] sm:w-[40px] md:w-[44px] h-auto' 
+                  : 'w-[42px] sm:w-[48px] md:w-[54px] lg:w-[62px] h-auto'
+              )}
+            />
+          </Link>
+
+          {/* Desktop Navigation (not hamburger) */}
+          <div className="hidden xl:flex items-center gap-1.5">
+            {(navLinks ?? [])
+              .filter((l) => l.label !== 'Home' && !l.highlight)
+              .map((item) => {
+                const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href.split('?')[0])
+                const hasChildren = !!item.children?.length
+
+                if (!hasChildren) {
+                  return (
+                    <Link
+                      key={`${item.label}:${item.href}`}
+                      href={item.href}
+                      className={cn(
+                        "px-3 py-2 rounded-full text-sm font-semibold transition-all duration-200",
+                        active
+                          ? "text-primary bg-primary/10"
+                          : isHomepage && !sticky
+                            ? "text-white/90 hover:text-white hover:bg-white/10"
+                            : "text-dark/70 dark:text-white/70 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  )
+                }
+
+                return (
+                  <div key={`${item.label}:${item.href}`} className="relative group">
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold transition-all duration-200",
+                        active
+                          ? "text-primary bg-primary/10"
+                          : isHomepage && !sticky
+                            ? "text-white/90 hover:text-white hover:bg-white/10"
+                            : "text-dark/70 dark:text-white/70 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10"
+                      )}
+                      aria-haspopup="menu"
+                    >
+                      <span>{item.label}</span>
+                      <Icon icon="ph:caret-down-bold" className="w-3.5 h-3.5 opacity-70" />
+                    </Link>
+
+                    <div className={cn(
+                      "absolute left-0 top-full pt-2 z-50",
+                      "opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0",
+                      "transition-all duration-200"
+                    )}>
+                      <div className="min-w-[340px] rounded-2xl border border-white/10 bg-dark/95 backdrop-blur-md shadow-2xl p-3">
+                        <div className="grid grid-cols-1 gap-1">
+                          {item.children?.map((child) => (
+                            <Link
+                              key={`${child.label}:${child.href}`}
+                              href={child.href}
+                              className="flex items-start gap-3 rounded-xl px-3 py-2.5 hover:bg-white/5 transition-colors"
+                            >
+                              {child.icon && (
+                                <span className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                  <Icon icon={child.icon} className="w-5 h-5" />
+                                </span>
+                              )}
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-white">{child.label}</div>
+                                {child.description && (
+                                  <div className="text-xs text-white/50 line-clamp-1">{child.description}</div>
+                                )}
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-white/10">
+                          <Link
+                            href={item.href}
+                            className="inline-flex items-center gap-2 text-xs font-semibold text-white/70 hover:text-primary transition-colors px-2 py-1"
+                          >
+                            View all {item.label}
+                            <Icon icon="ph:arrow-right-bold" className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            {/* Add a visible Contact link on desktop */}
+            <Link
+              href="/contactus"
+              className={cn(
+                "px-3 py-2 rounded-full text-sm font-semibold transition-all duration-200",
+                pathname.startsWith('/contact')
+                  ? "text-primary bg-primary/10"
+                  : isHomepage && !sticky
+                    ? "text-white/90 hover:text-white hover:bg-white/10"
+                    : "text-dark/70 dark:text-white/70 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10"
+              )}
+            >
+              Contact
+            </Link>
+          </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3">
+          {/* WhatsApp Quick Contact - Desktop */}
+          <Link
+            href="https://wa.me/66812345678?text=Hello%2C%20I'm%20interested%20in%20PSM%20Phuket%20properties"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "hidden lg:flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-semibold transition-all duration-300",
+              "bg-[#25D366] text-white hover:bg-[#128C7E] hover:scale-105 shadow-lg shadow-[#25D366]/25"
+            )}
+          >
+            <Icon icon="ri:whatsapp-fill" className="w-5 h-5" />
+            <span>WhatsApp</span>
+          </Link>
+
+          {/* List Your Property CTA - Desktop */}
+          <Link
+            href="/list-your-property"
+            className={cn(
+              "hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all duration-300",
+              "bg-primary text-white hover:bg-primary/90 hover:scale-105 shadow-lg shadow-primary/25"
+            )}
+          >
+            <Icon icon="ph:tag-bold" className="w-4 h-4" />
+            <span>List Property</span>
+          </Link>
+
+          {/* Theme Toggle */}
+          <button
+            className={cn(
+              "p-2 rounded-full transition-all duration-300 hover:scale-110",
+              isHomepage && !sticky
+                ? "text-white hover:bg-white/10"
+                : "text-dark dark:text-white hover:bg-dark/5 dark:hover:bg-white/10"
+            )}
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            aria-label="Toggle theme"
+          >
+            <Icon
+              icon="solar:sun-bold"
+              className="w-5 h-5 dark:hidden block"
+            />
+            <Icon
+              icon="solar:moon-bold"
+              className="w-5 h-5 dark:block hidden"
+            />
+          </button>
+
+          {/* Language Toggle */}
+          <LanguageToggle />
+
+          {/* User Avatar */}
+          {session?.user && (
+            <div className="relative group flex items-center justify-center">
+              <Image 
+                src={session?.user?.image || "https://ik.imagekit.io/slydc8kod/Jum%20(3).png"} 
+                alt={`${session?.user?.name || 'User'} avatar`} 
+                width={32} 
+                height={32} 
+                className="rounded-full sm:w-[36px] sm:h-[36px] ring-2 ring-primary/30 transition-all duration-300 group-hover:ring-primary" 
+              />
+              <div className="absolute w-fit text-sm font-medium text-center z-10 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 bg-dark dark:bg-white text-white dark:text-dark py-2 px-4 min-w-28 rounded-xl shadow-2xl top-full left-1/2 transform -translate-x-1/2 mt-3">
+                {session?.user?.name}
+              </div>
+            </div>
+          )}
+
+          {/* Phone Number - Tablet+ */}
+          <Link 
+            href="tel:+66812345678" 
+            className={cn(
+              "hidden md:flex lg:hidden items-center gap-2 text-sm font-medium transition-colors",
+              isHomepage && !sticky
+                ? "text-white hover:text-primary"
+                : "text-dark dark:text-white hover:text-primary"
+            )}
+          >
+            <Icon icon="ph:phone-bold" className="w-5 h-5" />
+          </Link>
+
+          {/* Menu Button */}
+          <button
+            onClick={() => setNavbarOpen(!navbarOpen)}
+            className={cn(
+              "flex items-center gap-2 px-3 sm:px-5 py-2.5 sm:py-3 rounded-full font-semibold transition-all duration-300 border hover:scale-105",
+              isHomepage && !sticky
+                ? "text-dark bg-white border-white hover:bg-primary hover:text-white hover:border-primary"
+                : sticky
+                  ? "text-white bg-dark dark:bg-primary dark:text-white border-dark dark:border-primary hover:bg-primary hover:border-primary"
+                  : "bg-dark text-white border-dark hover:bg-primary hover:border-primary dark:bg-white dark:text-dark dark:border-white dark:hover:bg-primary dark:hover:text-white dark:hover:border-primary"
+            )}
+            aria-label="Toggle navigation menu"
+          >
+            <Icon 
+              icon={navbarOpen ? "ph:x" : "ph:list"} 
+              className="w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300" 
+            />
+            <span className="hidden xs:block text-sm sm:text-base">Menu</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Backdrop */}
+      <div 
+        className={cn(
+          "fixed inset-0 bg-black/60 backdrop-blur-sm transition-all duration-500 z-40",
+          navbarOpen ? "opacity-100 visible" : "opacity-0 invisible"
+        )} 
+        onClick={() => setNavbarOpen(false)}
+      />
+
+      {/* Side Menu */}
+      <div
+        ref={sideMenuRef}
+        className={cn(
+          "fixed top-0 right-0 h-full w-full max-w-2xl bg-gradient-to-b from-dark via-dark to-dark/95 shadow-2xl transition-transform duration-500 ease-out z-50 overflow-hidden",
+          navbarOpen ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        {/* Decorative Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+        </div>
+
+        <div className="relative flex flex-col h-full overflow-y-auto no-scrollbar">
+          {/* Header */}
+          <div className="sticky top-0 z-10 flex items-center justify-between p-6 sm:p-8 bg-gradient-to-b from-dark via-dark to-transparent">
+            <Link href="/" onClick={() => setNavbarOpen(false)}>
+              <Image
+                src='https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?updatedAt=1765040666333'
+                alt='PSM Phuket Real Estate Logo'
+                width={60}
+                height={27}
+                unoptimized={true}
+                className="w-[50px] h-auto brightness-0 invert"
+              />
+            </Link>
+            <button
+              onClick={() => setNavbarOpen(false)}
+              aria-label="Close navigation menu"
+              className="p-3 rounded-full bg-white/10 hover:bg-white hover:text-dark text-white transition-all duration-300 hover:scale-110"
+            >
+              <Icon icon="ph:x" className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="flex-1 px-6 sm:px-8 py-4">
+            <ul className="space-y-1">
+              {navLinks && navLinks?.map((item: any, index: number) => (
+                <NavLink 
+                  key={index} 
+                  item={item} 
+                  onClick={() => setNavbarOpen(false)} 
+                />
+              ))}
+            </ul>
+
+            {/* Auth Buttons */}
+            <div className="mt-8 pt-6 border-t border-white/10">
+              {session?.user ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5">
+                    <Image 
+                      src={session?.user?.image || "https://ik.imagekit.io/slydc8kod/Jum%20(3).png"} 
+                      alt={`${session?.user?.name || 'User'} avatar`}
+                      width={48}
+                      height={48}
+                      className="rounded-full ring-2 ring-primary"
+                    />
+                    <div>
+                      <p className="text-white font-semibold">{session?.user?.name}</p>
+                      <p className="text-white/50 text-sm">{session?.user?.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Link 
+                      href="/dashboard" 
+                      onClick={() => setNavbarOpen(false)}
+                      className="flex-1 py-3 px-6 bg-primary text-white text-center rounded-full font-semibold hover:bg-primary/90 transition-colors"
+                    >
+                      Dashboard
+                    </Link>
+                    <button 
+                      onClick={handleSignOut}
+                      className="py-3 px-6 bg-white/10 text-white rounded-full font-semibold hover:bg-white hover:text-dark transition-all duration-300"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link 
+                    onClick={() => setNavbarOpen(false)} 
+                    href="/sign-in" 
+                    className="flex-1 py-3.5 px-8 bg-primary text-white text-center rounded-full font-semibold hover:bg-primary/90 transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link 
+                    onClick={() => setNavbarOpen(false)} 
+                    href="/sign-up" 
+                    className="flex-1 py-3.5 px-8 bg-white/10 text-white text-center rounded-full font-semibold hover:bg-white hover:text-dark transition-all duration-300"
+                  >
+                    Create Account
+                  </Link>
+                </div>
+              )}
+            </div>
+          </nav>
+
+          {/* Footer Section */}
+          <div className="sticky bottom-0 px-6 sm:px-8 py-6 bg-gradient-to-t from-dark via-dark to-transparent">
+            {/* Quick Contact Actions */}
+            <div className="flex gap-3 mb-6">
+              <Link
+                href="https://wa.me/66812345678?text=Hello%2C%20I'm%20interested%20in%20PSM%20Phuket%20properties"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full bg-[#25D366] text-white font-semibold hover:bg-[#128C7E] transition-colors"
+              >
+                <Icon icon="ri:whatsapp-fill" className="w-5 h-5" />
+                WhatsApp
+              </Link>
+              <Link
+                href="tel:+66812345678"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full bg-white/10 text-white font-semibold hover:bg-white hover:text-dark transition-all duration-300"
+              >
+                <Icon icon="ph:phone-bold" className="w-5 h-5" />
+                Call Now
+              </Link>
+            </div>
+
+            {/* Contact Info */}
+            <div className="space-y-2 mb-6">
+              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                Contact PSM Phuket
+              </p>
+              <div className="flex flex-col gap-1">
+                <Link 
+                  href="mailto:info@psmphuket.com" 
+                  className="text-white/80 hover:text-primary transition-colors text-sm flex items-center gap-2"
+                >
+                  <Icon icon="ph:envelope" className="w-4 h-4 text-primary" />
+                  info@psmphuket.com
+                </Link>
+                <Link 
+                  href="tel:+66812345678" 
+                  className="text-white/80 hover:text-primary transition-colors text-sm flex items-center gap-2"
+                >
+                  <Icon icon="ph:phone" className="w-4 h-4 text-primary" />
+                  +66 (0)81 234 5678
+                </Link>
+                <p className="text-white/50 text-sm flex items-center gap-2">
+                  <Icon icon="ph:map-pin" className="w-4 h-4 text-primary" />
+                  Phuket, Thailand
+                </p>
+              </div>
+            </div>
+
+            {/* Social Links */}
+            <div className="flex items-center gap-3">
+              {socialLinks.map((social, index) => (
+                <Link
+                  key={index}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={social.label}
+                  className="p-2.5 rounded-full bg-white/5 text-white/70 hover:bg-primary hover:text-white transition-all duration-300"
+                >
+                  <Icon icon={social.icon} className="w-5 h-5" />
+                </Link>
+              ))}
+            </div>
+
+            {/* Copyright */}
+            <p className="text-white/30 text-xs mt-4">
+              © {new Date().getFullYear()} PSM Phuket. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+export default Header

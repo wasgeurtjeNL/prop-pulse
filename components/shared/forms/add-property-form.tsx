@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, X, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/ui/rich-text-editor";
 import {
   Select,
   SelectContent,
@@ -59,15 +59,42 @@ interface PropertyFormProps {
 export default function AddPropertyForm({ initialData }: PropertyFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isRewritingContent, setIsRewritingContent] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<File[]>([]);
+  const [propertyFeatures, setPropertyFeatures] = useState<Array<{
+    title: string;
+    description: string;
+    icon: string;
+  }>>(initialData?.propertyFeatures as any || [
+    {
+      title: "Property details",
+      description: "One of the few homes in the area with a private pool.",
+      icon: "ph:house"
+    },
+    {
+      title: "Smart home access",
+      description: "Easily check yourself in with a modern keypad system.",
+      icon: "ph:key"
+    },
+    {
+      title: "Energy efficient",
+      description: "Built with sustainable and smart-home features.",
+      icon: "ph:lightning"
+    }
+  ]);
 
   const defaultValues = initialData
     ? {
         ...initialData,
         image: initialData.image,
         tag: initialData.tag || "",
+        shortDescription: initialData.shortDescription || "",
+        yearBuilt: initialData.yearBuilt || undefined,
+        mapUrl: initialData.mapUrl || "",
       }
     : {
         type: "FOR_SALE",
+        category: "RESIDENTIAL_HOME",
         status: "ACTIVE",
         amenities: [],
         beds: 0,
@@ -77,7 +104,10 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
         price: "",
         location: "",
         content: "",
+        shortDescription: "",
         tag: "",
+        yearBuilt: undefined,
+        mapUrl: "",
         image: undefined,
       };
 
@@ -88,22 +118,119 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
     defaultValues: defaultValues as any,
   });
 
+  // Cleanup object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      galleryImages.forEach(file => {
+        URL.revokeObjectURL(URL.createObjectURL(file));
+      });
+    };
+  }, [galleryImages]);
+
+  // AI Content Rewrite Function
+  const handleRewriteContent = async () => {
+    const values = form.getValues();
+    
+    // Validate minimum required fields
+    if (!values.title || !values.location) {
+      toast.error("Vul eerst de titel en locatie in voordat je de content herschrijft.");
+      return;
+    }
+
+    setIsRewritingContent(true);
+    try {
+      const response = await fetch("/api/properties/rewrite-content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: values.title,
+          location: values.location,
+          price: values.price,
+          beds: values.beds,
+          baths: values.baths,
+          sqft: values.sqft,
+          type: values.type,
+          category: values.category,
+          content: values.content || "Property beschrijving nog niet beschikbaar.",
+          shortDescription: values.shortDescription,
+          amenities: values.amenities || [],
+          yearBuilt: values.yearBuilt,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to rewrite content");
+      }
+
+      // Update form with rewritten content
+      if (result.data.contentHtml) {
+        form.setValue("content", result.data.contentHtml);
+      }
+      if (result.data.shortDescription) {
+        form.setValue("shortDescription", result.data.shortDescription);
+      }
+      if (result.data.propertyFeatures && result.data.propertyFeatures.length > 0) {
+        setPropertyFeatures(result.data.propertyFeatures);
+      }
+
+      toast.success("Content succesvol herschreven met AI! ✨");
+    } catch (error) {
+      console.error("Rewrite error:", error);
+      toast.error("Kon de content niet herschrijven. Probeer opnieuw.");
+    } finally {
+      setIsRewritingContent(false);
+    }
+  };
+
   const onSubmit = async (values: PropertyFormValues) => {
     setIsLoading(true);
     try {
+      // Upload main image (hero image)
+      // Upload hero image
       let imageUrl = values.image;
-
       if (typeof values.image === "object" && values.image.length > 0) {
         const formData = new FormData();
         formData.append("file", values.image[0]);
         imageUrl = await uploadToImageKit(formData);
       }
 
+      // Upload all gallery images
+      const imageUrls: string[] = [imageUrl as string]; // Position 1 (hero)
+      
+      // Upload bulk gallery images
+      if (galleryImages.length > 0) {
+        toast.info(`Uploading ${galleryImages.length} gallery images...`);
+        for (let i = 0; i < galleryImages.length; i++) {
+          const formData = new FormData();
+          formData.append("file", galleryImages[i]);
+          const uploadedUrl = await uploadToImageKit(formData);
+          imageUrls.push(uploadedUrl);
+          
+          // Update progress
+          if (galleryImages.length > 3) {
+            toast.info(`Uploaded ${i + 1} of ${galleryImages.length} gallery images`);
+          }
+        }
+      }
+
+      const propertyData = {
+        ...values,
+        imageUrl,
+        imageUrls: imageUrls.length > 1 ? imageUrls : undefined, // Only include if we have gallery images
+        category: values.category,
+        shortDescription: values.shortDescription || "",
+        yearBuilt: values.yearBuilt ? Number(values.yearBuilt) : undefined,
+        mapUrl: values.mapUrl || "",
+        propertyFeatures: propertyFeatures.length > 0 ? propertyFeatures : undefined,
+      };
+
       if (initialData) {
-        await updateProperty(initialData.id, { ...values, imageUrl });
+        await updateProperty(initialData.id, propertyData);
         toast.success("Property updated successfully");
       } else {
-        await createProperty({ ...values, imageUrl });
+        await createProperty(propertyData);
         toast.success("Property created successfully");
       }
 
@@ -167,12 +294,55 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
 
               <FormField
                 control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Property Category</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="w-full">
+                        <SelectItem value="LUXURY_VILLA">Luxury Villa</SelectItem>
+                        <SelectItem value="APARTMENT">Apartment</SelectItem>
+                        <SelectItem value="RESIDENTIAL_HOME">Residential Home</SelectItem>
+                        <SelectItem value="OFFICE_SPACES">Office Spaces</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
                 name="price"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Price</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g. $1,250,000" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="yearBuilt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Year Built (Optional)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g. 2020" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -225,13 +395,63 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
 
             <FormField
               control={form.control}
+              name="shortDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Short Description (Optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Brief overview of the property"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    A brief one-line description that appears in property cards
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="content"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Full Description</FormLabel>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRewriteContent}
+                      disabled={isRewritingContent || isLoading}
+                      className="gap-2 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 border-purple-200 text-purple-700 dark:from-purple-950/30 dark:to-pink-950/30 dark:border-purple-800 dark:text-purple-300"
+                    >
+                      {isRewritingContent ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Herschrijven...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4" />
+                          Herschrijf met AI
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   <FormControl>
-                    <Textarea placeholder="Property details..." {...field} />
+                    <RichTextEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Write a detailed property description with formatting..."
+                    />
                   </FormControl>
+                  <FormDescription>
+                    Use the toolbar to format your text with headings, lists, bold, italic, and more. 
+                    Klik op &quot;Herschrijf met AI&quot; om automatisch verkoopgerichte content te genereren.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -287,27 +507,195 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
 
         <Card>
           <CardHeader>
+            <CardTitle>Property Features</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-6">
+            <FormDescription>
+              Add special features that highlight what makes this property unique. These will appear on the property detail page.
+            </FormDescription>
+            
+            {propertyFeatures.map((feature, index) => (
+              <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 border rounded-lg">
+                <div className="md:col-span-3">
+                  <FormLabel>Icon</FormLabel>
+                  <Input
+                    placeholder="ph:house"
+                    value={feature.icon}
+                    onChange={(e) => {
+                      const newFeatures = [...propertyFeatures];
+                      newFeatures[index].icon = e.target.value;
+                      setPropertyFeatures(newFeatures);
+                    }}
+                  />
+                  <FormDescription className="text-xs mt-1">
+                    <a href="https://icon-sets.iconify.design/ph/" target="_blank" rel="noopener" className="text-primary hover:underline">
+                      Browse icons
+                    </a>
+                  </FormDescription>
+                </div>
+                
+                <div className="md:col-span-4">
+                  <FormLabel>Title</FormLabel>
+                  <Input
+                    placeholder="Property details"
+                    value={feature.title}
+                    onChange={(e) => {
+                      const newFeatures = [...propertyFeatures];
+                      newFeatures[index].title = e.target.value;
+                      setPropertyFeatures(newFeatures);
+                    }}
+                  />
+                </div>
+                
+                <div className="md:col-span-4">
+                  <FormLabel>Description</FormLabel>
+                  <Input
+                    placeholder="One of the few homes in the area with a private pool."
+                    value={feature.description}
+                    onChange={(e) => {
+                      const newFeatures = [...propertyFeatures];
+                      newFeatures[index].description = e.target.value;
+                      setPropertyFeatures(newFeatures);
+                    }}
+                  />
+                </div>
+                
+                <div className="md:col-span-1 flex items-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      const newFeatures = propertyFeatures.filter((_, i) => i !== index);
+                      setPropertyFeatures(newFeatures);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setPropertyFeatures([
+                  ...propertyFeatures,
+                  { title: "", description: "", icon: "ph:star" }
+                ]);
+              }}
+            >
+              + Add Feature
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Media & Settings</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-6">
+            <div className="space-y-6">
+              <FormLabel>Property Images</FormLabel>
+              <FormDescription>
+                Upload a hero image and multiple gallery images for your property.
+              </FormDescription>
+              
+              {/* Hero Image */}
+              <FormField
+                control={form.control}
+                name="image"
+                render={({ field: { value, onChange, ...fieldProps } }) => (
+                  <FormItem>
+                    <FormLabel>Hero Image (Required)</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...fieldProps}
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => {
+                          onChange(event.target.files);
+                        }}
+                      />
+                    </FormControl>
+                    <FormDescription>This will be the main image displayed prominently on the property page</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Separator />
+
+              {/* Gallery Images - Bulk Upload */}
+              <FormItem>
+                <FormLabel>Gallery Images (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => {
+                      const files = e.target.files;
+                      if (files) {
+                        const newFiles = Array.from(files);
+                        setGalleryImages(prev => [...prev, ...newFiles]);
+                      }
+                    }}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Select multiple images at once for the property gallery. You can select as many as you need.
+                </FormDescription>
+              </FormItem>
+
+              {/* Gallery Preview */}
+              {galleryImages.length > 0 && (
+                <div className="space-y-2">
+                  <FormLabel>Selected Gallery Images ({galleryImages.length})</FormLabel>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {galleryImages.map((file, index) => (
+                      <div key={index} className="relative group">
+                        <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Gallery ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGalleryImages(prev => prev.filter((_, i) => i !== index));
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                        <p className="text-xs text-center mt-1 text-muted-foreground truncate">
+                          {file.name}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <FormField
               control={form.control}
-              name="image"
-              render={({ field: { value, onChange, ...fieldProps } }) => (
+              name="mapUrl"
+              render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Main Image</FormLabel>
+                  <FormLabel>Map URL (Optional)</FormLabel>
                   <FormControl>
                     <Input
-                      {...fieldProps}
-                      type="file"
-                      accept="image/*"
-                      onChange={(event) => {
-                        onChange(event.target.files);
-                      }}
+                      placeholder="e.g. https://maps.google.com/..."
+                      {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Max 5MB. Formats: JPG, PNG, WEBP.
+                    Google Maps embed URL for property location
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
