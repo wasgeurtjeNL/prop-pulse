@@ -129,17 +129,17 @@ const Services = () => {
           </div>
           <div className="col-span-1 xs:col-span-1 sm:col-span-1 lg:col-span-3">
             <div className="relative rounded-xl sm:rounded-2xl overflow-hidden group">
-              <Link href="/properties?category=office-spaces">
+              <Link href="/properties?type=FOR_RENT">
                 <Image
-                  src="/images/categories/office.jpg"
-                  alt="Commercial spaces in Thailand"
+                  src="https://ik.imagekit.io/slydc8kod/landing-pages/ai-generated/phuket-luxury-real-estate-section-1-1765803415374_vObjyLDkE.webp?updatedAt=1765803416903"
+                  alt="Rental properties in Thailand"
                   width={320}
                   height={386}
                   className="w-full aspect-[4/5] sm:aspect-[3/4] object-cover"
                   unoptimized={true}
                 />
               </Link>
-              <Link href="/properties?category=office-spaces" className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 group-hover:top-0 duration-500">
+              <Link href="/properties?type=FOR_RENT" className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 group-hover:top-0 duration-500">
                 <div className="flex justify-end">
                   <div className="bg-white text-dark rounded-full w-fit p-2.5 sm:p-3">
                     <Icon icon="ph:arrow-right" className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -147,10 +147,10 @@ const Services = () => {
                 </div>
                 <div className="flex flex-col gap-1 sm:gap-2">
                   <h3 className="text-white text-base sm:text-lg lg:text-xl font-medium">
-                    Commercial Spaces
+                    Rental Homes
                   </h3>
                   <p className="text-white/80 text-xs sm:text-sm leading-relaxed line-clamp-2">
-                    Prime commercial real estate in high-traffic areas.
+                    Find your perfect rental - from cozy condos to luxury villas, ready to move in.
                   </p>
                 </div>
               </Link>

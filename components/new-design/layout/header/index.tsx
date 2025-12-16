@@ -423,8 +423,8 @@ const Header: React.FC = () => {
         </div>
 
         <div className="relative flex flex-col h-full overflow-y-auto no-scrollbar">
-          {/* Header */}
-          <div className="sticky top-0 z-10 flex items-center justify-between p-6 sm:p-8 bg-gradient-to-b from-dark via-dark to-transparent">
+          {/* Header - Compact */}
+          <div className="sticky top-0 z-10 flex items-center justify-between p-4 sm:p-5 bg-gradient-to-b from-dark via-dark to-transparent">
             <Link href="/" onClick={() => setNavbarOpen(false)}>
               <Image
                 src='https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?updatedAt=1765040666333'
@@ -432,21 +432,21 @@ const Header: React.FC = () => {
                 width={60}
                 height={27}
                 unoptimized={true}
-                className="w-[50px] h-auto brightness-0 invert"
+                className="w-[40px] h-auto brightness-0 invert"
               />
             </Link>
             <button
               onClick={() => setNavbarOpen(false)}
               aria-label="Close navigation menu"
-              className="p-3 rounded-full bg-white/10 hover:bg-white hover:text-dark text-white transition-all duration-300 hover:scale-110"
+              className="p-2 rounded-full bg-white/10 hover:bg-white hover:text-dark text-white transition-all duration-300 hover:scale-110"
             >
-              <Icon icon="ph:x" className="w-6 h-6" />
+              <Icon icon="ph:x" className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="flex-1 px-6 sm:px-8 py-4">
-            <ul className="space-y-1">
+          {/* Navigation Links - Compact */}
+          <nav className="flex-1 px-4 sm:px-5 py-2">
+            <ul className="space-y-0.5">
               {navLinks && navLinks?.map((item: any, index: number) => (
                 <NavLink 
                   key={index} 
@@ -456,52 +456,52 @@ const Header: React.FC = () => {
               ))}
             </ul>
 
-            {/* Auth Buttons */}
-            <div className="mt-8 pt-6 border-t border-white/10">
+            {/* Auth Buttons - Compact */}
+            <div className="mt-4 pt-4 border-t border-white/10">
               {session?.user ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
                     <Image 
                       src={session?.user?.image || "https://ik.imagekit.io/slydc8kod/Jum%20(3).png"} 
                       alt={`${session?.user?.name || 'User'} avatar`}
-                      width={48}
-                      height={48}
+                      width={40}
+                      height={40}
                       className="rounded-full ring-2 ring-primary"
                     />
                     <div>
-                      <p className="text-white font-semibold">{session?.user?.name}</p>
-                      <p className="text-white/50 text-sm">{session?.user?.email}</p>
+                      <p className="text-white font-semibold text-sm">{session?.user?.name}</p>
+                      <p className="text-white/50 text-xs">{session?.user?.email}</p>
                     </div>
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex gap-2">
                     <Link 
                       href="/dashboard" 
                       onClick={() => setNavbarOpen(false)}
-                      className="flex-1 py-3 px-6 bg-primary text-white text-center rounded-full font-semibold hover:bg-primary/90 transition-colors"
+                      className="flex-1 py-2.5 px-4 bg-primary text-white text-center rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors"
                     >
                       Dashboard
                     </Link>
                     <button 
                       onClick={handleSignOut}
-                      className="py-3 px-6 bg-white/10 text-white rounded-full font-semibold hover:bg-white hover:text-dark transition-all duration-300"
+                      className="py-2.5 px-4 bg-white/10 text-white rounded-full text-sm font-semibold hover:bg-white hover:text-dark transition-all duration-300"
                     >
                       Sign Out
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex gap-2">
                   <Link 
                     onClick={() => setNavbarOpen(false)} 
                     href="/sign-in" 
-                    className="flex-1 py-3.5 px-8 bg-primary text-white text-center rounded-full font-semibold hover:bg-primary/90 transition-colors"
+                    className="flex-1 py-2.5 px-6 bg-primary text-white text-center rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors"
                   >
                     Sign In
                   </Link>
                   <Link 
                     onClick={() => setNavbarOpen(false)} 
                     href="/sign-up" 
-                    className="flex-1 py-3.5 px-8 bg-white/10 text-white text-center rounded-full font-semibold hover:bg-white hover:text-dark transition-all duration-300"
+                    className="flex-1 py-2.5 px-6 bg-white/10 text-white text-center rounded-full text-sm font-semibold hover:bg-white hover:text-dark transition-all duration-300"
                   >
                     Create Account
                   </Link>
@@ -510,57 +510,57 @@ const Header: React.FC = () => {
             </div>
           </nav>
 
-          {/* Footer Section */}
-          <div className="sticky bottom-0 px-6 sm:px-8 py-6 bg-gradient-to-t from-dark via-dark to-transparent">
+          {/* Footer Section - Compact */}
+          <div className="sticky bottom-0 px-4 sm:px-5 py-4 bg-gradient-to-t from-dark via-dark to-transparent">
             {/* Quick Contact Actions */}
-            <div className="flex gap-3 mb-6">
+            <div className="flex gap-2 mb-4">
               <Link
                 href="https://wa.me/66812345678?text=Hello%2C%20I'm%20interested%20in%20PSM%20Phuket%20properties"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full bg-[#25D366] text-white font-semibold hover:bg-[#128C7E] transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-[#25D366] text-white text-sm font-semibold hover:bg-[#128C7E] transition-colors"
               >
-                <Icon icon="ri:whatsapp-fill" className="w-5 h-5" />
+                <Icon icon="ri:whatsapp-fill" className="w-4 h-4" />
                 WhatsApp
               </Link>
               <Link
                 href="tel:+66812345678"
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full bg-white/10 text-white font-semibold hover:bg-white hover:text-dark transition-all duration-300"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white hover:text-dark transition-all duration-300"
               >
-                <Icon icon="ph:phone-bold" className="w-5 h-5" />
+                <Icon icon="ph:phone-bold" className="w-4 h-4" />
                 Call Now
               </Link>
             </div>
 
-            {/* Contact Info */}
-            <div className="space-y-2 mb-6">
-              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+            {/* Contact Info - Compact */}
+            <div className="mb-3">
+              <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-1.5">
                 Contact PSM Phuket
               </p>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-0.5">
                 <Link 
                   href="mailto:info@psmphuket.com" 
-                  className="text-white/80 hover:text-primary transition-colors text-sm flex items-center gap-2"
+                  className="text-white/80 hover:text-primary transition-colors text-xs flex items-center gap-1.5"
                 >
-                  <Icon icon="ph:envelope" className="w-4 h-4 text-primary" />
+                  <Icon icon="ph:envelope" className="w-3.5 h-3.5 text-primary" />
                   info@psmphuket.com
                 </Link>
                 <Link 
                   href="tel:+66812345678" 
-                  className="text-white/80 hover:text-primary transition-colors text-sm flex items-center gap-2"
+                  className="text-white/80 hover:text-primary transition-colors text-xs flex items-center gap-1.5"
                 >
-                  <Icon icon="ph:phone" className="w-4 h-4 text-primary" />
+                  <Icon icon="ph:phone" className="w-3.5 h-3.5 text-primary" />
                   +66 (0)81 234 5678
                 </Link>
-                <p className="text-white/50 text-sm flex items-center gap-2">
-                  <Icon icon="ph:map-pin" className="w-4 h-4 text-primary" />
+                <p className="text-white/50 text-xs flex items-center gap-1.5">
+                  <Icon icon="ph:map-pin" className="w-3.5 h-3.5 text-primary" />
                   Phuket, Thailand
                 </p>
               </div>
             </div>
 
-            {/* Social Links */}
-            <div className="flex items-center gap-3">
+            {/* Social Links - Compact */}
+            <div className="flex items-center gap-2">
               {socialLinks.map((social, index) => (
                 <Link
                   key={index}
@@ -568,15 +568,15 @@ const Header: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="p-2.5 rounded-full bg-white/5 text-white/70 hover:bg-primary hover:text-white transition-all duration-300"
+                  className="p-2 rounded-full bg-white/5 text-white/70 hover:bg-primary hover:text-white transition-all duration-300"
                 >
-                  <Icon icon={social.icon} className="w-5 h-5" />
+                  <Icon icon={social.icon} className="w-4 h-4" />
                 </Link>
               ))}
             </div>
 
             {/* Copyright */}
-            <p className="text-white/30 text-xs mt-4">
+            <p className="text-white/30 text-[10px] mt-3">
               © {new Date().getFullYear()} PSM Phuket. All rights reserved.
             </p>
           </div>

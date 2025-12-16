@@ -93,7 +93,7 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ items, className = '' }) => {
                     {/* Separator */}
                     <Icon
                       icon="ph:caret-right"
-                      className="w-4 h-4 mx-2 text-dark/40 dark:text-white/40 flex-shrink-0"
+                      className="w-4 h-4 mx-1 text-dark/40 dark:text-white/40 flex-shrink-0"
                       aria-hidden="true"
                     />
                   </>

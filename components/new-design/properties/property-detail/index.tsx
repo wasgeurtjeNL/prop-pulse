@@ -87,7 +87,7 @@ export default function Details() {
     ] : [];
 
     return (
-        <section className="pt-[70px] xs:pt-[80px] sm:pt-[100px] md:pt-[120px] lg:pt-[160px] pb-8 sm:pb-12 md:pb-16 lg:pb-20 relative overflow-x-hidden" >
+        <section className="pt-2 sm:pt-4 md:pt-6 pb-8 sm:pb-12 md:pb-16 lg:pb-20 relative overflow-x-hidden" >
             <div className="container mx-auto max-w-8xl px-3 sm:px-4 md:px-5 2xl:px-0">
                 {/* Breadcrumbs */}
                 {item && (
