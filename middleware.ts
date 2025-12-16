@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Next.js 16 requires the function to be named "proxy" or be a default export
-export default async function proxy(request: NextRequest) {
+// Next.js 16 middleware
+export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get the session token from cookies
-  const sessionToken = request.cookies.get("better-auth.session_token")?.value;
+  // Get all cookies to debug
+  const allCookies = request.cookies.getAll();
+  
+  // Get the session token from cookies - try both with and without prefix
+  const sessionToken = 
+    request.cookies.get("better-auth.session_token")?.value ||
+    request.cookies.get("__Secure-better-auth.session_token")?.value;
 
   // Define protected routes
   const protectedRoutes = ["/dashboard"];
@@ -19,6 +24,13 @@ export default async function proxy(request: NextRequest) {
 
   // Check if the current path is an auth page
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
+
+  // Log for debugging (will show in Vercel logs)
+  if (isProtectedRoute || isAuthRoute) {
+    console.log("[Middleware] Path:", pathname);
+    console.log("[Middleware] Cookies:", allCookies.map(c => c.name));
+    console.log("[Middleware] Has session token:", !!sessionToken);
+  }
 
   // Redirect to sign-in if trying to access protected route without session
   if (isProtectedRoute && !sessionToken) {
