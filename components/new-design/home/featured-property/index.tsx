@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { getHighlightedProperty } from "@/lib/actions/property.actions";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, sanitizeText } from "@/lib/utils";
 import FeaturedPropertyCarousel from "./carousel";
 
 const FeaturedProperty = async () => {
@@ -44,18 +44,18 @@ const FeaturedProperty = async () => {
                 Featured Property
               </p>
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium text-dark dark:text-white mt-1">
-                {highlightedProperty.title}
+                {sanitizeText(highlightedProperty.title)}
               </h2>
               <div className="flex items-center gap-2 mt-2">
                 <Icon icon="ph:map-pin" className="w-5 h-5 sm:w-6 sm:h-6 text-dark/50 dark:text-white/50 flex-shrink-0" />
                 <p className="text-dark/50 dark:text-white/50 text-sm sm:text-base">
-                  {highlightedProperty.location}
+                  {sanitizeText(highlightedProperty.location)}
                 </p>
               </div>
             </div>
             
             <p className="text-sm sm:text-base text-dark/50 dark:text-white/50 leading-relaxed">
-              {description}
+              {sanitizeText(description)}
             </p>
             
             <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:gap-10">

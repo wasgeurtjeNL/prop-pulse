@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Bed, Bath, Square } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { formatType } from "@/lib/utils";
+import { formatType, sanitizeText } from "@/lib/utils";
 
 type PropertyCardProps = {
   image: string;
@@ -52,10 +52,10 @@ const PropertyCard = ({
         </div>
       </div>
       <CardHeader>
-        <CardTitle className="line-clamp-1 text-xl">{title}</CardTitle>
+        <CardTitle className="line-clamp-1 text-xl">{sanitizeText(title)}</CardTitle>
         <div className="flex items-center text-sm text-muted-foreground">
           <MapPin className="mr-1 h-4 w-4" />
-          {location}
+          {sanitizeText(location)}
         </div>
       </CardHeader>
       <CardContent>

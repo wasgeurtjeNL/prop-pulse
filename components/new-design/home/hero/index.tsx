@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getHeroImages } from '@/lib/actions/hero-image.actions'
 import { getHighlightedProperty, HighlightedProperty } from '@/lib/actions/property.actions'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, sanitizeText } from '@/lib/utils'
 
 // Default fallback images
 const DEFAULT_HERO_IMAGE = {
@@ -183,7 +183,7 @@ const Hero: React.FC<HeroProps> = async ({ page = 'home' }) => {
             </div>
             {/* Property title hint */}
             <p className='text-xs text-center mt-4 text-black/40 dark:text-white/40 group-hover:text-primary/60 transition-colors'>
-              {highlightedProperty.title} • Click to view details →
+              {sanitizeText(highlightedProperty.title)} - Click to view details
             </p>
           </Link>
         )}

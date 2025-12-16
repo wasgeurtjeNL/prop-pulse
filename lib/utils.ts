@@ -7,6 +7,41 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Sanitize text by replacing problematic Unicode characters with safe ASCII alternatives.
+ * This prevents encoding issues with em-dashes, special quotes, accented characters, etc.
+ */
+export function sanitizeText(text: string | null | undefined): string {
+  if (!text) return '';
+  
+  return text
+    // Replace various dashes with standard hyphen
+    .replace(/[\u2013\u2014\u2015]/g, '-')  // en-dash, em-dash, horizontal bar
+    .replace(/\u2212/g, '-')                 // minus sign
+    // Replace fancy quotes with standard quotes
+    .replace(/[\u2018\u2019\u201A]/g, "'")   // single quotes
+    .replace(/[\u201C\u201D\u201E]/g, '"')   // double quotes
+    // Replace accented characters with ASCII equivalents
+    .replace(/[àáâãäå]/gi, (match) => match.toLowerCase() === match ? 'a' : 'A')
+    .replace(/[èéêë]/gi, (match) => match.toLowerCase() === match ? 'e' : 'E')
+    .replace(/[ìíîï]/gi, (match) => match.toLowerCase() === match ? 'i' : 'I')
+    .replace(/[òóôõö]/gi, (match) => match.toLowerCase() === match ? 'o' : 'O')
+    .replace(/[ùúûü]/gi, (match) => match.toLowerCase() === match ? 'u' : 'U')
+    .replace(/[ñ]/gi, (match) => match.toLowerCase() === match ? 'n' : 'N')
+    .replace(/[ç]/gi, (match) => match.toLowerCase() === match ? 'c' : 'C')
+    .replace(/[ÿ]/gi, 'y')
+    .replace(/[æ]/gi, 'ae')
+    .replace(/[œ]/gi, 'oe')
+    // Replace ellipsis
+    .replace(/\u2026/g, '...')
+    // Replace other problematic characters
+    .replace(/[\u00A0]/g, ' ')               // non-breaking space
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')   // zero-width characters
+    // Remove any remaining characters that might cause issues (question mark sequences)
+    .replace(/\?{2,}/g, '')                  // Remove sequences of 2+ question marks
+    .trim();
+}
+
+/**
  * Format property type enum to readable string
  */
 export function formatType(type: PropertyType): string {

@@ -10,7 +10,7 @@ import PropertyTrustBadges from '@/components/new-design/property-trust-badges';
 import RelatedProperties from '@/components/new-design/properties/RelatedProperties';
 import Breadcrumb from '@/components/new-design/breadcrumb';
 import AdminEditButton from '@/components/shared/admin-edit-button';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, sanitizeText } from '@/lib/utils';
 
 export default function Details() {
     const { slug } = useParams();
@@ -121,10 +121,10 @@ export default function Details() {
                                 </span>
                             )}
                         </div>
-                        <h1 className='text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-52 font-semibold text-dark dark:text-white leading-tight'>{item?.name}</h1>
+                        <h1 className='text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-52 font-semibold text-dark dark:text-white leading-tight'>{sanitizeText(item?.name)}</h1>
                         <div className="flex gap-2 mt-1.5 sm:mt-2">
                             <Icon icon="ph:map-pin" width={16} height={16} className="text-dark/50 dark:text-white/50 flex-shrink-0 sm:w-5 sm:h-5" />
-                            <p className='text-dark/50 dark:text-white/50 text-xs sm:text-sm md:text-base'>{item?.location}</p>
+                            <p className='text-dark/50 dark:text-white/50 text-xs sm:text-sm md:text-base'>{sanitizeText(item?.location)}</p>
                         </div>
                         {/* Price Display */}
                         {item?.rate && (
