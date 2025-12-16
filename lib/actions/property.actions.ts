@@ -19,16 +19,6 @@ export interface PropertyFilterParams {
   amenities?: string | string[];
 }
 
-// Slugs of seeded demo properties to exclude from public listings
-const SEED_PROPERTY_SLUGS = [
-  "luxury-beachfront-villa-kamala",
-  "modern-sea-view-condo",
-  "tropical-pool-villa-rawai",
-  "pattaya-beach-condo",
-  "bang-tao-luxury-residence",
-  "pratumnak-hill-penthouse",
-];
-
 export const getFeaturedProperties = unstable_cache(
   async () => {
     try {
@@ -37,10 +27,6 @@ export const getFeaturedProperties = unstable_cache(
           where: {
             tag: "Featured",
             status: "ACTIVE",
-            // Exclude seeded demo properties
-            slug: {
-              notIn: SEED_PROPERTY_SLUGS,
-            },
           },
           take: 4,
           include: {
@@ -92,10 +78,6 @@ export async function getProperties(params: PropertyFilterParams) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       status: Status.ACTIVE,
-      // Exclude seeded demo properties
-      slug: {
-        notIn: SEED_PROPERTY_SLUGS,
-      },
     };
 
     if (query) {
