@@ -565,15 +565,24 @@ export async function updateImagePositions(propertyId: string, imagePositions: {
   }
 
   try {
-    // Update each image position in a transaction
-    await prisma.$transaction(
-      imagePositions.map(({ id, position }) =>
+    // First, set all positions to temporary negative values to avoid unique constraint conflicts
+    // The unique constraint is on (propertyId, position), so we need to do this in two steps
+    await prisma.$transaction([
+      // Step 1: Set all to temporary negative positions
+      ...imagePositions.map(({ id }, index) =>
+        prisma.propertyImage.update({
+          where: { id },
+          data: { position: -(index + 1000) }, // Use negative values to avoid conflicts
+        })
+      ),
+      // Step 2: Set to final positions
+      ...imagePositions.map(({ id, position }) =>
         prisma.propertyImage.update({
           where: { id },
           data: { position },
         })
-      )
-    );
+      ),
+    ]);
 
     revalidatePath("/dashboard");
     revalidatePath("/");
@@ -582,7 +591,7 @@ export async function updateImagePositions(propertyId: string, imagePositions: {
     return { success: true };
   } catch (error) {
     console.error("Error updating image positions:", error);
-    throw new Error("Failed to update image positions");
+    throw new Error(`Failed to update image positions: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

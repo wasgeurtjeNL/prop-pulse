@@ -8,6 +8,77 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Function to remove all emoji characters from text
+function stripEmojis(text: string): string {
+  // Comprehensive emoji regex pattern
+  return text
+    .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Emoticons
+    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Misc Symbols and Pictographs
+    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Transport and Map
+    .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '') // Flags
+    .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Misc symbols
+    .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')   // Variation Selectors
+    .replace(/[\u{1F900}-\u{1F9FF}]/gu, '') // Supplemental Symbols
+    .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '') // Chess Symbols
+    .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '') // Symbols Extended-A
+    .replace(/[\u{231A}-\u{231B}]/gu, '')   // Watch, Hourglass
+    .replace(/[\u{23E9}-\u{23F3}]/gu, '')   // Various symbols
+    .replace(/[\u{23F8}-\u{23FA}]/gu, '')   // Various symbols
+    .replace(/[\u{25AA}-\u{25AB}]/gu, '')   // Squares
+    .replace(/[\u{25B6}]/gu, '')            // Play button
+    .replace(/[\u{25C0}]/gu, '')            // Reverse button
+    .replace(/[\u{25FB}-\u{25FE}]/gu, '')   // Squares
+    .replace(/[\u{2614}-\u{2615}]/gu, '')   // Umbrella, coffee
+    .replace(/[\u{2648}-\u{2653}]/gu, '')   // Zodiac
+    .replace(/[\u{267F}]/gu, '')            // Wheelchair
+    .replace(/[\u{2693}]/gu, '')            // Anchor
+    .replace(/[\u{26A1}]/gu, '')            // Lightning
+    .replace(/[\u{26AA}-\u{26AB}]/gu, '')   // Circles
+    .replace(/[\u{26BD}-\u{26BE}]/gu, '')   // Sports
+    .replace(/[\u{26C4}-\u{26C5}]/gu, '')   // Weather
+    .replace(/[\u{26CE}]/gu, '')            // Ophiuchus
+    .replace(/[\u{26D4}]/gu, '')            // No entry
+    .replace(/[\u{26EA}]/gu, '')            // Church
+    .replace(/[\u{26F2}-\u{26F3}]/gu, '')   // Fountain, golf
+    .replace(/[\u{26F5}]/gu, '')            // Sailboat
+    .replace(/[\u{26FA}]/gu, '')            // Tent
+    .replace(/[\u{26FD}]/gu, '')            // Fuel pump
+    .replace(/[\u{2702}]/gu, '')            // Scissors
+    .replace(/[\u{2705}]/gu, '')            // Check mark
+    .replace(/[\u{2708}-\u{270D}]/gu, '')   // Various
+    .replace(/[\u{270F}]/gu, '')            // Pencil
+    .replace(/[\u{2712}]/gu, '')            // Black nib
+    .replace(/[\u{2714}]/gu, '')            // Check mark
+    .replace(/[\u{2716}]/gu, '')            // X mark
+    .replace(/[\u{271D}]/gu, '')            // Cross
+    .replace(/[\u{2721}]/gu, '')            // Star
+    .replace(/[\u{2728}]/gu, '')            // Sparkles
+    .replace(/[\u{2733}-\u{2734}]/gu, '')   // Symbols
+    .replace(/[\u{2744}]/gu, '')            // Snowflake
+    .replace(/[\u{2747}]/gu, '')            // Sparkle
+    .replace(/[\u{274C}]/gu, '')            // X
+    .replace(/[\u{274E}]/gu, '')            // X
+    .replace(/[\u{2753}-\u{2755}]/gu, '')   // Question marks
+    .replace(/[\u{2757}]/gu, '')            // Exclamation
+    .replace(/[\u{2763}-\u{2764}]/gu, '')   // Hearts
+    .replace(/[\u{2795}-\u{2797}]/gu, '')   // Math symbols
+    .replace(/[\u{27A1}]/gu, '')            // Arrow
+    .replace(/[\u{27B0}]/gu, '')            // Loop
+    .replace(/[\u{27BF}]/gu, '')            // Loop
+    .replace(/[\u{2934}-\u{2935}]/gu, '')   // Arrows
+    .replace(/[\u{2B05}-\u{2B07}]/gu, '')   // Arrows
+    .replace(/[\u{2B1B}-\u{2B1C}]/gu, '')   // Squares
+    .replace(/[\u{2B50}]/gu, '')            // Star
+    .replace(/[\u{2B55}]/gu, '')            // Circle
+    .replace(/[\u{3030}]/gu, '')            // Wavy dash
+    .replace(/[\u{303D}]/gu, '')            // Part alternation
+    .replace(/[\u{3297}]/gu, '')            // Circled Ideograph
+    .replace(/[\u{3299}]/gu, '')            // Circled Ideograph
+    .replace(/\?{3,}/g, '')                 // Remove sequences of 3+ question marks (broken emojis)
+    .trim();
+}
+
 // Interface for company profile
 interface CompanyProfile {
   companyName: string;
@@ -236,14 +307,23 @@ You ALWAYS output valid JSON with no markdown formatting.`
 
     const optimizedContent = JSON.parse(resultText);
 
-    console.log(`✅ Content rewritten successfully`);
+    // Strip emojis from all content to prevent encoding issues
+    const cleanedShortDescription = stripEmojis(optimizedContent.shortDescription || propertyData.shortDescription || "");
+    const cleanedContentHtml = stripEmojis(optimizedContent.contentHtml || "");
+    const cleanedFeatures = (optimizedContent.propertyFeatures || []).map((feature: { title: string; description: string; icon: string }) => ({
+      ...feature,
+      title: stripEmojis(feature.title || ""),
+      description: stripEmojis(feature.description || ""),
+    }));
+
+    console.log(`✅ Content rewritten and cleaned successfully`);
 
     return NextResponse.json({
       success: true,
       data: {
-        shortDescription: optimizedContent.shortDescription || propertyData.shortDescription,
-        contentHtml: optimizedContent.contentHtml || "",
-        propertyFeatures: optimizedContent.propertyFeatures || [],
+        shortDescription: cleanedShortDescription,
+        contentHtml: cleanedContentHtml,
+        propertyFeatures: cleanedFeatures,
       },
       companyProfileUsed: !!companyProfile,
     });

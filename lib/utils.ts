@@ -89,13 +89,13 @@ export function formatPrice(price: string | null | undefined): string {
   // Clean up the price string
   let cleanPrice = price.toString();
   
-  // Fix common encoding issues with Thai Baht symbol
-  // Ó©┐ = corrupted ฿ (UTF-8 misinterpretation)
+  // Fix common encoding issues - remove all broken characters
   cleanPrice = cleanPrice
-    .replace(/Ó©┐/g, '฿')
-    .replace(/\?+/g, '') // Remove any remaining ? from encoding issues
-    .replace(/฿฿+/g, '฿') // Fix double Baht symbols
-    .replace(/^\s*฿?\s*฿/g, '฿') // Clean up leading spaces and symbols
+    .replace(/Ó©┐/g, '')           // Corrupted Thai Baht
+    .replace(/\?+/g, '')            // Question marks from encoding issues
+    .replace(/฿+/g, '')             // Thai Baht symbols (we'll add THB prefix)
+    .replace(/[\u{0E3F}]/gu, '')    // Thai Baht unicode
+    .replace(/^[\s$€£¥]+/g, '')     // Remove leading currency symbols and spaces
     .trim();
   
   // Extract the numeric part
@@ -108,13 +108,16 @@ export function formatPrice(price: string | null | undefined): string {
   const isMonthly = /\/mo|monthly|per month|\/month/i.test(cleanPrice);
   const suffix = isMonthly ? '/mo' : '';
   
-  // Check if price already has currency symbol
-  if (cleanPrice.startsWith('฿') || cleanPrice.startsWith('$') || cleanPrice.startsWith('€')) {
-    // Just clean it up and return
-    const currencySymbol = cleanPrice.charAt(0);
-    return `${currencySymbol}${numericPart}${suffix}`;
+  // Check original price for currency type
+  const originalPrice = price.toString().toLowerCase();
+  
+  if (originalPrice.includes('$') || originalPrice.includes('usd')) {
+    return `$${numericPart}${suffix}`;
+  }
+  if (originalPrice.includes('€') || originalPrice.includes('eur')) {
+    return `€${numericPart}${suffix}`;
   }
   
-  // Default to Thai Baht for this project
-  return `฿${numericPart}${suffix}`;
+  // Default to THB (text-based, more compatible than ฿ symbol)
+  return `THB ${numericPart}${suffix}`;
 }
