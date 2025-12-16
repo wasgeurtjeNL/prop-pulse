@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 // Temporary endpoint to fix user roles - DELETE AFTER USE
-export async function POST() {
+async function fixRole() {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -34,4 +34,8 @@ export async function POST() {
     }, { status: 500 });
   }
 }
+
+// Support both GET and POST for easier testing
+export const GET = fixRole;
+export const POST = fixRole;
 
