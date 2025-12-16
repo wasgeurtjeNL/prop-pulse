@@ -82,14 +82,15 @@ model Verification {
 }
 
 model Property {
-  id       String @id @default(cuid())
-  title    String
-  slug     String @unique
-  location String
-  price    String
-  beds     Int
-  baths    Float
-  sqft     Int
+  id            String  @id @default(cuid())
+  listingNumber String? @unique // Unique listing number for easy reference (e.g., "PP-0001")
+  title         String
+  slug          String  @unique
+  location      String
+  price         String
+  beds          Int
+  baths         Float
+  sqft          Int
 
   // Property classification
   type          PropertyType

@@ -30,6 +30,7 @@ import ViewLiveButton from "./view-live-button";
 
 interface AgentProperty {
   id: string;
+  listingNumber: string | null;
   title: string;
   slug: string;
   location: string;
@@ -62,6 +63,7 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[80px]">Image</TableHead>
+            <TableHead className="w-[90px]">Listing #</TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Type</TableHead>
@@ -81,6 +83,15 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
                     className="object-cover"
                   />
                 </div>
+              </TableCell>
+              <TableCell>
+                {property.listingNumber ? (
+                  <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                    {property.listingNumber}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">-</span>
+                )}
               </TableCell>
               <TableCell className="font-medium">
                 <div className="flex items-center gap-2">

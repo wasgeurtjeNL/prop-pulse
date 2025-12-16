@@ -120,6 +120,13 @@ export default function Details() {
                                     {item.category.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                                 </span>
                             )}
+                            {/* Listing Number Badge */}
+                            {item?.listingNumber && (
+                                <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono">
+                                    <Icon icon="ph:hash" width={12} height={12} />
+                                    {item.listingNumber}
+                                </span>
+                            )}
                         </div>
                         <h1 className='text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-52 font-semibold text-dark dark:text-white leading-tight'>{sanitizeText(item?.name)}</h1>
                         <div className="flex gap-2 mt-1.5 sm:mt-2">

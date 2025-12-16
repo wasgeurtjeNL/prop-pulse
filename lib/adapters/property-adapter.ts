@@ -7,6 +7,7 @@ import type { Property, PropertyImage } from "@/lib/generated/prisma/client";
 
 export interface PropertyTemplateFormat {
   id: string; // Property ID - required for viewing requests
+  listingNumber?: string; // Unique listing number for easy reference (e.g., "PP-0001")
   name: string;
   slug: string;
   title: string; // Full title
@@ -75,6 +76,7 @@ export function transformPropertyToTemplate(
 
   return {
     id: property.id, // Include database ID for viewing requests and updates
+    listingNumber: property.listingNumber || undefined, // Unique listing reference
     name: property.title,
     title: property.title, // Full title
     slug: property.slug,

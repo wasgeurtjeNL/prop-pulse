@@ -6,6 +6,7 @@ import { PropertyType, PropertyCategory, Status } from "@/lib/generated/prisma/c
 import { z } from "zod";
 import sharp from "sharp";
 import { notifyMatchingAlerts } from "@/lib/actions/property-alerts.actions";
+import { generateListingNumber } from "@/lib/actions/property.actions";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -377,8 +378,12 @@ export async function POST(request: NextRequest) {
     console.log(`   ✓ Uploaded ${uploadedImageUrls.length} images`);
 
     // Create the property with optimized content
+    // Generate unique listing number
+    const listingNumber = await generateListingNumber();
+    
     const property = await prisma.property.create({
       data: {
+        listingNumber,
         title: data.title,
         slug: finalSlug,
         location: data.location,

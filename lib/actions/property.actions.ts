@@ -10,6 +10,42 @@ import { z } from "zod";
 import { propertySchema } from "../validations";
 import { withRetry } from "../db-utils";
 
+/**
+ * Generate the next unique listing number in format "PP-XXXX"
+ * PP = PropPulse prefix, XXXX = zero-padded sequential number
+ */
+export async function generateListingNumber(): Promise<string> {
+  const PREFIX = "PP";
+  
+  // Find the highest existing listing number
+  const lastProperty = await prisma.property.findFirst({
+    where: {
+      listingNumber: {
+        startsWith: PREFIX,
+      },
+    },
+    orderBy: {
+      listingNumber: "desc",
+    },
+    select: {
+      listingNumber: true,
+    },
+  });
+  
+  let nextNumber = 1;
+  
+  if (lastProperty?.listingNumber) {
+    // Extract the number part (e.g., "PP-0042" -> 42)
+    const match = lastProperty.listingNumber.match(/PP-(\d+)/);
+    if (match) {
+      nextNumber = parseInt(match[1], 10) + 1;
+    }
+  }
+  
+  // Format as PP-XXXX (4 digits, zero-padded)
+  return `${PREFIX}-${nextNumber.toString().padStart(4, "0")}`;
+}
+
 export interface PropertyFilterParams {
   query?: string;
   type?: string;
@@ -194,6 +230,7 @@ export interface DashboardPropertyFilters {
 export interface PaginatedPropertiesResult {
   properties: {
     id: string;
+    listingNumber: string | null;
     title: string;
     slug: string;
     location: string;
@@ -270,12 +307,13 @@ export async function getAgentPropertiesPaginated(
     userId: currentUserId,
   };
 
-  // Search filter - title or location
+  // Search filter - title, location, slug, or listing number
   if (search && search.trim()) {
     where.OR = [
       { title: { contains: search.trim(), mode: "insensitive" } },
       { location: { contains: search.trim(), mode: "insensitive" } },
       { slug: { contains: search.trim(), mode: "insensitive" } },
+      { listingNumber: { contains: search.trim(), mode: "insensitive" } },
     ];
   }
 
@@ -306,6 +344,7 @@ export async function getAgentPropertiesPaginated(
       },
       select: {
         id: true,
+        listingNumber: true,
         title: true,
         slug: true,
         location: true,
@@ -386,8 +425,12 @@ export async function createProperty(data: CreatePropertyArgs) {
   }
 
   try {
+    // Generate unique listing number
+    const listingNumber = await generateListingNumber();
+    
     const property = await prisma.property.create({
       data: {
+        listingNumber,
         title: data.title,
         slug: slugify(data.title),
         location: data.location,
