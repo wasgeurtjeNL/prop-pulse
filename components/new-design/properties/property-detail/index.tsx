@@ -140,20 +140,20 @@ export default function Details() {
                         )}
                     </div>
                     <div className="lg:col-span-4 col-span-12 mt-3 lg:mt-0">
-                        <div className='flex gap-2 sm:gap-4'>
-                            <div className='flex flex-col gap-1 sm:gap-2 flex-1'>
+                        <div className='flex gap-2 sm:gap-4 overflow-x-auto scrollbar-hide pb-2 -mb-2 snap-x snap-mandatory'>
+                            <div className='flex flex-col gap-1 sm:gap-2 flex-shrink-0 min-w-[70px] sm:min-w-0 sm:flex-1 snap-start'>
                                 <Icon icon={'solar:bed-linear'} width={18} height={18} className="sm:w-5 sm:h-5" />
                                 <p className='text-[11px] sm:text-xs md:text-sm font-normal text-black dark:text-white whitespace-nowrap'>
                                     {item?.beds} Bed
                                 </p>
                             </div>
-                            <div className='flex flex-col gap-1 sm:gap-2 border-x border-black/10 dark:border-white/20 px-2 sm:px-3 md:px-4 flex-1'>
+                            <div className='flex flex-col gap-1 sm:gap-2 border-x border-black/10 dark:border-white/20 px-2 sm:px-3 md:px-4 flex-shrink-0 min-w-[70px] sm:min-w-0 sm:flex-1 snap-start'>
                                 <Icon icon={'solar:bath-linear'} width={18} height={18} className="sm:w-5 sm:h-5" />
                                 <p className='text-[11px] sm:text-xs md:text-sm font-normal text-black dark:text-white whitespace-nowrap'>
                                     {item?.baths} Bath
                                 </p>
                             </div>
-                            <div className='flex flex-col gap-1 sm:gap-2 flex-1'>
+                            <div className='flex flex-col gap-1 sm:gap-2 flex-shrink-0 min-w-[70px] sm:min-w-0 sm:flex-1 snap-start'>
                                 <Icon
                                     icon={'lineicons:arrow-all-direction'}
                                     width={18}
@@ -167,12 +167,48 @@ export default function Details() {
                         </div>
                     </div>
                 </div>
-                {/* Image Gallery - Mobile optimized layout */}
-                <div className="grid grid-cols-12 mt-6 sm:mt-8 gap-2 sm:gap-4 md:gap-6">
-                    {/* Main Image - full width on mobile, no row-span on mobile */}
+                {/* Image Gallery - Mobile Horizontal Scroll */}
+                {item?.images && item.images.length > 0 && (
+                    <div className="sm:hidden mt-6 -mx-3 px-3">
+                        <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2">
+                            {item.images.map((image: any, index: number) => (
+                                <div 
+                                    key={index}
+                                    className="flex-shrink-0 w-[85%] h-[220px] xs:h-[260px] snap-start cursor-pointer group relative overflow-hidden rounded-xl"
+                                    onClick={() => openLightbox(index)}
+                                >
+                                    <Image
+                                        src={image.src}
+                                        alt={`Property Image ${index + 1}`}
+                                        width={400}
+                                        height={500}
+                                        className="rounded-xl w-full h-full object-cover"
+                                        unoptimized={true}
+                                    />
+                                    {/* Image counter badge */}
+                                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                        <Icon icon="ph:images" width={14} height={14} />
+                                        {index + 1}/{item.images.length}
+                                    </div>
+                                    {/* Tap to expand hint on first image */}
+                                    {index === 0 && (
+                                        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1">
+                                            <Icon icon="ph:arrows-out" width={12} height={12} />
+                                            Tap to expand
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Image Gallery - Desktop Grid Layout (Hidden on mobile) */}
+                <div className="hidden sm:grid grid-cols-12 mt-6 sm:mt-8 gap-2 sm:gap-4 md:gap-6">
+                    {/* Main Image */}
                     <div className="col-span-12 lg:col-span-8 lg:row-span-2">
                         {item?.images && item?.images[0] && (
-                            <div className="w-full h-[220px] xs:h-[260px] sm:h-[400px] md:h-[540px] cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl" onClick={() => openLightbox(0)}>
+                            <div className="w-full h-[400px] md:h-[540px] cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl" onClick={() => openLightbox(0)}>
                                 <Image
                                     src={item.images[0]?.src}
                                     alt="Main Property Image"
@@ -184,17 +220,10 @@ export default function Details() {
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
                                     <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={36} height={36} />
                                 </div>
-                                {/* Mobile image counter */}
-                                {item.images.length > 1 && (
-                                    <div className="absolute bottom-2 right-2 sm:hidden bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                                        <Icon icon="ph:images" width={14} height={14} />
-                                        1/{item.images.length}
-                                    </div>
-                                )}
                             </div>
                         )}
                     </div>
-                    {/* Secondary images - hidden on very small screens, shown on sm+ */}
+                    {/* Secondary images - Only visible on sm+ screens */}
                     <div className="hidden sm:block lg:col-span-4 col-span-6 w-full h-[180px] sm:h-[240px] md:h-[335px]">
                         {item?.images && item?.images[1] && (
                             <div className="w-full h-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl" onClick={() => openLightbox(1)}>

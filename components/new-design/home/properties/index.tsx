@@ -172,8 +172,24 @@ const Properties: React.FC = () => {
               </>
             )}
 
-            {/* Properties Grid */}
-            <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 xl:gap-10'>
+            {/* Properties - Mobile Horizontal Scroll (shows ALL filtered properties) */}
+            <div className='sm:hidden -mx-4 px-4'>
+              <div className='flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4'>
+                {filteredProperties.map((item: any, index: number) => (
+                  <div key={`${item.slug}-${index}`} className='flex-shrink-0 w-[85%] snap-start'>
+                    <PropertyCard item={item} />
+                  </div>
+                ))}
+              </div>
+              {/* Scroll hint with count */}
+              <div className="flex items-center justify-center gap-2 mt-2 text-xs text-gray-400 dark:text-white/40">
+                <Icon icon="ph:arrows-left-right" width={14} height={14} />
+                <span>Swipe to see all {filteredProperties.length} properties</span>
+              </div>
+            </div>
+
+            {/* Properties Grid - Tablet & Desktop */}
+            <div className='hidden sm:grid sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 xl:gap-10'>
               {currentProperties.map((item: any, index: number) => (
                 <div key={`${item.slug}-${index}`}>
                   <PropertyCard item={item} />
@@ -181,10 +197,10 @@ const Properties: React.FC = () => {
               ))}
             </div>
 
-            {/* Pagination Controls - Mobile & Page Indicators */}
+            {/* Pagination Controls - Tablet & Desktop Only */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-10">
-                {/* Previous Button - Mobile */}
+              <div className="hidden sm:flex items-center justify-center gap-4 mt-10">
+                {/* Previous Button - Tablet */}
                 <button
                   onClick={goToPrevious}
                   disabled={!canGoPrevious}
@@ -214,7 +230,7 @@ const Properties: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Next Button - Mobile */}
+                {/* Next Button - Tablet */}
                 <button
                   onClick={goToNext}
                   disabled={!canGoNext}
@@ -239,8 +255,9 @@ const Properties: React.FC = () => {
           </div>
         )}
 
+        {/* View All Button - Hidden on mobile since horizontal scroll shows all */}
         {filteredProperties.length > 6 && (
-          <div className="flex justify-center mt-8 sm:mt-10 lg:mt-12">
+          <div className="hidden sm:flex justify-center mt-8 sm:mt-10 lg:mt-12">
             <Link 
               href={`/properties${activeFilter !== 'all' ? `?type=${activeFilter}` : ''}`}
               className="py-3 sm:py-3.5 lg:py-4 px-6 sm:px-7 lg:px-8 bg-primary hover:bg-dark duration-300 rounded-full text-white text-sm sm:text-base font-semibold w-full xs:w-auto text-center"

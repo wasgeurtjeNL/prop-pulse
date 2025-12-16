@@ -128,8 +128,98 @@ export default function RelatedProperties({
         </Link>
       </div>
 
-      {/* Property Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Property Cards - Mobile Horizontal Scroll */}
+      <div className="md:hidden -mx-3 sm:-mx-4 px-3 sm:px-4">
+        <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4">
+          {properties.map((property, index) => (
+            <Link
+              key={property.id}
+              href={`/properties/${property.slug}`}
+              className="group block flex-shrink-0 w-[80%] snap-start"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              {/* Image Container */}
+              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-4 bg-gray-100 dark:bg-gray-800">
+                <Image
+                  src={property.image || "/images/placeholder-property.jpg"}
+                  alt={property.title}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  sizes="(max-width: 768px) 80vw, 33vw"
+                />
+                
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                {/* Price Badge */}
+                <div className="absolute top-4 left-4">
+                  <div className="bg-white/95 dark:bg-dark/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
+                    <span className="text-primary font-bold text-lg">
+                      {property.price}
+                    </span>
+                    {isRental && (
+                      <span className="text-dark/50 dark:text-white/50 text-sm font-normal">
+                        /mo
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Type Badge */}
+                <div className="absolute top-4 right-4">
+                  <div className={`
+                    px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider
+                    ${isRental 
+                      ? "bg-blue-500/90 text-white" 
+                      : "bg-emerald-500/90 text-white"
+                    }
+                  `}>
+                    {isRental ? "For Rent" : "For Sale"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Property Info */}
+              <div className="space-y-2">
+                <h4 className="font-semibold text-dark dark:text-white text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                  {property.title}
+                </h4>
+                
+                {/* Location */}
+                <div className="flex items-center gap-1.5 text-dark/60 dark:text-white/60 text-sm">
+                  <Icon icon="ph:map-pin" width={16} height={16} className="text-primary flex-shrink-0" />
+                  <span className="truncate">{property.location.split(",").slice(0, 2).join(",")}</span>
+                </div>
+
+                {/* Specs */}
+                <div className="flex items-center gap-4 pt-2">
+                  <div className="flex items-center gap-1.5 text-dark/70 dark:text-white/70">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Icon icon="solar:bed-linear" width={18} height={18} className="text-primary" />
+                    </div>
+                    <span className="font-medium">{property.beds}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-dark/70 dark:text-white/70">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Icon icon="solar:bath-linear" width={18} height={18} className="text-primary" />
+                    </div>
+                    <span className="font-medium">{property.baths}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-dark/70 dark:text-white/70">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Icon icon="ph:ruler" width={18} height={18} className="text-primary" />
+                    </div>
+                    <span className="font-medium">{property.sqft}m²</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Property Cards Grid - Tablet & Desktop */}
+      <div className="hidden md:grid md:grid-cols-3 gap-6">
         {properties.map((property, index) => (
           <Link
             key={property.id}

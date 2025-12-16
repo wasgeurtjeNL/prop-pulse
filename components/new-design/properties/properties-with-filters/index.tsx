@@ -134,13 +134,27 @@ const PropertiesWithFilters: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'>
-                  {propertyHomes.map((item: any, index: number) => (
-                    <div key={item?.slug ?? index}>
-                      <PropertyCard item={item} priority={index === 0} />
+                <>
+                  {/* Mobile Horizontal Scroll */}
+                  <div className='md:hidden -mx-5 px-5'>
+                    <div className='flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4'>
+                      {propertyHomes.map((item: any, index: number) => (
+                        <div key={item?.slug ?? index} className='flex-shrink-0 w-[85%] snap-start'>
+                          <PropertyCard item={item} priority={index === 0} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                  
+                  {/* Tablet & Desktop Grid */}
+                  <div className='hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-6'>
+                    {propertyHomes.map((item: any, index: number) => (
+                      <div key={item?.slug ?? index}>
+                        <PropertyCard item={item} priority={index === 0} />
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
               
               {/* Property Alert CTA - Show after properties */}

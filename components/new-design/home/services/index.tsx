@@ -40,7 +40,7 @@ const Services = () => {
               View properties
             </Link>
           </div>
-          <div className="lg:col-span-6">
+          <div className="hidden lg:block lg:col-span-6">
             <div className="relative rounded-xl sm:rounded-2xl overflow-hidden group">
               <Link href="/properties?category=residential-home">
                 <Image
@@ -69,7 +69,7 @@ const Services = () => {
               </Link>
             </div>
           </div>
-          <div className="lg:col-span-6">
+          <div className="hidden lg:block lg:col-span-6">
             <div className="relative rounded-xl sm:rounded-2xl overflow-hidden group">
               <Link href="/properties?category=luxury-villa">
                 <Image
@@ -98,7 +98,7 @@ const Services = () => {
               </Link>
             </div>
           </div>
-          <div className="col-span-1 xs:col-span-1 sm:col-span-1 lg:col-span-3">
+          <div className="hidden lg:block lg:col-span-3">
             <div className="relative rounded-xl sm:rounded-2xl overflow-hidden group">
               <Link href="/properties?category=apartment">
                 <Image
@@ -127,7 +127,7 @@ const Services = () => {
               </Link>
             </div>
           </div>
-          <div className="col-span-1 xs:col-span-1 sm:col-span-1 lg:col-span-3">
+          <div className="hidden lg:block lg:col-span-3">
             <div className="relative rounded-xl sm:rounded-2xl overflow-hidden group">
               <Link href="/properties?type=FOR_RENT">
                 <Image
