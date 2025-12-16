@@ -303,6 +303,45 @@ import { cn } from '@/lib/utils'
 
 ---
 
+## 📱 Mobile Responsive - KRITIEKE REGELS
+
+### ⚠️ NOOIT translate-x-full gebruiken zonder visibility/display control
+
+Off-screen elementen (zoals side menus) die alleen `translate-x-full` gebruiken veroorzaken **horizontale overflow** en witte ruimte op mobile!
+
+```tsx
+// ❌ FOUT - Veroorzaakt horizontale overflow op mobile
+<div className={cn(
+  "fixed top-0 right-0 w-full",
+  isOpen ? "translate-x-0" : "translate-x-full"  // Element bestaat nog in document!
+)}>
+
+// ✅ GOED - Combineer translate met invisible/hidden
+<div className={cn(
+  "fixed top-0 right-0 w-full transition-all",
+  isOpen 
+    ? "translate-x-0 opacity-100 visible" 
+    : "translate-x-full opacity-0 invisible pointer-events-none"
+)}>
+```
+
+### Overflow Control
+```css
+/* In globals.css - gebruik overflow-x: clip (sterker dan hidden) */
+html, body {
+  overflow-x: clip;  /* Clipt ook fixed/absolute elements */
+  max-width: 100%;
+}
+```
+
+### Checklist voor Off-Screen Elementen
+- [ ] Gebruik `invisible` of `hidden` naast `translate-x-full`
+- [ ] Voeg `pointer-events-none` toe wanneer verborgen
+- [ ] Test ALTIJD op mobile viewport (< 400px)
+- [ ] Check met DevTools of er horizontale scroll is
+
+---
+
 ## ✅ Component Checklist
 
 Bij het maken van een nieuwe component, check:
@@ -314,6 +353,7 @@ Bij het maken van een nieuwe component, check:
 - [ ] Zijn images geoptimaliseerd met next/image?
 - [ ] Heeft het accessibility attributen (aria-*, alt, etc.)?
 - [ ] Is er lazy loading toegepast waar nodig?
+- [ ] **Off-screen elementen**: Gebruikt `invisible`/`hidden` naast `translate-x-full`?
 
 ---
 
@@ -328,6 +368,8 @@ Voordat je code commit:
 - [ ] TypeScript errors zijn opgelost
 - [ ] Grote componenten zijn lazy loaded
 - [ ] Server Components waar mogelijk
+- [ ] **Mobile responsive**: Geen horizontale overflow (test op 375px viewport)
+- [ ] **Off-screen elementen**: `translate-x-full` altijd met `invisible` combineren
 
 ---
 

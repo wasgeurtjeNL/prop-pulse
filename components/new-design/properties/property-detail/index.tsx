@@ -87,147 +87,159 @@ export default function Details() {
     ] : [];
 
     return (
-        <section className="pt-[160px] lg:pt-[180px] pb-12 sm:pb-16 md:pb-20 relative overflow-x-hidden" >
-            <div className="container mx-auto max-w-8xl px-4 sm:px-5 2xl:px-0">
+        <section className="pt-[100px] xs:pt-[120px] sm:pt-[140px] lg:pt-[180px] pb-8 sm:pb-12 md:pb-16 lg:pb-20 relative overflow-x-hidden" >
+            <div className="container mx-auto max-w-8xl px-3 sm:px-4 md:px-5 2xl:px-0">
                 {/* Breadcrumbs */}
                 {item && (
-                    <div className="mb-6">
+                    <div className="mb-3 sm:mb-4 md:mb-6">
                         <Breadcrumb items={breadcrumbs} />
                     </div>
                 )}
                 
-                <div className="grid grid-cols-12 items-end gap-4 sm:gap-6">
+                <div className="grid grid-cols-12 items-end gap-3 sm:gap-4 md:gap-6">
                     <div className="lg:col-span-8 col-span-12">
-                        <div className="flex flex-wrap items-center gap-3 mb-3">
+                        <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
                             {/* Property Type Badge */}
-                            <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold ${
+                            <span className={`inline-flex items-center gap-1 px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold ${
                                 item?.type === 'FOR_RENT' 
                                     ? 'bg-purple-500 text-white' 
                                     : 'bg-primary text-white'
                             }`}>
                                 <Icon 
                                     icon={item?.type === 'FOR_RENT' ? 'solar:key-bold' : 'solar:tag-price-bold'} 
-                                    width={16} 
-                                    height={16} 
+                                    width={14} 
+                                    height={14}
+                                    className="sm:w-4 sm:h-4"
                                 />
                                 {item?.type === 'FOR_RENT' ? 'For Rent' : 'For Sale'}
                             </span>
                             {/* Category Badge */}
                             {item?.category && (
-                                <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white/70">
+                                <span className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white/70">
                                     {item.category.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                                 </span>
                             )}
                         </div>
-                        <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-52 font-semibold text-dark dark:text-white leading-tight'>{item?.name}</h1>
-                        <div className="flex gap-2.5 mt-2">
-                            <Icon icon="ph:map-pin" width={20} height={20} className="text-dark/50 dark:text-white/50 flex-shrink-0" />
-                            <p className='text-dark/50 dark:text-white/50 text-sm sm:text-base'>{item?.location}</p>
+                        <h1 className='text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-52 font-semibold text-dark dark:text-white leading-tight'>{item?.name}</h1>
+                        <div className="flex gap-2 mt-1.5 sm:mt-2">
+                            <Icon icon="ph:map-pin" width={16} height={16} className="text-dark/50 dark:text-white/50 flex-shrink-0 sm:w-5 sm:h-5" />
+                            <p className='text-dark/50 dark:text-white/50 text-xs sm:text-sm md:text-base'>{item?.location}</p>
                         </div>
                         {/* Price Display */}
                         {item?.rate && (
-                            <div className="mt-4 flex items-baseline gap-2">
-                                <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
+                            <div className="mt-2 sm:mt-4 flex items-baseline gap-1 sm:gap-2">
+                                <span className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
                                     {item.rate.toString().includes('฿') || item.rate.toString().includes('$') ? item.rate : `฿${item.rate}`}
                                 </span>
                                 {item?.type === 'FOR_RENT' && !item.rate.toString().toLowerCase().includes('month') && (
-                                    <span className="text-base sm:text-lg text-dark/50 dark:text-white/50 font-medium">
+                                    <span className="text-sm sm:text-base md:text-lg text-dark/50 dark:text-white/50 font-medium">
                                         / month
                                     </span>
                                 )}
                             </div>
                         )}
                     </div>
-                    <div className="lg:col-span-4 col-span-12 mt-4 lg:mt-0">
-                        <div className='flex gap-4'>
-                            <div className='flex flex-col gap-2 flex-1'>
-                                <Icon icon={'solar:bed-linear'} width={20} height={20} />
-                                <p className='text-xs sm:text-sm font-normal text-black dark:text-white whitespace-nowrap'>
-                                    {item?.beds} Bedrooms
+                    <div className="lg:col-span-4 col-span-12 mt-3 lg:mt-0">
+                        <div className='flex gap-2 sm:gap-4'>
+                            <div className='flex flex-col gap-1 sm:gap-2 flex-1'>
+                                <Icon icon={'solar:bed-linear'} width={18} height={18} className="sm:w-5 sm:h-5" />
+                                <p className='text-[11px] sm:text-xs md:text-sm font-normal text-black dark:text-white whitespace-nowrap'>
+                                    {item?.beds} Bed
                                 </p>
                             </div>
-                            <div className='flex flex-col gap-2 border-x border-black/10 dark:border-white/20 px-3 sm:px-4 flex-1'>
-                                <Icon icon={'solar:bath-linear'} width={20} height={20} />
-                                <p className='text-xs sm:text-sm font-normal text-black dark:text-white whitespace-nowrap'>
-                                    {item?.baths} Bathrooms
+                            <div className='flex flex-col gap-1 sm:gap-2 border-x border-black/10 dark:border-white/20 px-2 sm:px-3 md:px-4 flex-1'>
+                                <Icon icon={'solar:bath-linear'} width={18} height={18} className="sm:w-5 sm:h-5" />
+                                <p className='text-[11px] sm:text-xs md:text-sm font-normal text-black dark:text-white whitespace-nowrap'>
+                                    {item?.baths} Bath
                                 </p>
                             </div>
-                            <div className='flex flex-col gap-2 flex-1'>
+                            <div className='flex flex-col gap-1 sm:gap-2 flex-1'>
                                 <Icon
                                     icon={'lineicons:arrow-all-direction'}
-                                    width={20}
-                                    height={20}
+                                    width={18}
+                                    height={18}
+                                    className="sm:w-5 sm:h-5"
                                 />
-                                <p className='text-xs sm:text-sm font-normal text-black dark:text-white whitespace-nowrap'>
+                                <p className='text-[11px] sm:text-xs md:text-sm font-normal text-black dark:text-white whitespace-nowrap'>
                                     {item?.area}m<sup>2</sup>
                                 </p>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="grid grid-cols-12 mt-6 sm:mt-8 gap-3 sm:gap-6 md:gap-8">
-                    <div className="lg:col-span-8 col-span-12 row-span-2">
+                {/* Image Gallery - Mobile optimized layout */}
+                <div className="grid grid-cols-12 mt-6 sm:mt-8 gap-2 sm:gap-4 md:gap-6">
+                    {/* Main Image - full width on mobile, no row-span on mobile */}
+                    <div className="col-span-12 lg:col-span-8 lg:row-span-2">
                         {item?.images && item?.images[0] && (
-                            <div className="w-full h-[300px] sm:h-[400px] md:h-[540px] cursor-pointer group relative overflow-hidden rounded-2xl" onClick={() => openLightbox(0)}>
+                            <div className="w-full h-[220px] xs:h-[260px] sm:h-[400px] md:h-[540px] cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl" onClick={() => openLightbox(0)}>
                                 <Image
                                     src={item.images[0]?.src}
                                     alt="Main Property Image"
                                     width={400}
                                     height={500}
-                                    className="rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    className="rounded-xl sm:rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                     unoptimized={true}
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={48} height={48} />
+                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={36} height={36} />
                                 </div>
+                                {/* Mobile image counter */}
+                                {item.images.length > 1 && (
+                                    <div className="absolute bottom-2 right-2 sm:hidden bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                        <Icon icon="ph:images" width={14} height={14} />
+                                        1/{item.images.length}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
-                    <div className="lg:col-span-4 col-span-6 w-full h-[180px] sm:h-[240px] md:h-[335px]">
+                    {/* Secondary images - hidden on very small screens, shown on sm+ */}
+                    <div className="hidden sm:block lg:col-span-4 col-span-6 w-full h-[180px] sm:h-[240px] md:h-[335px]">
                         {item?.images && item?.images[1] && (
-                            <div className="w-full h-full cursor-pointer group relative overflow-hidden rounded-2xl" onClick={() => openLightbox(1)}>
-                                <Image src={item.images[1]?.src} alt="Property Image 2" width={400} height={500} className="rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" unoptimized={true} />
+                            <div className="w-full h-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl" onClick={() => openLightbox(1)}>
+                                <Image src={item.images[1]?.src} alt="Property Image 2" width={400} height={500} className="rounded-xl sm:rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" unoptimized={true} />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={48} height={48} />
+                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={40} height={40} />
                                 </div>
                             </div>
                         )}
                     </div>
-                    <div className="lg:col-span-2 col-span-6 w-full h-[120px] sm:h-[140px] md:h-[155px]">
+                    <div className="hidden sm:block lg:col-span-2 col-span-6 w-full h-[100px] sm:h-[140px] md:h-[155px]">
                         {item?.images && item?.images[2] && (
-                            <div className="w-full h-full cursor-pointer group relative overflow-hidden rounded-2xl" onClick={() => openLightbox(2)}>
-                                <Image src={item.images[2]?.src} alt="Property Image 3" width={400} height={500} className="rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" unoptimized={true} />
+                            <div className="w-full h-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl" onClick={() => openLightbox(2)}>
+                                <Image src={item.images[2]?.src} alt="Property Image 3" width={400} height={500} className="rounded-xl sm:rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" unoptimized={true} />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={48} height={48} />
+                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={36} height={36} />
                                 </div>
                             </div>
                         )}
                     </div>
-                    <div className="lg:col-span-2 col-span-6 w-full h-[120px] sm:h-[140px] md:h-[155px]">
+                    <div className="hidden sm:block lg:col-span-2 col-span-6 w-full h-[100px] sm:h-[140px] md:h-[155px]">
                         {item?.images && item?.images[3] && (
-                            <div className="w-full h-full cursor-pointer group relative overflow-hidden rounded-2xl" onClick={() => openLightbox(3)}>
-                                <Image src={item.images[3]?.src} alt="Property Image 4" width={400} height={500} className="rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" unoptimized={true} />
+                            <div className="w-full h-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl" onClick={() => openLightbox(3)}>
+                                <Image src={item.images[3]?.src} alt="Property Image 4" width={400} height={500} className="rounded-xl sm:rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" unoptimized={true} />
                                 
                                 {/* Show More Overlay - when there are more than 4 images */}
                                 {item.images.length > 4 ? (
                                     <div className="absolute inset-0 bg-black/70 group-hover:bg-black/80 transition-all duration-300 flex flex-col items-center justify-center">
-                                        <h3 className="text-white text-base sm:text-xl font-bold uppercase tracking-wider">Show More</h3>
-                                        <p className="text-white text-xs sm:text-sm mt-1 sm:mt-2">+{item.images.length - 4} more {item.images.length - 4 === 1 ? 'photo' : 'photos'}</p>
-                                        <Icon icon="ph:images" className="text-white mt-2 sm:mt-3" width={32} height={32} />
+                                        <h3 className="text-white text-sm sm:text-xl font-bold uppercase tracking-wider">Show More</h3>
+                                        <p className="text-white text-xs sm:text-sm mt-1">+{item.images.length - 4} photos</p>
+                                        <Icon icon="ph:images" className="text-white mt-2" width={24} height={24} />
                                     </div>
                                 ) : (
                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                                        <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={48} height={48} />
+                                        <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={36} height={36} />
                                     </div>
                                 )}
                             </div>
                         )}
                     </div>
                 </div>
-                <div className="grid grid-cols-12 gap-6 sm:gap-8 mt-8 sm:mt-10">
+                <div className="grid grid-cols-12 gap-4 sm:gap-6 lg:gap-8 mt-5 sm:mt-8">
                     <div className="lg:col-span-8 col-span-12">
-                        <h3 className='text-lg sm:text-xl font-medium'>Property details</h3>
-                        <div className="py-6 sm:py-8 my-6 sm:my-8 border-y border-dark/10 dark:border-white/20 flex flex-col gap-6 sm:gap-8">
+                        <h3 className='text-base sm:text-lg md:text-xl font-medium'>Property details</h3>
+                        <div className="py-4 sm:py-6 md:py-8 my-4 sm:my-6 md:my-8 border-y border-dark/10 dark:border-white/20 flex flex-col gap-4 sm:gap-6">
                             {item?.propertyFeatures && item.propertyFeatures.length > 0 ? (
                                 item.propertyFeatures.map((feature: any, index: number) => (
                                     <div key={index} className="flex items-start gap-4 sm:gap-6">
@@ -312,9 +324,9 @@ export default function Details() {
                             )}
                         </div>
                         {item?.amenities && item.amenities.length > 0 && (
-                            <div className="py-6 sm:py-8 mt-6 sm:mt-8 border-t border-dark/5 dark:border-white/15">
-                                <h3 className='text-lg sm:text-xl font-medium'>What this property offers</h3>
-                                <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 mt-4 sm:mt-5 gap-4 sm:gap-6">
+                            <div className="py-4 sm:py-6 md:py-8 mt-4 sm:mt-6 border-t border-dark/5 dark:border-white/15">
+                                <h3 className='text-base sm:text-lg md:text-xl font-medium'>What this property offers</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-3 mt-3 sm:mt-4 gap-3 sm:gap-4">
                                     {item.amenities.map((amenity: string, index: number) => (
                                         <div key={index} className="flex items-center gap-2.5">
                                             <Icon icon="ph:check-circle" width={20} height={20} className="text-primary flex-shrink-0 sm:w-6 sm:h-6" />
@@ -342,7 +354,7 @@ export default function Details() {
                             </iframe>
                         )}
                     </div>
-                    <div className="lg:col-span-4 col-span-12 mt-6 lg:mt-0">
+                    <div className="lg:col-span-4 col-span-12 mt-4 sm:mt-6 lg:mt-0">
                         {/* Property Request Tabs */}
                         {item && (
                             <PropertyRequestTabs
@@ -353,7 +365,7 @@ export default function Details() {
                             />
                         )}
                         {testimonials && testimonials?.slice(0, 1).map((item:any, index:any) => (
-                            <div key={index} className="border p-6 sm:p-10 rounded-2xl border-dark/10 dark:border-white/20 mt-6 sm:mt-10 flex flex-col gap-4 sm:gap-6">
+                            <div key={index} className="border p-4 sm:p-6 md:p-10 rounded-xl sm:rounded-2xl border-dark/10 dark:border-white/20 mt-4 sm:mt-6 md:mt-10 flex flex-col gap-3 sm:gap-4 md:gap-6">
                                 <Icon icon="ph:house-simple" width={36} height={36} className="text-primary sm:w-11 sm:h-11" />
                                 <p className='text-sm sm:text-base text-dark dark:text-white'>{item.review}</p>
                                 <div className="flex items-center gap-4 sm:gap-6">

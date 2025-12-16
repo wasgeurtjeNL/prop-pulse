@@ -1,73 +1,11 @@
-// #region agent log
-'use client'
-// #endregion
 import Image from 'next/image'
 import Link from 'next/link'
-// #region agent log
-import { useEffect, useRef } from 'react'
-// #endregion
 
 const Hero: React.FC = () => {
-  // #region agent log
-  const sectionRef = useRef<HTMLElement>(null)
-  const gradientRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const measure = () => {
-      const viewport = { width: window.innerWidth, height: window.innerHeight }
-      const clientWidth = document.documentElement.clientWidth
-      const scrollWidth = document.documentElement.scrollWidth
-      
-      // Find elements causing overflow
-      const overflowingElements: {tag: string, class: string, width: number, right: number}[] = []
-      if (scrollWidth > clientWidth) {
-        document.querySelectorAll('*').forEach(el => {
-          const rect = el.getBoundingClientRect()
-          if (rect.right > clientWidth + 5) { // 5px tolerance
-            overflowingElements.push({
-              tag: el.tagName,
-              class: el.className?.toString()?.slice(0, 100) || '',
-              width: rect.width,
-              right: rect.right
-            })
-          }
-        })
-      }
-      
-      fetch('http://127.0.0.1:7243/ingest/1d474df5-ab02-44e6-b823-60dcc3ad7dc4',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          location:'hero/index.tsx:measure',
-          message:'Hero overflow detection v3',
-          hypothesisId:'I',
-          data:{
-            viewport,
-            clientWidth,
-            scrollWidth,
-            hasOverflow: scrollWidth > clientWidth,
-            overflowAmount: scrollWidth - clientWidth,
-            overflowingElements: overflowingElements.slice(0, 10), // First 10
-            visualViewportScale: window.visualViewport?.scale
-          },
-          timestamp:Date.now(),
-          sessionId:'debug-session'
-        })
-      }).catch(()=>{});
-    }
-    
-    // Measure on load and resize
-    setTimeout(measure, 500) // Delay to ensure page is fully loaded
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [])
-  // #endregion
-
   return (
-    <section ref={sectionRef} className='!py-0 overflow-x-hidden w-full'>
-      <div ref={gradientRef} className='w-full bg-gradient-to-b from-skyblue via-lightskyblue dark:via-[#4298b0] to-white/10 dark:to-black/10 overflow-hidden relative'>
-        <div ref={containerRef} className='w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-0 pt-16 sm:pt-20 lg:pt-24 pb-0 md:pb-68'>
+    <section className='!py-0 overflow-x-hidden w-full'>
+      <div className='w-full bg-gradient-to-b from-skyblue via-lightskyblue dark:via-[#4298b0] to-white/10 dark:to-black/10 overflow-hidden relative'>
+        <div className='w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-0 pt-16 sm:pt-20 lg:pt-24 pb-0 md:pb-68'>
           <div className='relative text-white dark:text-dark text-center md:text-start z-10'>
             <p className='text-inherit text-xs sm:text-sm font-medium'>Phuket & Pattaya, Thailand</p>
             <h1 className='text-inherit text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-semibold -tracking-wider md:max-w-[55%] lg:max-w-45p mt-3 sm:mt-4 mb-5 sm:mb-6 leading-tight'>
