@@ -12,8 +12,8 @@ interface HeroSubProps {
 
 const HeroSub: FC<HeroSubProps> = ({ title, description, badge, breadcrumbs }) => {
     return (
-        <div className="text-center container mx-auto px-4">
-            {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
+        <div className="text-center container mx-auto px-4 pt-0">
+            {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} className="mb-1" />}
             <div className='flex gap-1 items-center justify-center'>
                 <Icon icon={'ph:house-simple-fill'} width={12} height={12} className='text-primary' />
                 <span className='text-[10px] font-semibold text-dark/60 dark:text-white/60'>{badge}</span>

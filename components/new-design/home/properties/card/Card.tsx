@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 import ImageLightbox from '@/components/shared/image-lightbox'
+import { formatPrice } from '@/lib/utils'
 
 interface PropertyCardItem extends PropertyHomes {
   type?: 'FOR_SALE' | 'FOR_RENT';
@@ -105,9 +106,9 @@ const PropertyCard: React.FC<{ item: PropertyCardItem; priority?: boolean }> = (
               </div>
               <div className='flex flex-col items-start xs:items-end flex-shrink-0'>
                 <span className='text-sm sm:text-base font-medium text-primary px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 rounded-full bg-primary/10'>
-                  ${rate}
+                  {formatPrice(rate)}
                 </span>
-                {isRental && (
+                {isRental && !rate?.toLowerCase?.().includes('month') && (
                   <span className='text-xs text-primary font-medium mt-1'>Monthly</span>
                 )}
               </div>

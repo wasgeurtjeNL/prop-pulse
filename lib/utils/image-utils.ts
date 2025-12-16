@@ -58,16 +58,16 @@ export async function convertToWebP(
 
   try {
     const outputBuffer = await sharp(inputBuffer)
+      .resize({
+        width: maxWidth,
+        height: maxHeight,
+        fit: "cover", // Use cover to fill the target dimensions
+        withoutEnlargement: false, // Allow enlargement to match target size
+      })
       .webp({
         quality,
         effort,
         smartSubsample: true,
-      })
-      .resize({
-        width: maxWidth,
-        height: maxHeight,
-        fit: "inside",
-        withoutEnlargement: true,
       })
       .toBuffer();
 

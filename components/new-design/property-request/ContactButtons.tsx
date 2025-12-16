@@ -8,7 +8,7 @@ interface ContactButtonsProps {
 }
 
 export default function ContactButtons({ 
-  phoneNumber = '+66 (0) 2 026 8329',
+  phoneNumber = '+66 (0)98 626 1646',
   propertyTitle = 'this property'
 }: ContactButtonsProps) {
   

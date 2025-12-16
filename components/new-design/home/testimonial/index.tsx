@@ -95,12 +95,12 @@ const Testimonial = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="hidden lg:block w-full max-w-[300px] xl:max-w-[440px] rounded-2xl overflow-hidden flex-shrink-0">
+                                    <div className="hidden lg:block w-full max-w-[200px] xl:max-w-[260px] rounded-2xl overflow-hidden flex-shrink-0">
                                         <Image
                                             src={item.image}
                                             alt={item.name}
-                                            width={440}
-                                            height={440}
+                                            width={260}
+                                            height={260}
                                             className="w-full h-auto object-cover"
                                             unoptimized={true}
                                         />

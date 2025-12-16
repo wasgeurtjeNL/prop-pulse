@@ -92,10 +92,11 @@ model Property {
   sqft     Int
 
   // Property classification
-  type     PropertyType
-  category PropertyCategory @default(RESIDENTIAL_HOME)
-  tag      String?
-  status   Status           @default(ACTIVE)
+  type          PropertyType
+  category      PropertyCategory @default(RESIDENTIAL_HOME)
+  tag           String?
+  status        Status           @default(ACTIVE)
+  isHighlighted Boolean          @default(false) // Show in hero section on homepage
 
   // Images - Main image kept for backward compatibility
   image  String
@@ -795,6 +796,52 @@ enum ScheduledBlogStatus {
   COMPLETED       // Successfully generated and published
   FAILED          // Generation failed
   CANCELLED       // Manually cancelled
+}
+
+// Hero Images - Dynamic hero images for different device types and pages
+model HeroImage {
+  id          String   @id @default(cuid())
+  
+  // Image identification
+  page        String   @default("home")  // Which page this hero is for (home, properties, etc.)
+  deviceType  HeroDeviceType            // desktop, mobile, tablet
+  
+  // Image data
+  imageUrl    String                    // ImageKit URL
+  alt         String                    // SEO-optimized alt text
+  fileName    String?                   // Original/generated filename
+  
+  // Original image backup (for restore functionality)
+  originalUrl String?                   // Original static image URL to restore to
+  
+  // Image metadata for SEO
+  width       Int?
+  height      Int?
+  
+  // Generation info
+  isAiGenerated Boolean  @default(false)
+  aiPrompt      String?  @db.Text        // If AI generated, the prompt used
+  
+  // Optimization stats
+  originalSize    Int?                   // Original file size in bytes
+  optimizedSize   Int?                   // Compressed file size in bytes
+  
+  // Status
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([page, deviceType])
+  @@index([page])
+  @@index([isActive])
+  @@map("hero_image")
+}
+
+enum HeroDeviceType {
+  DESKTOP
+  MOBILE
+  TABLET
 }
 
 // Property Alerts - Users can subscribe to be notified when new properties match their criteria

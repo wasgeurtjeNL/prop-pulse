@@ -10,6 +10,7 @@ import PropertyTrustBadges from '@/components/new-design/property-trust-badges';
 import RelatedProperties from '@/components/new-design/properties/RelatedProperties';
 import Breadcrumb from '@/components/new-design/breadcrumb';
 import AdminEditButton from '@/components/shared/admin-edit-button';
+import { formatPrice } from '@/lib/utils';
 
 export default function Details() {
     const { slug } = useParams();
@@ -87,7 +88,7 @@ export default function Details() {
     ] : [];
 
     return (
-        <section className="pt-2 sm:pt-3 pb-8 sm:pb-12 md:pb-16 lg:pb-20 relative overflow-x-hidden" >
+        <section className="pt-0 pb-8 sm:pb-12 md:pb-16 lg:pb-20 relative overflow-x-hidden" >
             <div className="container mx-auto max-w-8xl px-3 sm:px-4 md:px-5 2xl:px-0">
                 {/* Breadcrumbs */}
                 {item && (
@@ -129,7 +130,7 @@ export default function Details() {
                         {item?.rate && (
                             <div className="mt-2 sm:mt-4 flex items-baseline gap-1 sm:gap-2">
                                 <span className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-bold text-primary">
-                                    {item.rate.toString().includes('฿') || item.rate.toString().includes('$') ? item.rate : `฿${item.rate}`}
+                                    {formatPrice(item.rate)}
                                 </span>
                                 {item?.type === 'FOR_RENT' && !item.rate.toString().toLowerCase().includes('month') && (
                                     <span className="text-sm sm:text-base md:text-lg text-dark/50 dark:text-white/50 font-medium">
@@ -390,7 +391,7 @@ export default function Details() {
                                 propertyId={item.id}
                                 propertyTitle={item.title}
                                 propertySlug={item.slug}
-                                phoneNumber="+66 (0) 9 862 61646"
+                                phoneNumber="+66 (0)98 626 1646"
                             />
                         )}
                         {testimonials && testimonials?.slice(0, 1).map((item:any, index:any) => (

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, PlusCircle, List, Settings, Calendar, Key, TrendingUp, FileText, Inbox, Download, Files, ExternalLink, Home } from "lucide-react";
+import { LayoutDashboard, PlusCircle, List, Settings, Calendar, Key, TrendingUp, FileText, Inbox, Download, Files, ExternalLink, Home, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AgentProfileCard from "@/components/shared/dashboard/agent-profile-card";
 import NavLink from "@/components/shared/dashboard/nav-link";
@@ -107,6 +107,9 @@ export default async function DashboardLayout({
           
           <div className="my-4 border-t border-slate-200 dark:border-slate-700" />
           
+          <NavLink href="/dashboard/hero-images" icon={<ImageIcon className="h-4 w-4" />}>
+            Hero Images
+          </NavLink>
           <NavLink href="/dashboard/settings" icon={<Settings className="h-4 w-4" />}>
             Instellingen
           </NavLink>

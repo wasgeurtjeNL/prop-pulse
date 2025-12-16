@@ -235,7 +235,61 @@ Geen probleem! Smart Blog AI werkt ook zonder Perplexity:
 - Geen live web research
 - Nog steeds professionele content
 
+---
 
+## 🗑️ Vercel Cache Management Setup
 
+### Wat doet het?
+De Vercel cache manager maakt het mogelijk om:
+- **Cache legen** - Forceer content updates op de live site
+- **Specifieke pagina's refreshen** - Update alleen wat nodig is
+- **Edge cache purgen** - Clear Vercel's CDN cache
+
+Dit is beschikbaar in het dashboard onder **Settings > Cache Beheer**.
+
+### Setup
+
+1. **Project ID ophalen:**
+   - Ga naar https://vercel.com
+   - Open je project > Settings
+   - Kopieer het "Project ID"
+
+2. **Team ID ophalen (voor team accounts):**
+   - Ga naar Team Settings
+   - Kopieer het "Team ID"
+
+3. **API Token aanmaken:**
+   - Ga naar https://vercel.com/account/tokens
+   - Maak een nieuwe token aan met scope: je team
+   - Kies een expiratie periode (1 jaar aanbevolen)
+
+4. **Voeg toe aan `.env.local`:**
+
+```env
+# Vercel Cache Management
+VERCEL_API_TOKEN="your-vercel-api-token"
+VERCEL_PROJECT_ID="prj_your-project-id"
+VERCEL_TEAM_ID="team_your-team-id"
+```
+
+### Gebruik
+Na configuratie is de cache manager beschikbaar in:
+- Dashboard > Settings > Cache Beheer
+
+Je kunt dan:
+- ✅ Alle cache legen met één klik
+- ✅ Specifieke pagina's refreshen
+- ✅ Cache tags invalideren
+- ✅ Vercel Edge cache purgen
+
+### Troubleshooting
+
+**"Vercel API niet geconfigureerd"**
+- Voeg alle drie de environment variables toe
+- Herstart de development server
+
+**"Cache operatie mislukt"**
+- Controleer of je token de juiste scope heeft
+- Controleer of de token niet is verlopen
 
 

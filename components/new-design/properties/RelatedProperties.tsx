@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Icon } from "@iconify/react";
 import PropertyAlertForm from "./PropertyAlertForm";
+import { formatPrice } from "@/lib/utils";
 
 interface RelatedProperty {
   id: string;
@@ -155,7 +156,7 @@ export default function RelatedProperties({
                 <div className="absolute top-4 left-4">
                   <div className="bg-white/95 dark:bg-dark/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
                     <span className="text-primary font-bold text-lg">
-                      {property.price}
+                      {formatPrice(property.price)}
                     </span>
                     {isRental && (
                       <span className="text-dark/50 dark:text-white/50 text-sm font-normal">
@@ -244,7 +245,7 @@ export default function RelatedProperties({
               <div className="absolute top-4 left-4">
                 <div className="bg-white/95 dark:bg-dark/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
                   <span className="text-primary font-bold text-lg">
-                    {property.price}
+                    {formatPrice(property.price)}
                   </span>
                   {isRental && (
                     <span className="text-dark/50 dark:text-white/50 text-sm font-normal">

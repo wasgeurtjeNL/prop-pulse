@@ -208,6 +208,24 @@ import Link from 'next/link'
 
 ## 💾 Database (Prisma)
 
+### ⚠️ User Roles - ALTIJD HOOFDLETTERS
+
+User roles in de database MOETEN altijd in **HOOFDLETTERS** zijn:
+- ✅ `ADMIN` (niet `admin`)
+- ✅ `AGENT` (niet `agent`)
+
+De dashboard toegangscontrole checkt op: `["AGENT", "ADMIN"]`
+
+```sql
+-- Controleer user roles:
+SELECT id, email, role FROM public.user;
+
+-- Fix role naar hoofdletters:
+UPDATE public.user SET role = 'ADMIN' WHERE email = 'user@example.com';
+```
+
+**NOOIT** de role check code aanpassen naar lowercase - altijd de database waarde fixen!
+
 ### ⚠️ Bij Database Errors - EERST Diagnose, DAN Oplossing
 
 Bij Prisma errors zoals "Server has closed the connection" (P1017):

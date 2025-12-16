@@ -21,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, Server, Bell, Send, Loader2, CheckCircle, XCircle, Sparkles, Building2, Users, MessageSquare, Tag, Ban } from "lucide-react";
+import { Mail, Server, Bell, Send, Loader2, CheckCircle, XCircle, Sparkles, Building2, Users, MessageSquare, Tag, Ban, Database } from "lucide-react";
+import CacheManager from "@/components/shared/dashboard/cache-manager";
 
 interface Settings {
   smtpHost: string | null;
@@ -549,6 +550,22 @@ Politieke onderwerpen"
           )}
           Instellingen Opslaan
         </Button>
+      </div>
+
+      {/* Cache Management */}
+      <div className="border-t pt-8 mt-8">
+        <div className="mb-6">
+          <div className="flex items-center gap-2">
+            <Database className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              Cache Beheer
+            </h2>
+          </div>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
+            Beheer de website cache en forceer content updates
+          </p>
+        </div>
+        <CacheManager />
       </div>
     </div>
   );

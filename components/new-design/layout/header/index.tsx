@@ -141,11 +141,11 @@ const Header: React.FC = () => {
                 info@psmphuket.com
               </Link>
               <Link 
-                href="tel:+66812345678" 
+                href="tel:+66986261646" 
                 className="flex items-center gap-2 hover:text-primary transition-colors"
               >
                 <Icon icon="ph:phone" className="w-4 h-4" />
-                +66 (0)81 234 5678
+                +66 (0)98 626 1646
               </Link>
             </div>
             <div className="flex items-center gap-4">
@@ -298,7 +298,7 @@ const Header: React.FC = () => {
         <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3">
           {/* WhatsApp Quick Contact - Desktop */}
           <Link
-            href="https://wa.me/66812345678?text=Hello%2C%20I'm%20interested%20in%20PSM%20Phuket%20properties"
+            href="https://wa.me/66986261646?text=Hello%2C%20I'm%20interested%20in%20PSM%20Phuket%20properties"
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
@@ -364,7 +364,7 @@ const Header: React.FC = () => {
 
           {/* Phone Number - Tablet+ */}
           <Link 
-            href="tel:+66812345678" 
+            href="tel:+66986261646" 
             className={cn(
               "hidden md:flex lg:hidden items-center gap-2 text-sm font-medium transition-colors",
               isHomepage && !sticky
@@ -410,7 +410,7 @@ const Header: React.FC = () => {
       <div
         ref={sideMenuRef}
         className={cn(
-          "fixed top-0 right-0 h-full w-full max-w-2xl bg-gradient-to-b from-dark via-dark to-dark/95 shadow-2xl transition-all duration-500 ease-out z-50 overflow-hidden",
+          "fixed top-0 right-0 h-full w-full sm:w-[400px] md:w-[420px] lg:w-[440px] bg-gradient-to-b from-dark via-dark to-dark/95 shadow-2xl transition-all duration-500 ease-out z-50 overflow-hidden",
           navbarOpen 
             ? "translate-x-0 opacity-100 visible" 
             : "translate-x-full opacity-0 invisible pointer-events-none"
@@ -515,7 +515,7 @@ const Header: React.FC = () => {
             {/* Quick Contact Actions */}
             <div className="flex gap-2 mb-4">
               <Link
-                href="https://wa.me/66812345678?text=Hello%2C%20I'm%20interested%20in%20PSM%20Phuket%20properties"
+                href="https://wa.me/66986261646?text=Hello%2C%20I'm%20interested%20in%20PSM%20Phuket%20properties"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-[#25D366] text-white text-sm font-semibold hover:bg-[#128C7E] transition-colors"
@@ -524,7 +524,7 @@ const Header: React.FC = () => {
                 WhatsApp
               </Link>
               <Link
-                href="tel:+66812345678"
+                href="tel:+66986261646"
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white hover:text-dark transition-all duration-300"
               >
                 <Icon icon="ph:phone-bold" className="w-4 h-4" />
@@ -546,11 +546,11 @@ const Header: React.FC = () => {
                   info@psmphuket.com
                 </Link>
                 <Link 
-                  href="tel:+66812345678" 
+                  href="tel:+66986261646" 
                   className="text-white/80 hover:text-primary transition-colors text-xs flex items-center gap-1.5"
                 >
                   <Icon icon="ph:phone" className="w-3.5 h-3.5 text-primary" />
-                  +66 (0)81 234 5678
+                  +66 (0)98 626 1646
                 </Link>
                 <p className="text-white/50 text-xs flex items-center gap-1.5">
                   <Icon icon="ph:map-pin" className="w-3.5 h-3.5 text-primary" />

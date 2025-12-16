@@ -76,3 +76,45 @@ export function calculateReadTime(content: string, wordsPerMinute: number = 200)
 export function formatReadTime(minutes: number): string {
   return `${minutes} min read`
 }
+
+/**
+ * Format price string to ensure proper currency symbol display
+ * Fixes encoding issues with Thai Baht (฿) and other currency symbols
+ * @param price - Price string from database (may have corrupted characters)
+ * @returns Clean formatted price string
+ */
+export function formatPrice(price: string | null | undefined): string {
+  if (!price) return '';
+  
+  // Clean up the price string
+  let cleanPrice = price.toString();
+  
+  // Fix common encoding issues with Thai Baht symbol
+  // Ó©┐ = corrupted ฿ (UTF-8 misinterpretation)
+  cleanPrice = cleanPrice
+    .replace(/Ó©┐/g, '฿')
+    .replace(/\?+/g, '') // Remove any remaining ? from encoding issues
+    .replace(/฿฿+/g, '฿') // Fix double Baht symbols
+    .replace(/^\s*฿?\s*฿/g, '฿') // Clean up leading spaces and symbols
+    .trim();
+  
+  // Extract the numeric part
+  const numericMatch = cleanPrice.match(/[\d,]+(\.\d+)?/);
+  if (!numericMatch) return cleanPrice;
+  
+  const numericPart = numericMatch[0];
+  
+  // Check if it's a rental price (contains /mo, /month, Monthly, etc.)
+  const isMonthly = /\/mo|monthly|per month|\/month/i.test(cleanPrice);
+  const suffix = isMonthly ? '/mo' : '';
+  
+  // Check if price already has currency symbol
+  if (cleanPrice.startsWith('฿') || cleanPrice.startsWith('$') || cleanPrice.startsWith('€')) {
+    // Just clean it up and return
+    const currencySymbol = cleanPrice.charAt(0);
+    return `${currencySymbol}${numericPart}${suffix}`;
+  }
+  
+  // Default to Thai Baht for this project
+  return `฿${numericPart}${suffix}`;
+}

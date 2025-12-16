@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, X, Sparkles } from "lucide-react";
+import { Loader2, X, Sparkles, Star } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -31,7 +32,7 @@ import {
 } from "@/components/ui/form";
 import { toast } from "sonner";
 import { uploadToImageKit } from "@/lib/actions/upload.actions";
-import { createProperty, updateProperty } from "@/lib/actions/property.actions";
+import { createProperty, updateProperty, togglePropertyHighlight } from "@/lib/actions/property.actions";
 import { propertySchema } from "@/lib/validations";
 import { Property } from "@/lib/generated/prisma/client";
 
@@ -60,6 +61,8 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isRewritingContent, setIsRewritingContent] = useState(false);
+  const [isTogglingHighlight, setIsTogglingHighlight] = useState(false);
+  const [isHighlighted, setIsHighlighted] = useState(initialData?.isHighlighted || false);
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
   const [propertyFeatures, setPropertyFeatures] = useState<Array<{
     title: string;
@@ -746,6 +749,52 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
                 )}
               />
             </div>
+
+            {/* Highlighted Property Toggle - Only show for existing properties */}
+            {initialData && (
+              <>
+                <Separator />
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-amber-200 dark:border-amber-800">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Star className={`h-5 w-5 ${isHighlighted ? 'text-amber-500 fill-amber-500' : 'text-amber-400'}`} />
+                      <span className="font-medium text-amber-900 dark:text-amber-100">
+                        Hero Highlight
+                      </span>
+                    </div>
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                      {isHighlighted 
+                        ? "This property is shown in the homepage hero section"
+                        : "Show this property in the homepage hero section"}
+                    </p>
+                    <p className="text-xs text-amber-600/70 dark:text-amber-400/70">
+                      Note: Only one property can be highlighted at a time
+                    </p>
+                  </div>
+                  <Switch
+                    checked={isHighlighted}
+                    disabled={isTogglingHighlight}
+                    onCheckedChange={async (checked) => {
+                      setIsTogglingHighlight(true);
+                      try {
+                        await togglePropertyHighlight(initialData.id);
+                        setIsHighlighted(checked);
+                        toast.success(
+                          checked 
+                            ? "Property is now highlighted on the homepage!" 
+                            : "Property highlight removed"
+                        );
+                      } catch (error) {
+                        console.error(error);
+                        toast.error("Failed to toggle highlight");
+                      } finally {
+                        setIsTogglingHighlight(false);
+                      }
+                    }}
+                  />
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

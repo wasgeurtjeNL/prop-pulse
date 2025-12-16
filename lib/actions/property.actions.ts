@@ -2,7 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import prisma from "../prisma";
-import { PropertyType, Status, PropertyCategory } from "../generated/prisma/client";
+import { PropertyType, Status, PropertyCategory, Property, PropertyImage } from "../generated/prisma/client";
 import { auth } from "../auth";
 import { headers } from "next/headers";
 import { slugify } from "../utils";
@@ -18,6 +18,9 @@ export interface PropertyFilterParams {
   baths?: string;
   amenities?: string | string[];
 }
+
+// Type for highlighted property with images
+export type HighlightedProperty = (Property & { images: PropertyImage[] }) | null;
 
 export const getFeaturedProperties = unstable_cache(
   async () => {
@@ -47,6 +50,39 @@ export const getFeaturedProperties = unstable_cache(
   ["featured-properties-key"],
   { revalidate: 3600, tags: ["featured-properties"] }
 );
+
+// Get the highlighted property for the hero section
+export async function getHighlightedProperty(): Promise<HighlightedProperty> {
+  const fetchHighlighted = unstable_cache(
+    async (): Promise<HighlightedProperty> => {
+      try {
+        return await withRetry(() =>
+          prisma.property.findFirst({
+            where: {
+              isHighlighted: true,
+              status: "ACTIVE",
+            },
+            include: {
+              images: {
+                orderBy: { position: "asc" },
+              },
+            },
+            orderBy: {
+              updatedAt: "desc", // Most recently updated highlighted property
+            },
+          })
+        );
+      } catch (error) {
+        console.error("Error fetching highlighted property:", error);
+        return null;
+      }
+    },
+    ["highlighted-property-key"],
+    { revalidate: 3600, tags: ["highlighted-property"] }
+  );
+  
+  return fetchHighlighted();
+}
 
 export async function getPropertyDetails(slug: string) {
   try {
@@ -401,7 +437,9 @@ export async function createProperty(data: CreatePropertyArgs) {
 
   revalidatePath("/dashboard");
   revalidatePath("/properties");
-  revalidateTag("featured-properties", { expire: 0 });
+  revalidatePath("/"); // Revalidate home for hero
+  revalidateTag("featured-properties");
+  revalidateTag("highlighted-property");
 }
 
 export async function deleteProperty(propertyId: string, userId: string) {
@@ -431,7 +469,9 @@ export async function deleteProperty(propertyId: string, userId: string) {
 
   revalidatePath("/dashboard");
   revalidatePath("/properties");
-  revalidateTag("featured-properties", { expire: 0 });
+  revalidatePath("/"); // Revalidate home for hero
+  revalidateTag("featured-properties");
+  revalidateTag("highlighted-property");
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -503,9 +543,56 @@ export async function updateProperty(id: string, data: any) {
 
     revalidatePath("/dashboard");
     revalidatePath(`/listings/${property.slug}`);
-    revalidateTag("featured-properties", { expire: 0 });
+    revalidatePath("/"); // Revalidate home for hero
+    revalidateTag("featured-properties");
+    revalidateTag("highlighted-property");
   } catch (error) {
     console.error(error);
     throw new Error("Failed to update property listing");
+  }
+}
+
+// Toggle highlighted status for a property (only one property can be highlighted at a time)
+export async function togglePropertyHighlight(propertyId: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  try {
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId },
+    });
+
+    if (!property) {
+      throw new Error("Property not found");
+    }
+
+    // If setting this property as highlighted, unhighlight all others first
+    if (!property.isHighlighted) {
+      await prisma.property.updateMany({
+        where: { isHighlighted: true },
+        data: { isHighlighted: false },
+      });
+    }
+
+    // Toggle the current property
+    await prisma.property.update({
+      where: { id: propertyId },
+      data: { isHighlighted: !property.isHighlighted },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/");
+    revalidateTag("highlighted-property");
+
+    return { success: true, isHighlighted: !property.isHighlighted };
+  } catch (error) {
+    console.error("Error toggling property highlight:", error);
+    // Re-throw with more details for debugging
+    throw new Error(`Failed to toggle property highlight: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
