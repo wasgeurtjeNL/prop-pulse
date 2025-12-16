@@ -11,6 +11,11 @@ export default async function EditPropertyPage({
 
   const property = await prisma.property.findFirst({
     where: { id },
+    include: {
+      images: {
+        orderBy: { position: "asc" },
+      },
+    },
   });
 
   if (!property) return notFound();

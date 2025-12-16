@@ -202,6 +202,7 @@ export interface PaginatedPropertiesResult {
     type: PropertyType;
     image: string;
     createdAt: Date;
+    isHighlighted: boolean;
   }[];
   totalCount: number;
   totalPages: number;
@@ -313,6 +314,7 @@ export async function getAgentPropertiesPaginated(
         type: true,
         image: true,
         createdAt: true,
+        isHighlighted: true,
       },
       skip,
       take: limit,
@@ -549,6 +551,38 @@ export async function updateProperty(id: string, data: any) {
   } catch (error) {
     console.error(error);
     throw new Error("Failed to update property listing");
+  }
+}
+
+// Update image positions for a property
+export async function updateImagePositions(propertyId: string, imagePositions: { id: string; position: number }[]) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  try {
+    // Update each image position in a transaction
+    await prisma.$transaction(
+      imagePositions.map(({ id, position }) =>
+        prisma.propertyImage.update({
+          where: { id },
+          data: { position },
+        })
+      )
+    );
+
+    revalidatePath("/dashboard");
+    revalidatePath("/");
+    revalidateTag("highlighted-property");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating image positions:", error);
+    throw new Error("Failed to update image positions");
   }
 }
 

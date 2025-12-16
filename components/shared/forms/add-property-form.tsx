@@ -34,7 +34,13 @@ import { toast } from "sonner";
 import { uploadToImageKit } from "@/lib/actions/upload.actions";
 import { createProperty, updateProperty, togglePropertyHighlight } from "@/lib/actions/property.actions";
 import { propertySchema } from "@/lib/validations";
-import { Property } from "@/lib/generated/prisma/client";
+import { Property, PropertyImage } from "@/lib/generated/prisma/client";
+import { updateImagePositions } from "@/lib/actions/property.actions";
+import { GripVertical, Crown } from "lucide-react";
+
+type PropertyWithImages = Property & {
+  images?: PropertyImage[];
+};
 
 const AMENITIES_LIST = [
   "Air Conditioning",
@@ -54,7 +60,7 @@ const AMENITIES_LIST = [
 type PropertyFormValues = z.infer<typeof propertySchema>;
 
 interface PropertyFormProps {
-  initialData?: Property | null;
+  initialData?: PropertyWithImages | null;
 }
 
 export default function AddPropertyForm({ initialData }: PropertyFormProps) {
@@ -64,6 +70,10 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
   const [isTogglingHighlight, setIsTogglingHighlight] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(initialData?.isHighlighted || false);
   const [galleryImages, setGalleryImages] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<PropertyImage[]>(
+    initialData?.images?.sort((a, b) => a.position - b.position) || []
+  );
+  const [isReorderingImages, setIsReorderingImages] = useState(false);
   const [propertyFeatures, setPropertyFeatures] = useState<Array<{
     title: string;
     description: string;
@@ -678,6 +688,168 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
                         <p className="text-xs text-center mt-1 text-muted-foreground truncate">
                           {file.name}
                         </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Existing Images Reorder - Only show for existing properties */}
+              {initialData && existingImages.length > 0 && (
+                <div className="space-y-3">
+                  <Separator />
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <FormLabel>Manage Image Order</FormLabel>
+                      <FormDescription>
+                        Drag or use arrows to reorder. The first image is the hero image shown on the homepage.
+                      </FormDescription>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {existingImages.map((image, index) => (
+                      <div 
+                        key={image.id} 
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                          index === 0 
+                            ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-300 dark:from-amber-950/30 dark:to-yellow-950/30 dark:border-amber-700' 
+                            : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            disabled={index === 0 || isReorderingImages}
+                            onClick={async () => {
+                              setIsReorderingImages(true);
+                              try {
+                                const newImages = [...existingImages];
+                                [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+                                // Update positions
+                                const imagePositions = newImages.map((img, idx) => ({
+                                  id: img.id,
+                                  position: idx + 1,
+                                }));
+                                await updateImagePositions(initialData.id, imagePositions);
+                                setExistingImages(newImages);
+                                toast.success(index === 1 ? "Image set as hero!" : "Image moved up");
+                              } catch (error) {
+                                console.error(error);
+                                toast.error("Failed to reorder images");
+                              } finally {
+                                setIsReorderingImages(false);
+                              }
+                            }}
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            disabled={index === existingImages.length - 1 || isReorderingImages}
+                            onClick={async () => {
+                              setIsReorderingImages(true);
+                              try {
+                                const newImages = [...existingImages];
+                                [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
+                                // Update positions
+                                const imagePositions = newImages.map((img, idx) => ({
+                                  id: img.id,
+                                  position: idx + 1,
+                                }));
+                                await updateImagePositions(initialData.id, imagePositions);
+                                setExistingImages(newImages);
+                                toast.success("Image moved down");
+                              } catch (error) {
+                                console.error(error);
+                                toast.error("Failed to reorder images");
+                              } finally {
+                                setIsReorderingImages(false);
+                              }
+                            }}
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </Button>
+                        </div>
+                        
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+                        
+                        <div className="h-16 w-24 rounded-md overflow-hidden flex-shrink-0">
+                          {image.url ? (
+                            <img
+                              src={image.url}
+                              alt={image.alt || `Image ${index + 1}`}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center">
+                              <span className="text-xs text-muted-foreground">No image</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            {index === 0 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">
+                                <Crown className="h-3 w-3" />
+                                Hero Image
+                              </span>
+                            )}
+                            <span className="text-sm text-muted-foreground">
+                              Position {index + 1}
+                            </span>
+                          </div>
+                          {image.alt && (
+                            <p className="text-xs text-muted-foreground truncate mt-1">{image.alt}</p>
+                          )}
+                        </div>
+                        
+                        {index !== 0 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="flex-shrink-0"
+                            disabled={isReorderingImages}
+                            onClick={async () => {
+                              setIsReorderingImages(true);
+                              try {
+                                // Move this image to position 1
+                                const newImages = [...existingImages];
+                                const [movedImage] = newImages.splice(index, 1);
+                                newImages.unshift(movedImage);
+                                // Update positions
+                                const imagePositions = newImages.map((img, idx) => ({
+                                  id: img.id,
+                                  position: idx + 1,
+                                }));
+                                await updateImagePositions(initialData.id, imagePositions);
+                                setExistingImages(newImages);
+                                toast.success("Image set as hero!");
+                              } catch (error) {
+                                console.error(error);
+                                toast.error("Failed to set hero image");
+                              } finally {
+                                setIsReorderingImages(false);
+                              }
+                            }}
+                          >
+                            <Crown className="h-4 w-4 mr-1" />
+                            Set as Hero
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>

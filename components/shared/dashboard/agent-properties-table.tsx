@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Trash, Eye } from "lucide-react";
+import { MoreHorizontal, Edit, Trash, Eye, Star } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +38,7 @@ interface AgentProperty {
   type: PropertyType;
   image: string;
   createdAt: Date;
+  isHighlighted: boolean;
 }
 
 export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
@@ -82,7 +83,15 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
                 </div>
               </TableCell>
               <TableCell className="font-medium">
-                <div className="line-clamp-1">{property.title}</div>
+                <div className="flex items-center gap-2">
+                  <span className="line-clamp-1">{property.title}</span>
+                  {property.isHighlighted && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" title="Featured on Homepage">
+                      <Star className="h-3 w-3 fill-current" />
+                      Hero
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground line-clamp-1">
                   {property.location}
                 </div>

@@ -54,8 +54,8 @@ const Hero: React.FC<HeroProps> = async ({ page = 'home' }) => {
   } : DEFAULT_HERO_IMAGE.mobile
 
   return (
-    <section className='!py-0 overflow-x-hidden w-full -mt-20'>
-      <div className='w-full overflow-hidden relative'>
+    <section className='!py-0 overflow-x-clip w-full -mt-20'>
+      <div className='w-full overflow-x-clip relative'>
         {/* Desktop Hero Background Image - full background, extends behind header */}
         <div className='hidden lg:block absolute inset-0 -top-20 z-0'>
           <Image
@@ -106,7 +106,7 @@ const Hero: React.FC<HeroProps> = async ({ page = 'home' }) => {
         {highlightedProperty && (
           <Link 
             href={`/properties/${highlightedProperty.slug}`}
-            className='w-full md:w-auto md:absolute bottom-0 md:-right-68 xl:right-0 bg-white dark:bg-black py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8 lg:px-16 md:pr-[295px] rounded-none md:rounded-none md:rounded-tl-2xl mt-0 md:mt-44 block hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group'
+            className='w-full md:w-auto md:absolute bottom-0 md:-right-68 xl:right-0 bg-white dark:bg-black py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8 lg:px-16 md:pr-[295px] rounded-none md:rounded-none md:rounded-tl-2xl mt-0 md:mt-44 block hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group z-20 cursor-pointer'
           >
             <div className='grid grid-cols-2 sm:grid-cols-4 md:flex gap-4 sm:gap-6 md:gap-10 lg:gap-16 xl:gap-24 text-left sm:text-center dark:text-white text-black'>
               <div className='flex flex-col sm:items-center gap-2 sm:gap-3'>
