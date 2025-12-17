@@ -36,6 +36,10 @@ export interface PropertyTemplateFormat {
   }>;
   yearBuilt?: number;
   mapUrl?: string;
+  
+  // Ownership details (only for FOR_SALE properties)
+  ownershipType?: "FREEHOLD" | "LEASEHOLD" | null;
+  isResale?: boolean | null;
 }
 
 type PropertyWithImages = Property & {
@@ -100,6 +104,10 @@ export function transformPropertyToTemplate(
     amenitiesWithIcons: amenitiesWithIcons || undefined,
     yearBuilt: property.yearBuilt || undefined,
     mapUrl: property.mapUrl || undefined,
+    
+    // Ownership details (only for FOR_SALE properties)
+    ownershipType: (property as any).ownershipType || undefined,
+    isResale: (property as any).isResale || undefined,
   };
 }
 

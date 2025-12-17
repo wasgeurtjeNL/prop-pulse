@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, X, Sparkles, Star } from "lucide-react";
+import { Loader2, X, Sparkles, Star, HelpCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { InfoTooltip } from "@/components/ui/tooltip";
 import {
   Form,
   FormControl,
@@ -104,6 +105,8 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
         shortDescription: initialData.shortDescription || "",
         yearBuilt: initialData.yearBuilt || undefined,
         mapUrl: initialData.mapUrl || "",
+        ownershipType: initialData.ownershipType || null,
+        isResale: initialData.isResale || false,
       }
     : {
         type: "FOR_SALE",
@@ -122,6 +125,8 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
         yearBuilt: undefined,
         mapUrl: "",
         image: undefined,
+        ownershipType: null,
+        isResale: false,
       };
 
   const form = useForm<PropertyFormValues>({
@@ -130,6 +135,9 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     defaultValues: defaultValues as any,
   });
+
+  // Watch the property type to conditionally show ownership fields
+  const propertyType = form.watch("type");
 
   // Cleanup object URLs to prevent memory leaks
   useEffect(() => {
@@ -237,6 +245,9 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
         yearBuilt: values.yearBuilt ? Number(values.yearBuilt) : undefined,
         mapUrl: values.mapUrl || "",
         propertyFeatures: propertyFeatures.length > 0 ? propertyFeatures : undefined,
+        // Ownership details (only for FOR_SALE)
+        ownershipType: values.type === "FOR_SALE" ? values.ownershipType : null,
+        isResale: values.type === "FOR_SALE" ? values.isResale : null,
       };
 
       if (initialData) {
@@ -381,6 +392,99 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
             />
           </CardContent>
         </Card>
+
+        {/* Ownership Details - Only show for FOR_SALE properties */}
+        {propertyType === "FOR_SALE" && (
+          <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/20 dark:to-indigo-950/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>Ownership Details</span>
+                <span className="text-xs font-normal text-muted-foreground bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded">
+                  For Sale Only
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              <div className="grid sm:grid-cols-2 gap-6">
+                {/* Ownership Type (Freehold/Leasehold) */}
+                <FormField
+                  control={form.control}
+                  name="ownershipType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        Ownership Type
+                        <InfoTooltip 
+                          content={
+                            <div className="space-y-2">
+                              <p><strong>Freehold:</strong> You own the property and land outright, with no time limit. Full ownership passes to heirs.</p>
+                              <p><strong>Leasehold:</strong> You own the property for a fixed period (e.g., 30-99 years) but not the land. The lease can often be extended.</p>
+                            </div>
+                          }
+                          side="right"
+                        />
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(value === "none" ? null : value)}
+                        value={field.value || "none"}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select ownership type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="w-full">
+                          <SelectItem value="none">Not specified</SelectItem>
+                          <SelectItem value="FREEHOLD">Freehold</SelectItem>
+                          <SelectItem value="LEASEHOLD">Leasehold</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Specify whether this is a freehold or leasehold property
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Re-sale Toggle */}
+                <FormField
+                  control={form.control}
+                  name="isResale"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="flex items-center">
+                        Re-sale Property
+                        <InfoTooltip 
+                          content={
+                            <div className="space-y-2">
+                              <p><strong>Re-sale:</strong> A property being sold by the current owner, not by the original developer.</p>
+                              <p>Re-sale properties are typically ready to move in and may have been previously lived in or rented out.</p>
+                            </div>
+                          }
+                          side="right"
+                        />
+                      </FormLabel>
+                      <div className="flex items-center gap-3 pt-2">
+                        <Switch
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {field.value ? "This is a re-sale property" : "This is a new property (from developer)"}
+                        </span>
+                      </div>
+                      <FormDescription>
+                        Enable if this property has been previously owned
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

@@ -1,8 +1,14 @@
-import Details from "@/components/new-design/properties/property-detail";
+import dynamic from "next/dynamic";
 import { Metadata } from "next";
-import { getPropertyDetails } from "@/lib/actions/property.actions";
+import { getPropertyDetails, getRelatedProperties } from "@/lib/actions/property.actions";
 import { notFound } from "next/navigation";
 import { generatePropertySchema, renderJsonLd } from "@/lib/utils/structured-data";
+import { transformPropertyToTemplate } from "@/lib/adapters/property-adapter";
+
+// Dynamic import for the heavy property detail component
+const Details = dynamic(() => import("@/components/new-design/properties/property-detail"), {
+  ssr: true,
+});
 
 interface PropertyDetailPageProps {
     params: Promise<{ slug: string }>;
@@ -95,6 +101,18 @@ const PropertyDetailPage = async ({ params }: PropertyDetailPageProps) => {
     const mainImage = property.images?.[0]?.url || property.image || '';
     const allImages = property.images?.map(img => img.url || '').filter(Boolean) || [property.image];
 
+    // Transform property to frontend format
+    const transformedProperty = transformPropertyToTemplate(property);
+
+    // Fetch related properties server-side for faster rendering
+    const relatedProperties = await getRelatedProperties(
+        property.slug,
+        property.type,
+        property.location,
+        property.category,
+        3
+    );
+
     // Generate structured data for SEO
     const propertySchema = generatePropertySchema({
         name: property.title,
@@ -120,7 +138,19 @@ const PropertyDetailPage = async ({ params }: PropertyDetailPageProps) => {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={renderJsonLd(propertySchema)}
             />
-            <Details />
+            {/* Preload hero image for LCP optimization */}
+            {mainImage && (
+                <link
+                    rel="preload"
+                    as="image"
+                    href={mainImage}
+                    fetchPriority="high"
+                />
+            )}
+            <Details 
+                initialProperty={transformedProperty} 
+                initialRelatedProperties={relatedProperties}
+            />
         </>
     );
 };

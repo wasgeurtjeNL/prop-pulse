@@ -28,7 +28,7 @@ export default function ScrollToTop() {
   return (
     <>
       {isVisible && (
-        <div className="fixed bottom-8 right-8 z-999">
+        <div className="fixed bottom-24 right-6 z-40">
           <div
             onClick={scrollToTop}
             aria-label="scroll to top"

@@ -43,4 +43,7 @@ export const propertySchema = z.object({
     if (val instanceof FileList) return val.length > 0;
     return false;
   }, "Image is required"),
+  // Ownership details (only for FOR_SALE properties)
+  ownershipType: z.enum(["FREEHOLD", "LEASEHOLD"]).optional().nullable(),
+  isResale: z.boolean().optional().nullable(),
 });

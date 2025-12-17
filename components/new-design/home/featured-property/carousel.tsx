@@ -81,3 +81,5 @@ const FeaturedPropertyCarousel: React.FC<FeaturedPropertyCarouselProps> = ({ ima
 
 export default FeaturedPropertyCarousel;
 
+
+

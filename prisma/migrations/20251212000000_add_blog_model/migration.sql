@@ -35,3 +35,5 @@ ALTER TABLE "blog" ADD CONSTRAINT "blog_authorId_fkey" FOREIGN KEY ("authorId") 
 
 
 
+
+

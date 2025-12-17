@@ -37,15 +37,15 @@ const Footer = () => {
               By subscribing, you agree to receive our promotional emails. You can unsubscribe  at any time.
             </p>
           </div>
-          <div className="flex items-center gap-6">
-            <Link href="#">
-              <Icon icon="ph:x-logo-bold" width={24} height={24} className="text-white hover:text-primary duration-300" />
+          <div className="flex items-center gap-6" role="list" aria-label="Social media links">
+            <Link href="https://twitter.com/psmphuket" target="_blank" rel="noopener noreferrer" aria-label="Follow us on X (Twitter)" role="listitem">
+              <Icon icon="ph:x-logo-bold" width={24} height={24} className="text-white hover:text-primary duration-300" aria-hidden="true" />
             </Link>
-            <Link href="#">
-              <Icon icon="ph:facebook-logo-bold" width={24} height={24} className="text-white hover:text-primary duration-300" />
+            <Link href="https://facebook.com/psmphuket" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Facebook" role="listitem">
+              <Icon icon="ph:facebook-logo-bold" width={24} height={24} className="text-white hover:text-primary duration-300" aria-hidden="true" />
             </Link>
-            <Link href="#">
-              <Icon icon="ph:instagram-logo-bold" width={24} height={24} className="text-white hover:text-primary duration-300" />
+            <Link href="https://instagram.com/psmphuket" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Instagram" role="listitem">
+              <Icon icon="ph:instagram-logo-bold" width={24} height={24} className="text-white hover:text-primary duration-300" aria-hidden="true" />
             </Link>
           </div>
         </div>

@@ -1,18 +1,116 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import { useParams } from "next/navigation";
+import dynamic from 'next/dynamic';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import Image from 'next/image';
 import HTMLContent from '@/components/ui/html-content';
-import PropertyRequestTabs from '@/components/new-design/property-request/PropertyRequestTabs';
-import PropertyTrustBadges from '@/components/new-design/property-trust-badges';
-import RelatedProperties from '@/components/new-design/properties/RelatedProperties';
 import Breadcrumb from '@/components/new-design/breadcrumb';
-import AdminEditButton from '@/components/shared/admin-edit-button';
-import { formatPrice, sanitizeText } from '@/lib/utils';
 
-export default function Details() {
+// Dynamic imports for below-the-fold components to reduce initial bundle
+const PropertyRequestTabs = dynamic(
+  () => import('@/components/new-design/property-request/PropertyRequestTabs'),
+  { loading: () => <div className="animate-pulse bg-slate-100 dark:bg-slate-800 h-[400px] rounded-2xl" /> }
+);
+
+const PropertyTrustBadges = dynamic(
+  () => import('@/components/new-design/property-trust-badges'),
+  { ssr: false }
+);
+
+const RelatedProperties = dynamic(
+  () => import('@/components/new-design/properties/RelatedProperties'),
+  { loading: () => <div className="animate-pulse h-64" /> }
+);
+
+const NearbyPois = dynamic(
+  () => import('@/components/new-design/properties/NearbyPois'),
+  { loading: () => <div className="animate-pulse h-48 rounded-xl bg-slate-100 dark:bg-slate-800" /> }
+);
+
+const AdminEditButton = dynamic(
+  () => import('@/components/shared/admin-edit-button'),
+  { ssr: false }
+);
+
+// Skeleton component for image placeholders with fixed aspect ratio to prevent CLS
+const ImageSkeleton = ({ className = "", aspectRatio = "4/3" }: { className?: string; aspectRatio?: string }) => (
+  <div 
+    className={`animate-pulse bg-gradient-to-br from-slate-200 via-slate-100 to-slate-200 dark:from-slate-700 dark:via-slate-800 dark:to-slate-700 ${className}`}
+    style={{ aspectRatio }}
+  >
+    <div className="w-full h-full flex items-center justify-center">
+      <Icon icon="ph:image" className="w-12 h-12 text-slate-300 dark:text-slate-600" aria-hidden="true" />
+    </div>
+  </div>
+);
+
+// Optimized property image component with loading state and CLS prevention
+const PropertyImage = ({ 
+  src, 
+  alt, 
+  priority = false, 
+  className = "",
+  containerClassName = "",
+  sizes = "(max-width: 768px) 100vw, 50vw",
+  aspectRatio = "4/3"
+}: { 
+  src: string; 
+  alt: string; 
+  priority?: boolean;
+  className?: string;
+  containerClassName?: string;
+  sizes?: string;
+  aspectRatio?: string;
+}) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  return (
+    <div 
+      className={`relative overflow-hidden ${containerClassName}`}
+      style={{ aspectRatio }}
+    >
+      {/* Skeleton placeholder shown while loading - matches container aspect ratio */}
+      {isLoading && !error && (
+        <ImageSkeleton className="absolute inset-0 rounded-xl sm:rounded-2xl" aspectRatio={aspectRatio} />
+      )}
+      {/* Error state */}
+      {error && (
+        <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center rounded-xl sm:rounded-2xl">
+          <Icon icon="ph:image-broken" className="w-12 h-12 text-slate-400" aria-hidden="true" />
+        </div>
+      )}
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        priority={priority}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
+        className={`object-cover transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} ${className}`}
+        onLoad={() => setIsLoading(false)}
+        onError={() => {
+          setIsLoading(false);
+          setError(true);
+        }}
+      />
+    </div>
+  );
+};
+import { formatPrice, sanitizeText } from '@/lib/utils';
+import type { RelatedProperty } from '@/components/new-design/properties/RelatedProperties';
+
+interface DetailsProps {
+    /** Server-side fetched property data for faster initial render */
+    initialProperty?: any;
+    /** Server-side fetched related properties */
+    initialRelatedProperties?: RelatedProperty[];
+}
+
+export default function Details({ initialProperty, initialRelatedProperties }: DetailsProps) {
     const { slug } = useParams();
     const [testimonials, setTestimonials] = useState<any>(null);
     const [propertyHomes, setPropertyHomes] = useState<any>(null);
@@ -20,6 +118,11 @@ export default function Details() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
    useEffect(() => {
+    // Skip fetch if we have initial property data
+    if (initialProperty) {
+        return;
+    }
+    
     const fetchData = async () => {
         try {
             const [pageRes, propertyRes] = await Promise.all([
@@ -43,9 +146,10 @@ export default function Details() {
     }
 
     fetchData()
-}, [])
+}, [initialProperty])
 
-    const item = propertyHomes?.find((item:any) => item.slug === slug);
+    // Use server-side data if available, otherwise use client-side fetched data
+    const item = initialProperty || propertyHomes?.find((item:any) => item.slug === slug);
 
     const openLightbox = (index: number) => {
         setCurrentImageIndex(index);
@@ -88,7 +192,7 @@ export default function Details() {
     ] : [];
 
     return (
-        <section className="py-[5px] relative overflow-x-hidden" >
+        <main className="py-[5px] relative overflow-x-hidden" role="main">
             <div className="container mx-auto max-w-8xl px-3 sm:px-4 md:px-5 2xl:px-0">
                 {/* Breadcrumbs */}
                 {item && (
@@ -125,6 +229,28 @@ export default function Details() {
                                 <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono">
                                     <Icon icon="ph:hash" width={12} height={12} />
                                     {item.listingNumber}
+                                </span>
+                            )}
+                            {/* Ownership Type Badge (Freehold/Leasehold) - Only for FOR_SALE */}
+                            {item?.type === 'FOR_SALE' && item?.ownershipType && (
+                                <span className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium ${
+                                    item.ownershipType === 'FREEHOLD'
+                                        ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
+                                        : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                                }`}>
+                                    <Icon 
+                                        icon={item.ownershipType === 'FREEHOLD' ? 'ph:seal-check-bold' : 'ph:clock-bold'} 
+                                        width={12} 
+                                        height={12} 
+                                    />
+                                    {item.ownershipType === 'FREEHOLD' ? 'Freehold' : 'Leasehold'}
+                                </span>
+                            )}
+                            {/* Re-sale Badge - Only for FOR_SALE */}
+                            {item?.type === 'FOR_SALE' && item?.isResale && (
+                                <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                                    <Icon icon="ph:repeat-bold" width={12} height={12} />
+                                    Re-sale
                                 </span>
                             )}
                         </div>
@@ -178,98 +304,143 @@ export default function Details() {
                 {/* Image Gallery - Mobile Horizontal Scroll */}
                 {item?.images && item.images.length > 0 && (
                     <div className="sm:hidden mt-6 -mx-3 px-3">
-                        <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2">
+                        <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2" role="region" aria-label="Property images gallery">
                             {item.images.map((image: any, index: number) => (
-                                <div 
+                                <button 
                                     key={index}
-                                    className="flex-shrink-0 w-[85%] h-[220px] xs:h-[260px] snap-start cursor-pointer group relative overflow-hidden rounded-xl"
+                                    className="flex-shrink-0 w-[85%] snap-start cursor-pointer group relative overflow-hidden rounded-xl border-0 p-0 bg-transparent"
                                     onClick={() => openLightbox(index)}
+                                    aria-label={`View property image ${index + 1} of ${item.images.length}`}
+                                    type="button"
                                 >
-                                    <Image
+                                    <PropertyImage
                                         src={image.src}
-                                        alt={`Property Image ${index + 1}`}
-                                        width={400}
-                                        height={500}
-                                        className="rounded-xl w-full h-full object-cover"
-                                        unoptimized={true}
+                                        alt={`${item?.name || 'Property'} - Image ${index + 1}`}
+                                        priority={index === 0}
+                                        sizes="85vw"
+                                        className="rounded-xl"
+                                        containerClassName="w-full"
+                                        aspectRatio="4/3"
                                     />
                                     {/* Image counter badge */}
-                                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                                        <Icon icon="ph:images" width={14} height={14} />
+                                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 z-10" aria-hidden="true">
+                                        <Icon icon="ph:images" width={14} height={14} aria-hidden="true" />
                                         {index + 1}/{item.images.length}
                                     </div>
                                     {/* Tap to expand hint on first image */}
                                     {index === 0 && (
-                                        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1">
-                                            <Icon icon="ph:arrows-out" width={12} height={12} />
+                                        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1 z-10" aria-hidden="true">
+                                            <Icon icon="ph:arrows-out" width={12} height={12} aria-hidden="true" />
                                             Tap to expand
                                         </div>
                                     )}
-                                </div>
+                                </button>
                             ))}
                         </div>
                     </div>
                 )}
 
                 {/* Image Gallery - Desktop Grid Layout (Hidden on mobile) */}
-                <div className="hidden sm:grid grid-cols-12 mt-6 sm:mt-8 gap-2 sm:gap-4 md:gap-6">
-                    {/* Main Image */}
+                <div className="hidden sm:grid grid-cols-12 mt-6 sm:mt-8 gap-2 sm:gap-4 md:gap-6" role="region" aria-label="Property images gallery">
+                    {/* Main Image - Hero with priority loading */}
                     <div className="col-span-12 lg:col-span-8 lg:row-span-2">
                         {item?.images && item?.images[0] && (
-                            <div className="w-full h-[400px] md:h-[540px] cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl" onClick={() => openLightbox(0)}>
-                                <Image
+                            <button 
+                                className="w-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl border-0 p-0 bg-transparent block" 
+                                onClick={() => openLightbox(0)}
+                                aria-label={`View main property image - ${item?.name || 'Property'}`}
+                                type="button"
+                            >
+                                <PropertyImage
                                     src={item.images[0]?.src}
-                                    alt="Main Property Image"
-                                    width={400}
-                                    height={500}
-                                    className="rounded-xl sm:rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                    unoptimized={true}
+                                    alt={`${item?.name || 'Property'} - Main image`}
+                                    priority={true}
+                                    sizes="(max-width: 1024px) 100vw, 66vw"
+                                    className="rounded-xl sm:rounded-2xl transition-transform duration-300 group-hover:scale-105"
+                                    containerClassName="w-full"
+                                    aspectRatio="16/10"
                                 />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={36} height={36} />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center z-10" aria-hidden="true">
+                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={36} height={36} aria-hidden="true" />
                                 </div>
-                            </div>
+                            </button>
                         )}
                     </div>
                     {/* Secondary images - Only visible on sm+ screens */}
-                    <div className="hidden sm:block lg:col-span-4 col-span-6 w-full h-[180px] sm:h-[240px] md:h-[335px]">
+                    <div className="hidden sm:block lg:col-span-4 col-span-6">
                         {item?.images && item?.images[1] && (
-                            <div className="w-full h-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl" onClick={() => openLightbox(1)}>
-                                <Image src={item.images[1]?.src} alt="Property Image 2" width={400} height={500} className="rounded-xl sm:rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" unoptimized={true} />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={40} height={40} />
+                            <button 
+                                className="w-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl border-0 p-0 bg-transparent block" 
+                                onClick={() => openLightbox(1)}
+                                aria-label={`View property image 2 of ${item.images.length}`}
+                                type="button"
+                            >
+                                <PropertyImage
+                                    src={item.images[1]?.src}
+                                    alt={`${item?.name || 'Property'} - Image 2`}
+                                    sizes="(max-width: 1024px) 50vw, 33vw"
+                                    className="rounded-xl sm:rounded-2xl transition-transform duration-300 group-hover:scale-105"
+                                    containerClassName="w-full"
+                                    aspectRatio="4/3"
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center z-10" aria-hidden="true">
+                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={40} height={40} aria-hidden="true" />
                                 </div>
-                            </div>
+                            </button>
                         )}
                     </div>
-                    <div className="hidden sm:block lg:col-span-2 col-span-6 w-full h-[100px] sm:h-[140px] md:h-[155px]">
+                    <div className="hidden sm:block lg:col-span-2 col-span-6">
                         {item?.images && item?.images[2] && (
-                            <div className="w-full h-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl" onClick={() => openLightbox(2)}>
-                                <Image src={item.images[2]?.src} alt="Property Image 3" width={400} height={500} className="rounded-xl sm:rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" unoptimized={true} />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={36} height={36} />
+                            <button 
+                                className="w-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl border-0 p-0 bg-transparent block" 
+                                onClick={() => openLightbox(2)}
+                                aria-label={`View property image 3 of ${item.images.length}`}
+                                type="button"
+                            >
+                                <PropertyImage
+                                    src={item.images[2]?.src}
+                                    alt={`${item?.name || 'Property'} - Image 3`}
+                                    sizes="(max-width: 1024px) 50vw, 16vw"
+                                    className="rounded-xl sm:rounded-2xl transition-transform duration-300 group-hover:scale-105"
+                                    containerClassName="w-full"
+                                    aspectRatio="16/9"
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center z-10" aria-hidden="true">
+                                    <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={36} height={36} aria-hidden="true" />
                                 </div>
-                            </div>
+                            </button>
                         )}
                     </div>
-                    <div className="hidden sm:block lg:col-span-2 col-span-6 w-full h-[100px] sm:h-[140px] md:h-[155px]">
+                    <div className="hidden sm:block lg:col-span-2 col-span-6">
                         {item?.images && item?.images[3] && (
-                            <div className="w-full h-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl" onClick={() => openLightbox(3)}>
-                                <Image src={item.images[3]?.src} alt="Property Image 4" width={400} height={500} className="rounded-xl sm:rounded-2xl w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" unoptimized={true} />
+                            <button 
+                                className="w-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl border-0 p-0 bg-transparent block" 
+                                onClick={() => openLightbox(3)}
+                                aria-label={item.images.length > 4 ? `View all ${item.images.length} property images` : `View property image 4 of ${item.images.length}`}
+                                type="button"
+                            >
+                                <PropertyImage
+                                    src={item.images[3]?.src}
+                                    alt={`${item?.name || 'Property'} - Image 4`}
+                                    sizes="(max-width: 1024px) 50vw, 16vw"
+                                    className="rounded-xl sm:rounded-2xl transition-transform duration-300 group-hover:scale-105"
+                                    containerClassName="w-full"
+                                    aspectRatio="16/9"
+                                />
                                 
                                 {/* Show More Overlay - when there are more than 4 images */}
                                 {item.images.length > 4 ? (
-                                    <div className="absolute inset-0 bg-black/70 group-hover:bg-black/80 transition-all duration-300 flex flex-col items-center justify-center">
-                                        <h3 className="text-white text-sm sm:text-xl font-bold uppercase tracking-wider">Show More</h3>
-                                        <p className="text-white text-xs sm:text-sm mt-1">+{item.images.length - 4} photos</p>
-                                        <Icon icon="ph:images" className="text-white mt-2" width={24} height={24} />
+                                    <div className="absolute inset-0 bg-black/70 group-hover:bg-black/80 transition-all duration-300 flex flex-col items-center justify-center z-10">
+                                        <span className="text-white text-sm sm:text-xl font-bold uppercase tracking-wider">Show More</span>
+                                        <span className="text-white text-xs sm:text-sm mt-1">+{item.images.length - 4} photos</span>
+                                        <Icon icon="ph:images" className="text-white mt-2" width={24} height={24} aria-hidden="true" />
                                     </div>
                                 ) : (
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                                        <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={36} height={36} />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center z-10" aria-hidden="true">
+                                        <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={36} height={36} aria-hidden="true" />
                                     </div>
                                 )}
-                            </div>
+                            </button>
                         )}
                     </div>
                 </div>
@@ -373,6 +544,11 @@ export default function Details() {
                                 </div>
                             </div>
                         )}
+                        {/* Nearby Points of Interest */}
+                        {item?.id && (
+                            <NearbyPois propertyId={item.id} />
+                        )}
+
                         {/* Dynamic Related Properties - prevents 404s when properties are deleted */}
                         {item && (
                             <RelatedProperties
@@ -381,6 +557,7 @@ export default function Details() {
                                 location={item.location}
                                 category={item.category}
                                 limit={3}
+                                initialProperties={initialRelatedProperties}
                             />
                         )}
 
@@ -514,6 +691,6 @@ export default function Details() {
             
             {/* Admin Edit Button */}
             {item && <AdminEditButton editType="property" editId={item.id} />}
-        </section>
+        </main>
     );
 }

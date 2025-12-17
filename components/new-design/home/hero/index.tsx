@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getHeroImages } from '@/lib/actions/hero-image.actions'
 import { getHighlightedProperty, HighlightedProperty } from '@/lib/actions/property.actions'
 import { formatPrice, sanitizeText } from '@/lib/utils'
+import { getOptimizedImageUrl } from '@/lib/imagekit'
 
 // Default fallback images
 const DEFAULT_HERO_IMAGE = {
@@ -38,16 +39,18 @@ const Hero: React.FC<HeroProps> = async ({ page = 'home' }) => {
   const desktopImage = heroImages?.find(img => img.deviceType === 'DESKTOP')
   const mobileImage = heroImages?.find(img => img.deviceType === 'MOBILE')
   
-  // Use database images or fallback to defaults
+  // Use database images or fallback to defaults - with ImageKit optimization
   const heroDesktop = desktopImage ? {
-    src: desktopImage.imageUrl,
+    // Optimize desktop image: 1280px wide, 80% quality
+    src: getOptimizedImageUrl(desktopImage.imageUrl, { width: 1536, quality: 80 }),
     alt: desktopImage.alt,
     width: desktopImage.width || 1082,
     height: desktopImage.height || 1016,
   } : DEFAULT_HERO_IMAGE.desktop
   
   const heroMobile = mobileImage ? {
-    src: mobileImage.imageUrl,
+    // Optimize mobile image: 640px wide (enough for most phones), 75% quality
+    src: getOptimizedImageUrl(mobileImage.imageUrl, { width: 640, quality: 75, focus: 'auto' }),
     alt: mobileImage.alt,
     width: mobileImage.width || 750,
     height: mobileImage.height || 1334,
@@ -65,11 +68,12 @@ const Hero: React.FC<HeroProps> = async ({ page = 'home' }) => {
             priority={true}
             fetchPriority="high"
             sizes="100vw"
+            quality={80}
             className='object-cover object-top'
           />
         </div>
         
-        {/* Mobile Hero Background Image - absolute positioned behind content, extends behind header */}
+        {/* Mobile Hero Background Image - optimized for fast LCP */}
         <div className='lg:hidden absolute inset-0 z-0'>
           <Image
             src={heroMobile.src}
@@ -78,6 +82,7 @@ const Hero: React.FC<HeroProps> = async ({ page = 'home' }) => {
             priority={true}
             fetchPriority="high"
             sizes="100vw"
+            quality={75}
             className='object-cover object-top'
           />
           {/* Gradient overlay for text readability */}

@@ -7,7 +7,7 @@ import { Icon } from "@iconify/react";
 import PropertyAlertForm from "./PropertyAlertForm";
 import { formatPrice } from "@/lib/utils";
 
-interface RelatedProperty {
+export interface RelatedProperty {
   id: string;
   title: string;
   slug: string;
@@ -26,6 +26,8 @@ interface RelatedPropertiesProps {
   location: string;
   category?: string;
   limit?: number;
+  /** Pre-fetched properties from server for faster initial render */
+  initialProperties?: RelatedProperty[];
 }
 
 export default function RelatedProperties({
@@ -34,13 +36,20 @@ export default function RelatedProperties({
   location,
   category,
   limit = 3,
+  initialProperties,
 }: RelatedPropertiesProps) {
-  const [properties, setProperties] = useState<RelatedProperty[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Use initial properties if provided, otherwise fetch client-side
+  const [properties, setProperties] = useState<RelatedProperty[]>(initialProperties || []);
+  const [loading, setLoading] = useState(!initialProperties);
   const [error, setError] = useState<string | null>(null);
   const [showAlertDialog, setShowAlertDialog] = useState(false);
 
   useEffect(() => {
+    // Skip fetch if we have initial properties
+    if (initialProperties && initialProperties.length > 0) {
+      return;
+    }
+
     const fetchRelatedProperties = async () => {
       try {
         setLoading(true);
@@ -72,10 +81,10 @@ export default function RelatedProperties({
     };
 
     fetchRelatedProperties();
-  }, [currentSlug, propertyType, location, category, limit]);
+  }, [currentSlug, propertyType, location, category, limit, initialProperties]);
 
-  // Skeleton loader
-  if (loading) {
+  // Skeleton loader - only show if no initial properties
+  if (loading && !initialProperties) {
     return (
       <div className="mt-12 pt-10 border-t border-dark/10 dark:border-white/10">
         <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-64 mb-6 animate-pulse"></div>

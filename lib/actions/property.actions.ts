@@ -2,13 +2,15 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import prisma from "../prisma";
-import { PropertyType, Status, PropertyCategory, Property, PropertyImage } from "../generated/prisma/client";
+import { PropertyType, Status, PropertyCategory, Property, PropertyImage, OwnershipType } from "../generated/prisma/client";
 import { auth } from "../auth";
 import { headers } from "next/headers";
 import { slugify } from "../utils";
 import { z } from "zod";
 import { propertySchema } from "../validations";
 import { withRetry } from "../db-utils";
+import { geocodePropertyLocation } from "../services/poi/geocoding";
+import { analyzeProperty } from "../services/poi/sync";
 
 /**
  * Generate the next unique listing number in format "PP-XXXX"
@@ -413,6 +415,9 @@ type CreatePropertyArgs = z.infer<typeof propertySchema> & {
   amenitiesWithIcons?: Array<{ name: string; icon: string }>;
   yearBuilt?: number;
   mapUrl?: string;
+  // Ownership details (only for FOR_SALE properties)
+  ownershipType?: OwnershipType | null;
+  isResale?: boolean | null;
 };
 
 export async function createProperty(data: CreatePropertyArgs) {
@@ -454,6 +459,10 @@ export async function createProperty(data: CreatePropertyArgs) {
         amenitiesWithIcons: data.amenitiesWithIcons as any,
         yearBuilt: data.yearBuilt,
         mapUrl: data.mapUrl,
+        
+        // Ownership details (only relevant for FOR_SALE)
+        ownershipType: data.type === "FOR_SALE" ? data.ownershipType : null,
+        isResale: data.type === "FOR_SALE" ? data.isResale : null,
       },
     });
 
@@ -475,6 +484,12 @@ export async function createProperty(data: CreatePropertyArgs) {
         });
       }
     }
+
+    // Geocode property location and analyze POIs (async, non-blocking)
+    geocodeAndAnalyzeProperty(property.id, data.location, data.mapUrl).catch(err => {
+      console.error("Background geocoding/POI analysis error:", err);
+    });
+    
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to create property listing");
@@ -485,6 +500,42 @@ export async function createProperty(data: CreatePropertyArgs) {
   revalidatePath("/"); // Revalidate home for hero
   revalidateTag("featured-properties");
   revalidateTag("highlighted-property");
+}
+
+/**
+ * Background geocoding and POI analysis for a property
+ * This runs asynchronously after property creation/update
+ */
+async function geocodeAndAnalyzeProperty(
+  propertyId: string, 
+  location: string, 
+  mapUrl?: string
+): Promise<void> {
+  try {
+    // Step 1: Geocode the location
+    const coords = await geocodePropertyLocation(location, mapUrl);
+    
+    if (coords) {
+      // Update property with coordinates
+      await prisma.property.update({
+        where: { id: propertyId },
+        data: {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          district: coords.district,
+        },
+      });
+      
+      // Step 2: Analyze POIs (calculate distances and scores)
+      await analyzeProperty(propertyId);
+      
+      console.log(`Property ${propertyId} geocoded and analyzed successfully`);
+    } else {
+      console.warn(`Could not geocode location for property ${propertyId}: ${location}`);
+    }
+  } catch (error) {
+    console.error(`Error in geocodeAndAnalyzeProperty for ${propertyId}:`, error);
+  }
 }
 
 export async function deleteProperty(propertyId: string, userId: string) {
@@ -556,6 +607,10 @@ export async function updateProperty(id: string, data: any) {
         amenitiesWithIcons: data.amenitiesWithIcons as any,
         yearBuilt: data.yearBuilt,
         mapUrl: data.mapUrl,
+        
+        // Ownership details (only relevant for FOR_SALE)
+        ownershipType: data.type === "FOR_SALE" ? data.ownershipType : null,
+        isResale: data.type === "FOR_SALE" ? data.isResale : null,
       },
     });
 
@@ -584,6 +639,17 @@ export async function updateProperty(id: string, data: any) {
           });
         }
       }
+    }
+
+    // Re-geocode if location or mapUrl changed
+    const locationChanged = property.location !== data.location;
+    const mapUrlChanged = property.mapUrl !== data.mapUrl;
+    
+    if (locationChanged || mapUrlChanged) {
+      // Trigger background geocoding and POI re-analysis
+      geocodeAndAnalyzeProperty(id, data.location, data.mapUrl).catch(err => {
+        console.error("Background geocoding/POI analysis error:", err);
+      });
     }
 
     revalidatePath("/dashboard");
@@ -680,6 +746,70 @@ export async function togglePropertyHighlight(propertyId: string) {
     console.error("Error toggling property highlight:", error);
     // Re-throw with more details for debugging
     throw new Error(`Failed to toggle property highlight: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Get related properties based on type, location, and category
+ * Used for server-side rendering to improve LCP
+ */
+export async function getRelatedProperties(
+  currentSlug: string,
+  propertyType: string,
+  location: string,
+  category?: string | null,
+  limit: number = 3
+) {
+  try {
+    const properties = await prisma.property.findMany({
+      where: {
+        slug: { not: currentSlug },
+        type: propertyType as PropertyType,
+        status: 'ACTIVE',
+        OR: [
+          // Same category (highest priority)
+          ...(category ? [{ category: category as PropertyCategory }] : []),
+          // Same location area
+          { location: { contains: location.split(',')[0]?.trim() || location } },
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        price: true,
+        location: true,
+        type: true,
+        beds: true,
+        baths: true,
+        sqft: true,
+        image: true, // Fallback image field on property table
+        images: {
+          select: { url: true },
+          orderBy: { position: 'asc' },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return properties.map((p: typeof properties[number]) => ({
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      price: p.price,
+      location: p.location,
+      type: p.type as "FOR_SALE" | "FOR_RENT",
+      beds: p.beds,
+      baths: p.baths,
+      sqft: p.sqft,
+      // Use linked image first, fallback to main image field
+      image: p.images[0]?.url || p.image || '',
+    }));
+  } catch (error) {
+    console.error('Error fetching related properties:', error);
+    return [];
   }
 }
 

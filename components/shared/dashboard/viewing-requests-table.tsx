@@ -52,7 +52,7 @@ interface ViewingRequest {
     slug: string;
     location: string;
     price: string;
-  };
+  } | null;
 }
 
 export default function ViewingRequestsTable() {
@@ -204,18 +204,29 @@ export default function ViewingRequestsTable() {
                   </TableCell>
                   
                   <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <Link 
-                        href={`/properties/${request.property.slug}`}
-                        className="font-medium hover:text-primary transition-colors"
-                        target="_blank"
-                      >
-                        {request.property.title}
-                      </Link>
-                      <span className="text-xs text-muted-foreground">
-                        {request.property.location}
-                      </span>
-                    </div>
+                    {request.property ? (
+                      <div className="flex flex-col gap-1">
+                        <Link 
+                          href={`/properties/${request.property.slug}`}
+                          className="font-medium hover:text-primary transition-colors"
+                          target="_blank"
+                        >
+                          {request.property.title}
+                        </Link>
+                        <span className="text-xs text-muted-foreground">
+                          {request.property.location}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium text-muted-foreground italic">
+                          General Inquiry
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          No specific property
+                        </span>
+                      </div>
+                    )}
                   </TableCell>
                   
                   <TableCell>
@@ -248,9 +259,11 @@ export default function ViewingRequestsTable() {
                         <span className="font-bold text-green-600 dark:text-green-400">
                           ฿{request.offerAmount}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          Asking: ฿{request.property.price}
-                        </span>
+                        {request.property?.price && (
+                          <span className="text-xs text-muted-foreground">
+                            Asking: ฿{request.property.price}
+                          </span>
+                        )}
                       </div>
                     ) : request.viewingDate ? (
                       <div className="flex items-center gap-1">

@@ -11,6 +11,9 @@ import { LanguageProvider } from "@/lib/contexts/language-context";
 const font = Bricolage_Grotesque({ 
   subsets: ["latin"],
   variable: "--font-bricolage",
+  display: "swap", // Prevents FOIT (Flash of Invisible Text) for better CLS
+  preload: true,
+  fallback: ["system-ui", "sans-serif"],
 });
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
@@ -85,6 +88,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
+      <head>
+        {/* Preconnect to external resources for faster loading */}
+        <link rel="preconnect" href="https://ik.imagekit.io" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://ik.imagekit.io" />
+        <link rel="preconnect" href="https://api.iconify.design" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://api.iconify.design" />
+        {/* Preconnect to Google Fonts for faster font loading */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body className={`${font.className} bg-white dark:bg-black antialiased h-full m-0 p-0`}>
         <NextTopLoader color="#07be8a" />
         <SessionProvider>

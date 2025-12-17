@@ -98,6 +98,10 @@ model Property {
   tag           String?
   status        Status           @default(ACTIVE)
   isHighlighted Boolean          @default(false) // Show in hero section on homepage
+  
+  // Ownership details (only for FOR_SALE properties)
+  ownershipType OwnershipType?   // FREEHOLD or LEASEHOLD - null means not specified
+  isResale      Boolean?         @default(false) // True if property is a re-sale
 
   // Images - Main image kept for backward compatibility
   image  String
@@ -119,6 +123,34 @@ model Property {
   yearBuilt Int?
   mapUrl    String?
 
+  // ============================================
+  // GEO & POI DATA
+  // ============================================
+  
+  // Geo-coördinaten (voor POI distance berekeningen en kaart)
+  latitude   Float?
+  longitude  Float?
+  
+  // Pre-calculated location scores (0-100, higher = better)
+  beachScore       Int?  // Nabijheid tot stranden
+  familyScore      Int?  // Scholen, ziekenhuizen in de buurt
+  convenienceScore Int?  // Supermarkten, winkels, etc.
+  quietnessScore   Int?  // Afstand tot drukke wegen/nightlife
+  
+  // Sea view analyse
+  hasSeaView       Boolean  @default(false)
+  seaViewDirection String?  // N, NE, E, SE, S, SW, W, NW
+  seaDistance      Int?     // Meters tot dichtstbijzijnde kust
+  
+  // District voor filtering (genormaliseerd)
+  district         String?  // Rawai, Kata, Chalong, Patong, etc.
+  
+  // POI sync tracking
+  poisLastCalculatedAt DateTime?
+  
+  // Relations - POI distances
+  poiDistances PropertyPoiDistance[]
+
   // Relations
   userId          String
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -127,6 +159,11 @@ model Property {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([latitude, longitude])
+  @@index([district])
+  @@index([beachScore])
+  @@index([familyScore])
+  @@index([convenienceScore])
   @@map("property")
 }
 
@@ -151,6 +188,11 @@ enum PropertyType {
   FOR_RENT
 }
 
+enum OwnershipType {
+  FREEHOLD
+  LEASEHOLD
+}
+
 enum PropertyCategory {
   LUXURY_VILLA
   APARTMENT
@@ -167,8 +209,8 @@ enum Status {
 
 model ViewingRequest {
   id         String   @id @default(cuid())
-  propertyId String
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String?
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
 
   // Request details
   requestType RequestType
@@ -942,4 +984,231 @@ model PropertyAlertNotification {
   @@index([alertId])
   @@index([createdAt])
   @@map("property_alert_notification")
+}
+
+// ============================================
+// POI SYSTEEM - Points of Interest
+// ============================================
+
+// Hoofdtabel voor alle Points of Interest
+model Poi {
+  id          String   @id @default(cuid())
+  
+  // Identificatie - voor deduplicatie
+  externalId  String?  // OSM node ID of Google place_id
+  source      PoiSource @default(OSM)
+  
+  // Basis info
+  name        String
+  nameTh      String?  // Thai naam
+  nameLocal   String?  // Lokale naam variant
+  
+  // Categorisatie
+  category    PoiCategory
+  subCategory String?  // Meer specifiek: "international_school", "private_hospital"
+  
+  // Locatie
+  latitude    Float
+  longitude   Float
+  address     String?
+  district    String?  // Rawai, Kata, Chalong, Patong, etc.
+  
+  // Metadata van bron
+  osmTags     Json?    // Originele OSM tags voor debugging/filtering
+  
+  // Kwaliteit & ranking
+  importance  Int      @default(5) // 1-10, voor ranking in UI
+  isVerified  Boolean  @default(false) // Handmatig geverifieerd
+  isActive    Boolean  @default(true)
+  
+  // Voor noise/traffic proxies
+  noiseLevel    NoiseLevel?
+  trafficLevel  TrafficLevel?
+  
+  // Sync tracking
+  lastSyncedAt DateTime?
+  syncError    String?
+  
+  // Relations
+  propertyDistances PropertyPoiDistance[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([externalId, source])
+  @@index([category])
+  @@index([subCategory])
+  @@index([district])
+  @@index([latitude, longitude])
+  @@index([isActive])
+  @@map("poi")
+}
+
+// Pre-berekende afstanden tussen properties en POIs
+model PropertyPoiDistance {
+  id          String   @id @default(cuid())
+  
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  poiId       String
+  poi         Poi      @relation(fields: [poiId], references: [id], onDelete: Cascade)
+  
+  // Afstanden
+  distanceMeters  Int      // Hemelsbreed (Haversine)
+  walkingMinutes  Int?     // Via routing API (optioneel)
+  drivingMinutes  Int?     // Via routing API (optioneel)
+  
+  // Relevantie voor UI
+  isHighlight     Boolean  @default(false) // Toon prominent op listing
+  
+  calculatedAt    DateTime @default(now())
+
+  @@unique([propertyId, poiId])
+  @@index([propertyId])
+  @@index([poiId])
+  @@index([distanceMeters])
+  @@map("property_poi_distance")
+}
+
+// POI Sync Job tracking
+model PoiSyncJob {
+  id              String   @id @default(cuid())
+  
+  // Job info
+  jobType         PoiSyncJobType
+  status          PoiSyncJobStatus @default(PENDING)
+  
+  // Scope
+  category        PoiCategory?  // Null = all categories
+  district        String?       // Null = all districts
+  
+  // Results
+  poisFetched     Int      @default(0)
+  poisCreated     Int      @default(0)
+  poisUpdated     Int      @default(0)
+  poisSkipped     Int      @default(0)
+  
+  // Timing
+  startedAt       DateTime?
+  completedAt     DateTime?
+  
+  // Error handling
+  errorMessage    String?  @db.Text
+  errorStack      String?  @db.Text
+  
+  createdAt       DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("poi_sync_job")
+}
+
+// ============================================
+// POI ENUMS
+// ============================================
+
+enum PoiSource {
+  OSM           // OpenStreetMap via Overpass API
+  GOOGLE        // Google Places API
+  MANUAL        // Handmatig toegevoegd door admin
+  GOVERNMENT    // Officiële overheidsbronnen
+}
+
+enum PoiCategory {
+  // 🏖️ Leisure
+  BEACH
+  PARK
+  VIEWPOINT
+  GOLF_COURSE
+  MARINA
+  TEMPLE
+  
+  // 🏫 Family & Education
+  INTERNATIONAL_SCHOOL
+  LOCAL_SCHOOL
+  KINDERGARTEN
+  UNIVERSITY
+  
+  // 🏥 Healthcare
+  HOSPITAL
+  CLINIC
+  PHARMACY
+  DENTIST
+  
+  // 🏙️ Daily Life - Shopping
+  SHOPPING_MALL
+  SUPERMARKET
+  CONVENIENCE_STORE
+  MARKET
+  
+  // 🏙️ Daily Life - Services
+  GYM
+  COWORKING
+  BANK
+  ATM
+  POST_OFFICE
+  
+  // 🍽️ Food & Drink
+  RESTAURANT
+  CAFE
+  BAR
+  NIGHTCLUB
+  
+  // 🚦 Transport & Infrastructure
+  MAIN_ROAD
+  HIGHWAY_ACCESS
+  AIRPORT
+  BUS_STATION
+  FERRY_TERMINAL
+  TAXI_STAND
+  
+  // 🌊 Environment & Views
+  SEA_VIEW_POINT
+  MOUNTAIN_VIEW
+  RIVER
+  LAKE
+  
+  // 🔇 Noise Indicators
+  NIGHTLIFE_CLUSTER
+  BUSY_INTERSECTION
+  CONSTRUCTION_ZONE
+  
+  // 🧱 Areas & Districts
+  NEIGHBORHOOD
+  TOURIST_AREA
+  RESIDENTIAL_AREA
+  
+  // 🏨 Accommodation (for reference)
+  HOTEL
+  RESORT
+}
+
+enum NoiseLevel {
+  QUIET       // Residentieel, ver van wegen
+  MODERATE    // Normale straten
+  BUSY        // Drukke wegen, winkels
+  LOUD        // Nightlife, hoofdwegen
+}
+
+enum TrafficLevel {
+  LOW
+  MEDIUM
+  HIGH
+  VERY_HIGH
+}
+
+enum PoiSyncJobType {
+  FULL_SYNC       // Alle POIs voor hele regio
+  CATEGORY_SYNC   // Specifieke categorie
+  DISTRICT_SYNC   // Specifiek district
+  INCREMENTAL     // Alleen nieuwe/gewijzigde
+}
+
+enum PoiSyncJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
 }
