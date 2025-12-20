@@ -231,6 +231,7 @@ model Property {
   viewingRequests ViewingRequest[]
   rentalBookings  RentalBooking[]
   blockedDates    PropertyBlockedDate[]
+  tm30Accommodation Tm30Accommodation?  // Linked TM30 registration
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1321,13 +1322,13 @@ enum PoiSyncJobStatus {
 // ============================================
 
 model RentalPricingConfig {
-  id        String   @id @default(cuid())
+  id        String   @id @default("default")
   
-  // Low season date ranges (stored as JSON array of {start, end} objects)
-  lowSeasonRanges Json?   @db.Json
-  
-  // Surcharge tiers for short stays
-  surchargeTiers  Json?   @db.Json
+  peakSeasonMonths     Int[]   @default([12, 1, 2])
+  peakSeasonSurcharges Json    @default("[{\"minDays\":1,\"maxDays\":7,\"surchargePercent\":30},{\"minDays\":8,\"maxDays\":14,\"surchargePercent\":20},{\"minDays\":15,\"maxDays\":19,\"surchargePercent\":15},{\"minDays\":20,\"maxDays\":30,\"surchargePercent\":0}]")
+  lowSeasonSurcharges  Json    @default("[{\"minDays\":1,\"maxDays\":7,\"surchargePercent\":20},{\"minDays\":8,\"maxDays\":14,\"surchargePercent\":17},{\"minDays\":15,\"maxDays\":19,\"surchargePercent\":13},{\"minDays\":20,\"maxDays\":30,\"surchargePercent\":0}]")
+  minimumStayDays      Int     @default(1)
+  maximumStayDays      Int     @default(30)
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1541,4 +1542,146 @@ model PropertyBlockedDate {
   @@index([propertyId])
   @@index([startDate, endDate])
   @@map("property_blocked_date")
+}
+
+// ============================================
+// TM30 ACCOMMODATION CACHE
+// ============================================
+// Cached TM30 accommodations from Thailand Immigration website
+// Used for linking properties to their TM30 registration
+model Tm30Accommodation {
+  id         String   @id @default(cuid())
+  
+  // TM30 System Identifiers
+  tm30Id     String   @map("tm30_id")      // Original ID from TM30 system
+  name       String                         // Accommodation name in TM30
+  address    String   @db.Text              // Full address
+  
+  // Status in TM30 system
+  status     String?  @default("Pending")   // "Approved", "Pending", "Rejected"
+  
+  // Link to our property
+  propertyId String?  @unique @map("property_id")
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  
+  // Matching metadata
+  matchScore Float?    @map("match_score")
+  matchedBy  String?   @map("matched_by")
+  matchedAt  DateTime? @map("matched_at")
+  
+  // Sync metadata
+  lastSyncedAt DateTime? @map("last_synced_at")
+  syncSource   String?   @map("sync_source")
+  createdAt    DateTime? @default(now()) @map("created_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
+  
+  @@index([name])
+  @@index([status])
+  @@index([propertyId])
+  @@map("tm30_accommodation")
+}
+
+// ============================================
+// TM30 ACCOMMODATION REGISTRATION REQUEST
+// For adding NEW accommodations to TM30 system
+// Data can come from OCR of ทะเบียนบ้าน (house registration)
+// ============================================
+model Tm30AccommodationRequest {
+  id         String   @id @default(cuid())
+  
+  // ============================================
+  // EIGENAAR INFORMATIE (Owner / เจ้าบ้าน)
+  // ============================================
+  // If checkbox "เจ้าบ้านเป็นบุคคลเดียวกับผู้ลงทะเบียน" is checked, 
+  // these are copied from the TM30 profile (RUEDEEKORN's data)
+  ownerSameAsRegistrant  Boolean  @default(true) @map("owner_same_as_registrant")
+  ownerNationalType      String   @default("THAI") @map("owner_national_type") // THAI or FOREIGNER
+  ownerNationalId        String?  @map("owner_national_id")      // Thai ID: 1770500036961
+  ownerPassportNumber    String?  @map("owner_passport_number")  // For foreigners
+  ownerFirstName         String   @map("owner_first_name")       // ฤดีกร
+  ownerMiddleName        String?  @map("owner_middle_name")
+  ownerLastName          String   @map("owner_last_name")        // จันทร์เกิด
+  ownerTelephone         String   @map("owner_telephone")        // 0986261646
+  ownerGender            String?  @map("owner_gender")           // M/F
+  
+  // ============================================
+  // TYPE & HOUSE ID (from ทะเบียนบ้าน)
+  // ============================================
+  entityType     String  @default("INDIVIDUAL") @map("entity_type") // INDIVIDUAL or JURISTIC
+  houseIdNumber  String? @map("house_id_number")  // เลขรหัสประจำบ้าน: S392-013427-3
+  
+  // ============================================
+  // ACCOMMODATIE DETAILS
+  // ============================================
+  accommodationType     String   @map("accommodation_type")      // Dropdown value
+  accommodationName     String   @map("accommodation_name")      // e.g., "PHUKET: New Villa Name"
+  position              String?                                  // Dropdown: Owner, Manager, etc.
+  positionOther         String?  @map("position_other")          // If position is "Other"
+  
+  // ============================================
+  // ADRES (from ทะเบียนบ้าน)
+  // ============================================
+  addressNumber     String   @map("address_number")      // บ้านเลขที่: 46/27
+  villageNumber     String?  @map("village_number")      // หมู่ที่: 4
+  alley             String?                              // ซอย
+  road              String?                              // ถนน
+  province          String                               // จังหวัด: PHUKET
+  district          String                               // อำเภอ: Mueang Phuket
+  subDistrict       String   @map("sub_district")        // ตำบล: Rawai
+  postalCode        String   @map("postal_code")         // รหัสไปรษณีย์: 83130
+  latitude          Float?                               // Optional
+  longitude         Float?                               // Optional
+  
+  // ============================================
+  // REFERENCE DOCUMENTS (uploaded files)
+  // ============================================
+  houseRegistrationUrl   String?  @map("house_registration_url")   // สำเนาทะเบียนบ้าน
+  houseRegistrationPath  String?  @map("house_registration_path")  // Path in storage
+  
+  // ============================================
+  // OCR DATA (from ChatGPT Vision)
+  // ============================================
+  ocrProcessed     Boolean   @default(false) @map("ocr_processed")
+  ocrProcessedAt   DateTime? @map("ocr_processed_at")
+  ocrRawData       Json?     @map("ocr_raw_data")        // Full OCR response
+  ocrConfidence    Float?    @map("ocr_confidence")      // 0-1 confidence score
+  
+  // ============================================
+  // SUBMISSION STATUS
+  // ============================================
+  status           Tm30AccomRequestStatus @default(DRAFT)
+  tm30Id           String?  @map("tm30_id")              // Assigned after approval: 7521-XXXXX
+  submittedAt      DateTime? @map("submitted_at")
+  approvedAt       DateTime? @map("approved_at")
+  rejectedAt       DateTime? @map("rejected_at")
+  rejectionReason  String?  @map("rejection_reason")
+  errorMessage     String?  @map("error_message")
+  
+  // ============================================
+  // LINK TO PROPERTY (after approved)
+  // ============================================
+  propertyId       String?  @unique @map("property_id")
+  
+  // ============================================
+  // AUDIT
+  // ============================================
+  createdBy        String?  @map("created_by")
+  updatedBy        String?  @map("updated_by")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([propertyId])
+  @@index([houseIdNumber])
+  @@map("tm30_accommodation_request")
+}
+
+enum Tm30AccomRequestStatus {
+  DRAFT            // Nog niet klaar om te submiten
+  PENDING          // Wacht op automatisering
+  PROCESSING       // Playwright is bezig
+  SUBMITTED        // Ingediend bij TM30, wacht op goedkeuring
+  APPROVED         // Goedgekeurd door TM30
+  REJECTED         // Afgewezen door TM30
+  FAILED           // Technische fout
 }
