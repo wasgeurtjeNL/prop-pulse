@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { Icon } from '@iconify/react'
 import { cn } from '@/lib/utils'
@@ -21,6 +21,9 @@ export default function ImageLightbox({
   onIndexChange,
 }: ImageLightboxProps) {
   const hasMultipleImages = images.length > 1
+  // Store scroll position and original overflow
+  const scrollPositionRef = useRef(0)
+  const originalOverflowRef = useRef('')
 
   const nextImage = useCallback(() => {
     onIndexChange((currentIndex + 1) % images.length)
@@ -30,9 +33,13 @@ export default function ImageLightbox({
     onIndexChange((currentIndex - 1 + images.length) % images.length)
   }, [currentIndex, images.length, onIndexChange])
 
-  // Handle keyboard navigation
+  // Handle keyboard navigation and scroll lock
   useEffect(() => {
     if (!isOpen) return
+
+    // Save current scroll position and overflow before locking
+    scrollPositionRef.current = window.scrollY
+    originalOverflowRef.current = document.body.style.overflow
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
@@ -53,7 +60,12 @@ export default function ImageLightbox({
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = 'unset'
+      // Restore original overflow
+      document.body.style.overflow = originalOverflowRef.current
+      // Restore scroll position after a small delay to ensure DOM has updated
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPositionRef.current)
+      })
     }
   }, [isOpen, onClose, nextImage, previousImage])
 

@@ -49,9 +49,146 @@ import {
 import { generateListingNumber } from '@/lib/actions/property.actions';
 import { parseLocationToSlugs } from '@/lib/property-url';
 import { calculatePropertyPoiDistances, calculatePropertyScores } from '@/lib/services/poi/sync';
+import { processPassportPhoto, sendWhatsAppMessage } from '@/lib/services/tm30-whatsapp';
 
 // Website base URL
 const WEBSITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://prop-pulse-nine.vercel.app';
+
+// ============================================
+// TM30 PASSPORT PHOTO HANDLER
+// ============================================
+
+/**
+ * Check if incoming photo is a passport for TM30 booking
+ * Returns a response if handled, null if not a passport flow
+ */
+async function handlePossiblePassportPhoto(
+  phoneNumber: string,
+  photoId: string,
+  message: WhatsAppMessage
+): Promise<BotResponse | null> {
+  try {
+    // Normalize phone number (remove leading 0, ensure country code)
+    const normalizedPhone = phoneNumber.replace(/^0/, '').replace(/^\+/, '');
+    
+    // Find pending booking for this phone number that needs passports
+    const pendingBooking = await prisma.rentalBooking.findFirst({
+      where: {
+        OR: [
+          // Match with country code variations
+          { guestPhone: { contains: normalizedPhone.slice(-9) } }, // Last 9 digits
+        ],
+        status: 'PENDING',
+        passportsReceived: { lt: prisma.rentalBooking.fields.passportsRequired },
+        property: {
+          tm30AccommodationId: { not: null },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        property: {
+          select: {
+            title: true,
+            tm30AccommodationId: true,
+          },
+        },
+        guests: {
+          where: { passportImageUrl: null },
+          orderBy: { guestNumber: 'asc' },
+          take: 1,
+        },
+      },
+    });
+
+    if (!pendingBooking || pendingBooking.guests.length === 0) {
+      // No pending booking that needs passports
+      return null;
+    }
+
+    console.log(`[TM30] Found pending booking ${pendingBooking.id} for phone ${phoneNumber}`);
+    console.log(`[TM30] Passports: ${pendingBooking.passportsReceived}/${pendingBooking.passportsRequired}`);
+
+    // Download the image from Twilio/WhatsApp
+    const imageUrl = await downloadPassportImage(photoId);
+    
+    if (!imageUrl) {
+      return {
+        text: `❌ Sorry, I couldn't download the image. Please try sending the passport photo again.`,
+      };
+    }
+
+    // Process the passport photo
+    const result = await processPassportPhoto(
+      pendingBooking.id,
+      imageUrl,
+      message.id
+    );
+
+    return { text: result.message };
+  } catch (error) {
+    console.error('[TM30] Error handling passport photo:', error);
+    return null; // Let normal flow handle it
+  }
+}
+
+/**
+ * Download image from WhatsApp/Twilio for passport processing
+ */
+async function downloadPassportImage(mediaUrl: string): Promise<string | null> {
+  try {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    
+    if (!accountSid || !authToken) {
+      console.error('[TM30] Twilio credentials not configured');
+      return null;
+    }
+    
+    console.log(`[TM30] Downloading passport image from: ${mediaUrl}`);
+    
+    // Download from Twilio
+    const imageResponse = await fetch(mediaUrl, {
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
+      },
+      redirect: 'follow',
+    });
+    
+    if (!imageResponse.ok) {
+      console.error(`[TM30] Failed to download image: ${imageResponse.status}`);
+      return null;
+    }
+    
+    const contentType = imageResponse.headers.get('content-type');
+    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+    
+    if (imageBuffer.length === 0) {
+      console.error('[TM30] Downloaded image is empty');
+      return null;
+    }
+    
+    console.log(`[TM30] Downloaded passport image, size: ${imageBuffer.length} bytes`);
+    
+    // Upload to ImageKit for permanent storage
+    const timestamp = Date.now();
+    const extension = contentType?.includes('png') ? 'png' : 'jpg';
+    const fileName = `passport-${timestamp}.${extension}`;
+    
+    const uploaded = await imagekit.upload({
+      file: imageBuffer,
+      fileName,
+      folder: '/tm30-passports',
+      tags: ['passport', 'tm30'],
+    });
+    
+    console.log(`[TM30] Uploaded passport to ImageKit: ${uploaded.url}`);
+    return uploaded.url;
+    
+  } catch (error) {
+    console.error('[TM30] Error downloading passport image:', error);
+    return null;
+  }
+}
 
 // ============================================
 // MAIN MESSAGE HANDLER
@@ -69,6 +206,25 @@ export async function handleIncomingMessage(
   try {
     // Parse the message to understand intent (async for Google Maps URL support)
     const parsed = await parseMessage(message);
+    
+    // ============================================
+    // CHECK FOR TM30 PASSPORT PHOTO FLOW
+    // ============================================
+    // If user sends a photo and has a pending booking that needs passports,
+    // process it as a passport photo
+    if (parsed.isPhoto && parsed.photoId) {
+      const passportResult = await handlePossiblePassportPhoto(
+        phoneNumber,
+        parsed.photoId,
+        message
+      );
+      
+      if (passportResult) {
+        // This was handled as a passport photo
+        return passportResult;
+      }
+      // Not a passport flow, continue with normal handling
+    }
     
     // Get or create session
     let session = await getActiveSession(whatsappId);

@@ -1,118 +1,149 @@
-# PropPulse - Cursor AI Rules
+# PSM Phuket - Cursor AI Rules
 
-Dit is een Next.js 16 real estate platform met focus op SEO en performance.
+This is a Next.js 16 real estate platform focused on SEO and performance.
 
-## 🚫 Belangrijke Verboden
+**IMPORTANT: All code, comments, and UI text should be in English unless otherwise specified.**
 
-- **NOOIT** `npm run dev` uitvoeren - de gebruiker start dit zelf
-- **NOOIT** nieuwe functies/APIs aanmaken als er al bestaande zijn - ALTIJD eerst zoeken naar bestaande implementaties
-- **NOOIT** TypeScript errors negeren - alle types moeten correct zijn
+## 🚫 Important Restrictions
+
+- **NEVER** run `npm run dev` - the user starts this themselves
+- **NEVER** create new functions/APIs if existing ones exist - ALWAYS search for existing implementations first
+- **NEVER** ignore TypeScript errors - all types must be correct
 
 ---
 
-## 📂 Project Structuur & Conventies
+## 🚀 Deployment & Workflow
+
+### ⚠️ NO GitHub
+This project does **NOT use GitHub**. All version control and deployment goes through other tools.
+
+### Deployment Flow
+1. **Make changes** → Wait for user approval
+2. **Test** → Use MCP Playwright (browser tools) to test the changes
+3. **Deploy** → After approval, deploy via `vercel --prod`
+
+### Database Migrations (Prisma)
+- **Local database**: `npx prisma db push` and `npx prisma generate`
+- **Production database**: Use **Supabase MCP** to push schema changes
+- For new models/fields:
+  1. Update `prisma/schema.prisma`
+  2. Push to production via `mcp_supabase_apply_migration`
+  3. Generate types locally with `npx prisma generate`
+
+### Test Workflow (MCP Playwright)
+Before deploying, test the changes:
+```
+1. mcp_cursor-ide-browser_browser_navigate → Navigate to the page
+2. mcp_cursor-ide-browser_browser_snapshot → View the elements
+3. mcp_cursor-ide-browser_browser_click/type → Test interactions
+4. Check console/network errors if needed
+```
+
+---
+
+## 📂 Project Structure & Conventions
 
 ### Tech Stack
 - **Framework**: Next.js 16 (App Router)
 - **React**: 19
-- **Database**: Prisma met PostgreSQL  
+- **Database**: Prisma with PostgreSQL  
 - **Auth**: Better Auth
 - **Styling**: Tailwind CSS 4
 - **Images**: ImageKit.io
-- **Animaties**: Framer Motion
+- **Animations**: Framer Motion
 
-### Folder Structuur
+### Folder Structure
 ```
 app/
-  (front)/       → Publieke pagina's
+  (front)/       → Public pages
   (dashboard)/   → Admin dashboard
   api/           → API routes
 components/
-  ui/            → Basis UI componenten (shadcn/ui)
-  new-design/    → Feature-specifieke componenten
-  shared/        → Herbruikbare componenten
+  ui/            → Base UI components (shadcn/ui)
+  new-design/    → Feature-specific components
+  shared/        → Reusable components
 lib/
-  actions/       → Server Actions (CRUD operaties)
-  utils/         → Utility functies
+  actions/       → Server Actions (CRUD operations)
+  utils/         → Utility functions
   validations/   → Zod schemas
 ```
 
 ---
 
-## 🔄 Hergebruik van Bestaande Code
+## 🔄 Reusing Existing Code
 
-### ALTIJD eerst controleren of functionaliteit al bestaat:
+### ALWAYS check if functionality already exists:
 
 #### Server Actions (lib/actions/)
-- `blog.actions.ts` - Blog CRUD operaties
-- `property.actions.ts` - Property CRUD operaties  
-- `upload.actions.ts` - File upload naar ImageKit
+- `blog.actions.ts` - Blog CRUD operations
+- `property.actions.ts` - Property CRUD operations  
+- `upload.actions.ts` - File upload to ImageKit
 - `user.actions.ts` - User management
 
-#### Utility Functies (lib/)
+#### Utility Functions (lib/)
 - `lib/utils.ts` - `cn()`, `formatType()`, `getUserInitials()`, `slugify()`
 - `lib/url.ts` - URL helpers
-- `lib/validation.ts` - Validatie helpers
-- `lib/imagekit.ts` - ImageKit configuratie
+- `lib/validation.ts` - Validation helpers
+- `lib/imagekit.ts` - ImageKit configuration
 
 #### SEO Utils (lib/utils/)
 - `structured-data.ts` - Schema.org JSON-LD generators:
-  - `generatePropertySchema()` - Voor property pagina's
-  - `generateOrganizationSchema()` - Voor bedrijfsinfo
-  - `generateBreadcrumbSchema()` - Voor breadcrumbs
-  - `generateFAQSchema()` - Voor FAQ secties
-  - `generateArticleSchema()` - Voor blog posts
-  - `renderJsonLd()` - Helper voor script rendering
+  - `generatePropertySchema()` - For property pages
+  - `generateOrganizationSchema()` - For business info
+  - `generateBreadcrumbSchema()` - For breadcrumbs
+  - `generateFAQSchema()` - For FAQ sections
+  - `generateArticleSchema()` - For blog posts
+  - `renderJsonLd()` - Helper for script rendering
 
-#### UI Componenten (components/ui/)
-Gebruik ALTIJD de bestaande shadcn/ui componenten:
+#### UI Components (components/ui/)
+ALWAYS use the existing shadcn/ui components:
 - Button, Card, Input, Select, Dialog, Form, etc.
 
 ---
 
-## 🚀 Performance & PageSpeed Optimalisatie
+## 🚀 Performance & PageSpeed Optimization
 
 ### Images
 ```tsx
-// ✅ GOED - Gebruik Next.js Image met optimalisatie
+// ✅ GOOD - Use Next.js Image with optimization
 import Image from 'next/image'
 
 <Image 
   src={url}
-  alt="Beschrijvende alt tekst"  // ALTIJD alt tekst voor SEO
+  alt="Descriptive alt text"  // ALWAYS add alt text for SEO
   width={800}
   height={600}
-  loading="lazy"                  // Lazy load voor below-the-fold
-  priority                        // Alleen voor above-the-fold images
+  loading="lazy"                  // Lazy load for below-the-fold
+  priority                        // Only for above-the-fold images
   sizes="(max-width: 768px) 100vw, 50vw"  // Responsive sizes
-  quality={75}                    // Balans tussen kwaliteit en grootte
-  placeholder="blur"              // Blur placeholder voor betere UX
+  quality={75}                    // Balance between quality and size
+  placeholder="blur"              // Blur placeholder for better UX
 />
 ```
 
 ### Code Splitting & Lazy Loading
 ```tsx
-// ✅ GOED - Dynamic imports voor zware componenten
+// ✅ GOOD - Dynamic imports for heavy components
 import dynamic from 'next/dynamic'
 
 const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
   loading: () => <Skeleton />,
-  ssr: false  // Als niet nodig voor SEO
+  ssr: false  // If not needed for SEO
 })
 ```
 
 ### Server vs Client Components
 ```tsx
-// Standaard = Server Component (beter voor SEO & performance)
-// Gebruik 'use client' ALLEEN wanneer nodig:
+// Default = Server Component (better for SEO & performance)
+// Use 'use client' ONLY when needed:
 // - Event handlers (onClick, onChange, etc.)
-// - useState, useEffect, andere hooks
+// - useState, useEffect, other hooks
 // - Browser APIs (window, document)
 ```
 
 ### Fonts
 ```tsx
-// ✅ GOED - Gebruik next/font voor optimale loading
+// ✅ GOOD - Use next/font for optimal loading
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
 ```
@@ -122,11 +153,11 @@ const inter = Inter({ subsets: ['latin'], display: 'swap' })
 // In Server Components / fetch calls
 fetch(url, { 
   next: { 
-    revalidate: 3600  // Cache voor 1 uur
+    revalidate: 3600  // Cache for 1 hour
   }
 })
 
-// Voor statische pagina's
+// For static pages
 export const revalidate = 3600
 ```
 
@@ -134,17 +165,17 @@ export const revalidate = 3600
 
 ## 🔍 SEO Best Practices
 
-### Metadata (Elke pagina MOET dit hebben)
+### Metadata (Every page MUST have this)
 ```tsx
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Pagina Titel | PropPulse',
-  description: 'Unieke beschrijving van 150-160 karakters...',
-  keywords: ['vastgoed', 'dubai', 'investeren'],
+  title: 'Page Title | PSM Phuket',
+  description: 'Unique description of 150-160 characters...',
+  keywords: ['real estate', 'phuket', 'investing'],
   openGraph: {
-    title: 'Titel voor social media',
-    description: 'Beschrijving voor social media',
+    title: 'Title for social media',
+    description: 'Description for social media',
     images: ['/og-image.jpg'],
     type: 'website',
   },
@@ -152,26 +183,26 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
   },
   alternates: {
-    canonical: 'https://proppulse.com/pagina',
+    canonical: 'https://psmphuket.com/page',
   },
 }
 
-// OF dynamisch:
+// OR dynamically:
 export async function generateMetadata({ params }): Promise<Metadata> {
-  // Fetch data en return metadata
+  // Fetch data and return metadata
 }
 ```
 
 ### Structured Data (JSON-LD)
 ```tsx
-// Importeer bestaande helpers!
+// Import existing helpers!
 import { 
   generatePropertySchema, 
   generateBreadcrumbSchema,
   renderJsonLd 
 } from '@/lib/utils/structured-data'
 
-// In je component:
+// In your component:
 <script
   type="application/ld+json"
   dangerouslySetInnerHTML={renderJsonLd(generatePropertySchema({
@@ -184,23 +215,23 @@ import {
 
 ### Semantic HTML
 ```tsx
-// ✅ GOED - Gebruik semantische elementen
+// ✅ GOOD - Use semantic elements
 <header>...</header>
 <main>...</main>
 <article>...</article>
 <section>...</section>
 <nav>...</nav>
 <footer>...</footer>
-<h1>...</h1>  // Slechts 1 per pagina!
+<h1>...</h1>  // Only 1 per page!
 ```
 
 ### Links
 ```tsx
-// ✅ GOED - Interne links
+// ✅ GOOD - Internal links
 import Link from 'next/link'
 <Link href="/properties" prefetch>Properties</Link>
 
-// ✅ GOED - Externe links
+// ✅ GOOD - External links
 <a href="https://..." target="_blank" rel="noopener noreferrer">
 ```
 
@@ -208,64 +239,64 @@ import Link from 'next/link'
 
 ## 💾 Database (Prisma)
 
-### ⚠️ User Roles - ALTIJD HOOFDLETTERS
+### ⚠️ User Roles - ALWAYS UPPERCASE
 
-User roles in de database MOETEN altijd in **HOOFDLETTERS** zijn:
-- ✅ `ADMIN` (niet `admin`)
-- ✅ `AGENT` (niet `agent`)
+User roles in the database MUST always be in **UPPERCASE**:
+- ✅ `ADMIN` (not `admin`)
+- ✅ `AGENT` (not `agent`)
 
-De dashboard toegangscontrole checkt op: `["AGENT", "ADMIN"]`
+The dashboard access control checks for: `["AGENT", "ADMIN"]`
 
 ```sql
--- Controleer user roles:
+-- Check user roles:
 SELECT id, email, role FROM public.user;
 
--- Fix role naar hoofdletters:
+-- Fix role to uppercase:
 UPDATE public.user SET role = 'ADMIN' WHERE email = 'user@example.com';
 ```
 
-**NOOIT** de role check code aanpassen naar lowercase - altijd de database waarde fixen!
+**NEVER** adjust the role check code to lowercase - always fix the database value!
 
-### ⚠️ Bij Database Errors - EERST Diagnose, DAN Oplossing
+### ⚠️ For Database Errors - FIRST Diagnose, THEN Fix
 
-Bij Prisma errors zoals "Server has closed the connection" (P1017):
+For Prisma errors like "Server has closed the connection" (P1017):
 
-1. **NOOIT direct code aanpassen** - Eerst de configuratie controleren!
-2. **Controleer DATABASE_URL in .env**:
-   - Gebruik `127.0.0.1` in plaats van `localhost` (IPv6/IPv4 issues op Windows)
-   - Controleer de poort (Supabase lokaal = `5432`, niet `5433`)
-   - Controleer de database naam
-3. **Controleer Docker containers**:
+1. **NEVER immediately adjust code** - First check the configuration!
+2. **Check DATABASE_URL in .env**:
+   - Use `127.0.0.1` instead of `localhost` (IPv6/IPv4 issues on Windows)
+   - Check the port (Supabase local = `5432`, not `5433`)
+   - Check the database name
+3. **Check Docker containers**:
    ```bash
    docker ps --filter "name=supabase" --format "table {{.Names}}\t{{.Ports}}"
    ```
-4. **Test database bereikbaarheid**:
+4. **Test database reachability**:
    ```bash
    docker exec supabase_db_my-platform psql -U postgres -c "SELECT 1;"
    ```
-5. **Na .env wijzigingen**: 
-   - Dev server herstarten
-   - `npx prisma db push` als tabellen ontbreken
+5. **After .env changes**: 
+   - Restart dev server
+   - `npx prisma db push` if tables are missing
 
-### Correcte DATABASE_URL formaat (lokale Supabase):
+### Correct DATABASE_URL format (local Supabase):
 ```
 DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/real_estate_pulse"
 ```
 
 ### Queries
 ```tsx
-// ✅ GOED - Selecteer alleen wat je nodig hebt
+// ✅ GOOD - Select only what you need
 const properties = await prisma.property.findMany({
   select: {
     id: true,
     title: true,
     slug: true,
-    // Niet de hele entity als je niet alles nodig hebt
+    // Don't fetch the entire entity if you don't need everything
   },
-  take: 10,  // Limiteer resultaten
+  take: 10,  // Limit results
 })
 
-// ✅ GOED - Gebruik includes efficiënt
+// ✅ GOOD - Use includes efficiently
 const property = await prisma.property.findUnique({
   where: { slug },
   include: {
@@ -288,24 +319,24 @@ export async function getProperties(filters: PropertyFilters) {
     return { success: true, data: properties }
   } catch (error) {
     console.error('Error:', error)
-    return { success: false, error: 'Fout bij ophalen properties' }
+    return { success: false, error: 'Error fetching properties' }
   }
 }
 ```
 
 ---
 
-## 🎨 Styling Conventies
+## 🎨 Styling Conventions
 
 ### Tailwind Classes
 ```tsx
-// ✅ GOED - Gebruik cn() voor conditionele classes
+// ✅ GOOD - Use cn() for conditional classes
 import { cn } from '@/lib/utils'
 
 <div className={cn(
   'base-classes',
   isActive && 'active-classes',
-  className  // Props doorgeven
+  className  // Pass through props
 )}>
 ```
 
@@ -321,20 +352,20 @@ import { cn } from '@/lib/utils'
 
 ---
 
-## 📱 Mobile Responsive - KRITIEKE REGELS
+## 📱 Mobile Responsive - CRITICAL RULES
 
-### ⚠️ NOOIT translate-x-full gebruiken zonder visibility/display control
+### ⚠️ NEVER use translate-x-full without visibility/display control
 
-Off-screen elementen (zoals side menus) die alleen `translate-x-full` gebruiken veroorzaken **horizontale overflow** en witte ruimte op mobile!
+Off-screen elements (like side menus) that only use `translate-x-full` cause **horizontal overflow** and white space on mobile!
 
 ```tsx
-// ❌ FOUT - Veroorzaakt horizontale overflow op mobile
+// ❌ WRONG - Causes horizontal overflow on mobile
 <div className={cn(
   "fixed top-0 right-0 w-full",
-  isOpen ? "translate-x-0" : "translate-x-full"  // Element bestaat nog in document!
+  isOpen ? "translate-x-0" : "translate-x-full"  // Element still exists in document!
 )}>
 
-// ✅ GOED - Combineer translate met invisible/hidden
+// ✅ CORRECT - Combine translate with invisible/hidden
 <div className={cn(
   "fixed top-0 right-0 w-full transition-all",
   isOpen 
@@ -345,55 +376,55 @@ Off-screen elementen (zoals side menus) die alleen `translate-x-full` gebruiken 
 
 ### Overflow Control
 ```css
-/* In globals.css - gebruik overflow-x: clip (sterker dan hidden) */
+/* In globals.css - use overflow-x: clip (stronger than hidden) */
 html, body {
-  overflow-x: clip;  /* Clipt ook fixed/absolute elements */
+  overflow-x: clip;  /* Clips fixed/absolute elements too */
   max-width: 100%;
 }
 ```
 
-### Checklist voor Off-Screen Elementen
-- [ ] Gebruik `invisible` of `hidden` naast `translate-x-full`
-- [ ] Voeg `pointer-events-none` toe wanneer verborgen
-- [ ] Test ALTIJD op mobile viewport (< 400px)
-- [ ] Check met DevTools of er horizontale scroll is
+### Checklist for Off-Screen Elements
+- [ ] Use `invisible` or `hidden` alongside `translate-x-full`
+- [ ] Add `pointer-events-none` when hidden
+- [ ] ALWAYS test on mobile viewport (< 400px)
+- [ ] Check with DevTools for horizontal scroll
 
 ---
 
 ## ✅ Component Checklist
 
-Bij het maken van een nieuwe component, check:
+When creating a new component, check:
 
-- [ ] Bestaat er al een vergelijkbare component?
-- [ ] Server of Client component? (Server = default)
-- [ ] Heeft het goede TypeScript types?
-- [ ] Is het responsive (mobile-first)?
-- [ ] Zijn images geoptimaliseerd met next/image?
-- [ ] Heeft het accessibility attributen (aria-*, alt, etc.)?
-- [ ] Is er lazy loading toegepast waar nodig?
-- [ ] **Off-screen elementen**: Gebruikt `invisible`/`hidden` naast `translate-x-full`?
+- [ ] Does a similar component already exist?
+- [ ] Server or Client component? (Server = default)
+- [ ] Does it have proper TypeScript types?
+- [ ] Is it responsive (mobile-first)?
+- [ ] Are images optimized with next/image?
+- [ ] Does it have accessibility attributes (aria-*, alt, etc.)?
+- [ ] Is lazy loading applied where needed?
+- [ ] **Off-screen elements**: Uses `invisible`/`hidden` alongside `translate-x-full`?
 
 ---
 
 ## 🚨 Code Review Checklist
 
-Voordat je code commit:
+Before committing code:
 
-- [ ] Geen duplicate functies/APIs gemaakt
-- [ ] Alle pagina's hebben correcte metadata
-- [ ] Images gebruiken next/image met alt tekst
-- [ ] Geen console.log statements in productie code
-- [ ] TypeScript errors zijn opgelost
-- [ ] Grote componenten zijn lazy loaded
-- [ ] Server Components waar mogelijk
-- [ ] **Mobile responsive**: Geen horizontale overflow (test op 375px viewport)
-- [ ] **Off-screen elementen**: `translate-x-full` altijd met `invisible` combineren
+- [ ] No duplicate functions/APIs created
+- [ ] All pages have correct metadata
+- [ ] Images use next/image with alt text
+- [ ] No console.log statements in production code
+- [ ] TypeScript errors are resolved
+- [ ] Large components are lazy loaded
+- [ ] Server Components where possible
+- [ ] **Mobile responsive**: No horizontal overflow (test on 375px viewport)
+- [ ] **Off-screen elements**: `translate-x-full` always combined with `invisible`
 
 ---
 
-## 📝 Voorbeelden
+## 📝 Examples
 
-### Nieuwe Property Pagina (compleet voorbeeld)
+### New Property Page (complete example)
 ```tsx
 // app/(front)/properties/[slug]/page.tsx
 import { Metadata } from 'next'
@@ -413,7 +444,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!property) return { title: 'Not Found' }
   
   return {
-    title: `${property.title} | PropPulse`,
+    title: `${property.title} | PSM Phuket`,
     description: property.description?.slice(0, 160),
     openGraph: {
       images: [property.images[0]?.url || '/default-og.jpg'],
@@ -445,10 +476,9 @@ export default async function PropertyPage({ params }: Props) {
       />
       <main>
         <h1>{property.title}</h1>
-        {/* Rest van de component */}
+        {/* Rest of the component */}
       </main>
     </>
   )
 }
 ```
-

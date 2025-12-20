@@ -54,7 +54,7 @@ export async function geocodeAddress(
     
     const response = await fetch(url.toString(), {
       headers: {
-        'User-Agent': 'PropPulse/1.0 (contact@proppulse.com)',
+        'User-Agent': 'PSMPhuket/1.0 (contact@psmphuket.com)',
         'Accept': 'application/json',
       },
     });
@@ -177,11 +177,41 @@ export function extractCoordsFromMapUrl(url: string): GeocodingResult | null {
 }
 
 /**
+ * Clean location string for better geocoding results
+ */
+function cleanLocationString(location: string): string {
+  if (!location) return '';
+  
+  // Remove encoding artifacts
+  let cleaned = location
+    .replace(/\?+/g, '') // Remove question marks (encoding issues)
+    .replace(/ï¿½/g, '') // Remove replacement characters
+    .replace(/Tha[ïi]?lande?/gi, 'Thailand') // Fix various Thailand spellings
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
+  
+  // Remove leading numbers like "435 4233" which are often internal codes
+  cleaned = cleaned.replace(/^\d+\s+\d+\s*/, '');
+  
+  // Remove "Mueang Phuket District" which OSM doesn't recognize well
+  cleaned = cleaned.replace(/,?\s*Mueang Phuket District/gi, '');
+  
+  // Remove postal codes like "83100" or "83130"
+  cleaned = cleaned.replace(/\s*\d{5}\s*/g, ' ');
+  
+  // Clean up multiple commas and spaces
+  cleaned = cleaned.replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
+  
+  return cleaned;
+}
+
+/**
  * Geocode a property location
  * 
  * Tries multiple strategies:
  * 1. Extract from mapUrl if present
- * 2. Geocode the location string
+ * 2. Geocode the cleaned location string
+ * 3. Try simplified versions of the location
  * 
  * @param location - Location string (e.g., "Rawai, Phuket")
  * @param mapUrl - Optional Google Maps URL
@@ -203,17 +233,52 @@ export async function geocodePropertyLocation(
     }
   }
   
-  // Strategy 2: Geocode the location string
-  const geocoded = await geocodeAddress(location);
+  // Clean the location string
+  const cleanedLocation = cleanLocationString(location);
+  console.log(`Geocoding: "${location}" -> cleaned: "${cleanedLocation}"`);
+  
+  // Strategy 2: Geocode the cleaned location string
+  const geocoded = await geocodeAddress(cleanedLocation);
   if (geocoded) {
     return geocoded;
   }
   
-  // Strategy 3: Try with "Phuket" appended if not already present
-  if (!location.toLowerCase().includes('phuket')) {
-    const withPhuket = await geocodeAddress(`${location}, Phuket`);
+  // Strategy 3: Try with "Phuket, Thailand" appended if not already present
+  if (!cleanedLocation.toLowerCase().includes('phuket')) {
+    const withPhuket = await geocodeAddress(`${cleanedLocation}, Phuket, Thailand`);
     if (withPhuket) {
       return withPhuket;
+    }
+  }
+  
+  // Strategy 4: Extract just the district/area name and try that
+  const district = extractDistrictFromLocation(location);
+  if (district) {
+    const districtOnly = await geocodeAddress(`${district}, Phuket, Thailand`);
+    if (districtOnly) {
+      console.log(`Geocoded using district fallback: ${district}`);
+      return districtOnly;
+    }
+  }
+  
+  // Strategy 5: Try known Phuket areas from the location string
+  const phuketAreas = [
+    'Rawai', 'Patong', 'Kamala', 'Kata', 'Karon', 'Surin', 
+    'Bang Tao', 'Nai Harn', 'Chalong', 'Nai Yang', 'Mai Khao',
+    'Cherng Talay', 'Kathu', 'Phuket Town', 'Thalang'
+  ];
+  
+  const locationLower = location.toLowerCase();
+  for (const area of phuketAreas) {
+    if (locationLower.includes(area.toLowerCase())) {
+      const areaResult = await geocodeAddress(`${area}, Phuket, Thailand`);
+      if (areaResult) {
+        console.log(`Geocoded using area fallback: ${area}`);
+        return {
+          ...areaResult,
+          district: area,
+        };
+      }
     }
   }
   

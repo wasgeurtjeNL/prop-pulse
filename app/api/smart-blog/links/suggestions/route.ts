@@ -579,27 +579,31 @@ export async function PUT(request: Request) {
         // Build the image prompt
         const imagePrompt = buildSectionImagePrompt(section.heading, parsed.title, i);
 
-        // Generate image with DALL-E 3
+        // Generate image with GPT Image 1.5
         const imageResponse = await openai.images.generate({
-          model: "dall-e-3",
+          model: "gpt-image-1.5",
           prompt: imagePrompt,
           n: 1,
           size: "1024x1024", // Square format, will be cropped/displayed appropriately
-          quality: "standard",
-          style: "natural",
         });
 
-        const generatedImageUrl = imageResponse.data[0]?.url;
-        if (!generatedImageUrl) {
-          throw new Error("No image URL returned");
+        // GPT Image 1.5 returns base64 data by default
+        const imageData = imageResponse.data?.[0];
+        const b64Data = (imageData as { b64_json?: string })?.b64_json;
+        const generatedImageUrl = imageData?.url;
+
+        let inputBuffer: Buffer;
+
+        if (b64Data) {
+          inputBuffer = Buffer.from(b64Data, "base64");
+        } else if (generatedImageUrl) {
+          const imgResponse = await fetch(generatedImageUrl);
+          if (!imgResponse.ok) throw new Error("Failed to download image");
+          const imageArrayBuffer = await imgResponse.arrayBuffer();
+          inputBuffer = Buffer.from(imageArrayBuffer);
+        } else {
+          throw new Error("No image data returned");
         }
-
-        // Download the image
-        const imgResponse = await fetch(generatedImageUrl);
-        if (!imgResponse.ok) throw new Error("Failed to download image");
-
-        const imageArrayBuffer = await imgResponse.arrayBuffer();
-        const inputBuffer = Buffer.from(imageArrayBuffer);
 
         // Convert to WebP
         const webpResult = await convertToWebP(inputBuffer, {

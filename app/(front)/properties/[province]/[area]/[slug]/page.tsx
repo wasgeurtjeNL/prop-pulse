@@ -1,9 +1,11 @@
 import dynamic from "next/dynamic";
 import { Metadata } from "next";
-import { getPropertyDetails, getRelatedProperties } from "@/lib/actions/property.actions";
+import { getPropertyByFullSlug, getRelatedProperties } from "@/lib/actions/property.actions";
+import { getNearbyPois } from "@/lib/actions/poi.actions";
 import { notFound } from "next/navigation";
-import { generatePropertySchema, renderJsonLd } from "@/lib/utils/structured-data";
+import { generatePropertySchema, generatePropertyFAQSchema, renderJsonLd } from "@/lib/utils/structured-data";
 import { transformPropertyToTemplate } from "@/lib/adapters/property-adapter";
+import { TrackPropertyView } from "@/components/shared/analytics/track-property-view";
 
 // Dynamic import for the heavy property detail component
 const Details = dynamic(() => import("@/components/new-design/properties/property-detail"), {
@@ -11,12 +13,12 @@ const Details = dynamic(() => import("@/components/new-design/properties/propert
 });
 
 interface PropertyDetailPageProps {
-    params: Promise<{ slug: string }>;
+    params: Promise<{ province: string; area: string; slug: string }>;
 }
 
 export async function generateMetadata({ params }: PropertyDetailPageProps): Promise<Metadata> {
-    const { slug } = await params;
-    const property = await getPropertyDetails(slug);
+    const { province, area, slug } = await params;
+    const property = await getPropertyByFullSlug(province, area, slug);
 
     if (!property) {
         return {
@@ -25,7 +27,7 @@ export async function generateMetadata({ params }: PropertyDetailPageProps): Pro
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://realestatepulse.com';
-    const propertyUrl = `${baseUrl}/properties/${property.slug}`;
+    const propertyUrl = `${baseUrl}/properties/${province}/${area}/${property.slug}`;
     
     // Get first image or fallback
     const mainImage = property.images?.[0]?.url || property.image || '';
@@ -33,24 +35,45 @@ export async function generateMetadata({ params }: PropertyDetailPageProps): Pro
 
     // Create optimized title with location, type and price
     const propertyType = property.category?.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) || 'Property';
-    const metaTitle = `${property.title} | ${property.location} | ${property.price} | Real Estate Pulse`;
+    const areaName = area.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const provinceName = province.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const metaTitle = `${property.title} | ${areaName}, ${provinceName} | ${property.price} | Real Estate Pulse`;
     
-    // Create rich description
+    // Create rich description with POI highlights
+    const poiHighlights: string[] = [];
+    if (property.seaDistance && property.seaDistance < 2000) {
+        poiHighlights.push(`${property.seaDistance}m to beach`);
+    }
+    if (property.hasSeaView) {
+        poiHighlights.push('Sea view');
+    }
+    if (property.beachScore && property.beachScore >= 70) {
+        poiHighlights.push('Near beach');
+    }
+    if (property.familyScore && property.familyScore >= 60) {
+        poiHighlights.push('Family-friendly');
+    }
+    
+    const poiSuffix = poiHighlights.length > 0 ? ` • ${poiHighlights.join(' • ')}` : '';
+    
     const metaDescription = property.shortDescription || 
-        `${property.beds} bedroom ${propertyType.toLowerCase()} for ${property.type === 'FOR_SALE' ? 'sale' : 'rent'} in ${property.location}. ${property.sqft} sq ft. Price: ${property.price}. Contact us to schedule a viewing.`;
+        `${property.beds} bedroom ${propertyType.toLowerCase()} for ${property.type === 'FOR_SALE' ? 'sale' : 'rent'} in ${areaName}, ${provinceName}. ${property.sqft} m². Price: ${property.price}${poiSuffix}. Contact us to schedule a viewing.`;
 
     return {
         title: metaTitle,
         description: metaDescription,
         keywords: [
             property.title,
+            areaName,
+            provinceName,
             property.location,
             propertyType,
             `${property.beds} bedroom`,
             property.type === 'FOR_SALE' ? 'for sale' : 'for rent',
             'real estate',
             'property',
-            ...property.amenities.slice(0, 5), // Add top amenities as keywords
+            'Thailand',
+            ...property.amenities.slice(0, 5),
         ].join(', '),
         authors: [{ name: 'Real Estate Pulse' }],
         openGraph: {
@@ -62,7 +85,7 @@ export async function generateMetadata({ params }: PropertyDetailPageProps): Pro
                 url: img.startsWith('http') ? img : `${baseUrl}${img}`,
                 width: 1200,
                 height: 630,
-                alt: `${property.title} - ${property.location}`,
+                alt: `${property.title} - ${areaName}, ${provinceName}`,
             })),
             locale: 'en_US',
             type: 'website',
@@ -90,8 +113,8 @@ export async function generateMetadata({ params }: PropertyDetailPageProps): Pro
 }
 
 const PropertyDetailPage = async ({ params }: PropertyDetailPageProps) => {
-    const { slug } = await params;
-    const property = await getPropertyDetails(slug);
+    const { province, area, slug } = await params;
+    const property = await getPropertyByFullSlug(province, area, slug);
 
     if (!property) {
         notFound();
@@ -113,13 +136,23 @@ const PropertyDetailPage = async ({ params }: PropertyDetailPageProps) => {
         3
     );
 
-    // Generate structured data for SEO
+    // Fetch nearby POIs for structured data
+    const nearbyPoisResult = await getNearbyPois(property.id, { maxDistance: 10000, limit: 20 });
+    const nearbyPoisFlat = nearbyPoisResult.success && nearbyPoisResult.data 
+        ? nearbyPoisResult.data.flatMap(group => group.pois.map(poi => ({
+            name: poi.name,
+            category: poi.category,
+            distanceMeters: poi.distanceMeters,
+          })))
+        : [];
+
+    // Generate structured data for SEO (enhanced with POI data)
     const propertySchema = generatePropertySchema({
         name: property.title,
         description: property.shortDescription || `${property.beds} bedroom property in ${property.location}`,
         image: allImages.map(img => img.startsWith('http') ? img : `${baseUrl}${img}`),
         price: property.price,
-        currency: 'USD',
+        currency: 'THB',
         beds: property.beds,
         baths: property.baths,
         sqft: property.sqft,
@@ -129,24 +162,53 @@ const PropertyDetailPage = async ({ params }: PropertyDetailPageProps) => {
         category: property.category,
         datePublished: property.createdAt,
         dateModified: property.updatedAt,
+        latitude: property.latitude,
+        longitude: property.longitude,
+        district: property.district,
+        beachScore: property.beachScore,
+        familyScore: property.familyScore,
+        convenienceScore: property.convenienceScore,
+        quietnessScore: property.quietnessScore,
+        hasSeaView: property.hasSeaView,
+        seaDistance: property.seaDistance,
+        nearbyPois: nearbyPoisFlat,
+        // Add hierarchical URL info
+        provinceSlug: province,
+        areaSlug: area,
     }, baseUrl);
+
+    // Generate FAQ schema from POI data
+    const faqSchema = generatePropertyFAQSchema({
+        propertyName: property.title,
+        location: property.location,
+        district: property.district,
+        seaDistance: property.seaDistance,
+        hasSeaView: property.hasSeaView,
+        beachScore: property.beachScore,
+        familyScore: property.familyScore,
+        quietnessScore: property.quietnessScore,
+        convenienceScore: property.convenienceScore,
+        nearbyPois: nearbyPoisFlat,
+    });
 
     return (
         <>
-            {/* JSON-LD Structured Data */}
+            {/* Track page view for analytics */}
+            <TrackPropertyView propertyId={property.id} />
+            
+            {/* JSON-LD Structured Data - Property */}
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={renderJsonLd(propertySchema)}
             />
-            {/* Preload hero image for LCP optimization */}
-            {mainImage && (
-                <link
-                    rel="preload"
-                    as="image"
-                    href={mainImage}
-                    fetchPriority="high"
+            {/* JSON-LD Structured Data - FAQ (for rich snippets) */}
+            {faqSchema && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={renderJsonLd(faqSchema)}
                 />
             )}
+            {/* Note: Image preloading moved to Next.js Image priority prop in Details component */}
             <Details 
                 initialProperty={transformedProperty} 
                 initialRelatedProperties={relatedProperties}
@@ -156,3 +218,4 @@ const PropertyDetailPage = async ({ params }: PropertyDetailPageProps) => {
 };
 
 export default PropertyDetailPage;
+

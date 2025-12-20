@@ -68,16 +68,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic property routes
+  // Dynamic property routes with hierarchical URLs
   let propertyRoutes: MetadataRoute.Sitemap = [];
   try {
     const properties = await getProperties({});
-    propertyRoutes = properties.map((property) => ({
-      url: `${baseUrl}/properties/${property.slug}`,
-      lastModified: property.updatedAt || property.createdAt || new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    }));
+    propertyRoutes = properties.map((property) => {
+      // Use hierarchical URL structure: /properties/{province}/{area}/{slug}
+      const province = property.provinceSlug || 'phuket';
+      const area = property.areaSlug || 'other';
+      return {
+        url: `${baseUrl}/properties/${province}/${area}/${property.slug}`,
+        lastModified: property.updatedAt || property.createdAt || new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      };
+    });
   } catch (error) {
     console.error('Error fetching properties for sitemap:', error);
   }
@@ -98,5 +103,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticRoutes, ...propertyRoutes, ...blogRoutes];
 }
+
+
+
 
 

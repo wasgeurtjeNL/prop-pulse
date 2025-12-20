@@ -1037,3 +1037,237 @@ body {
   @apply text-sm text-slate-600 dark:text-slate-400;
   @apply mb-0;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   POI BLOG RICH CONTENT STYLING
+   AI-generated blog posts with enhanced visual formatting
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Rich Blog Content Container */
+.rich-blog-content {
+  @apply w-full;
+}
+
+/* Blog Intro Section - Hero style opening */
+.blog-details .blog-intro,
+.rich-blog-content .blog-intro {
+  @apply relative my-8 p-6 md:p-8 rounded-2xl;
+  @apply bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50;
+  @apply dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-cyan-950/10;
+  @apply border border-emerald-200/50 dark:border-emerald-700/30;
+}
+
+.blog-details .blog-intro .lead,
+.rich-blog-content .blog-intro .lead {
+  @apply text-xl md:text-2xl leading-relaxed;
+  @apply text-slate-700 dark:text-slate-200;
+  @apply font-medium m-0;
+}
+
+/* Statistics Highlight Grid */
+.blog-details .stats-highlight,
+.rich-blog-content .stats-highlight {
+  @apply my-10 py-10 px-8 md:px-12 rounded-3xl;
+  @apply bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900;
+  @apply dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950;
+  @apply flex flex-wrap justify-center items-stretch;
+  @apply gap-8 md:gap-12 lg:gap-16;
+  @apply text-white;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.blog-details .stats-highlight .stat-item,
+.rich-blog-content .stats-highlight .stat-item {
+  @apply text-center flex flex-col items-center justify-center;
+  @apply px-6 py-4 min-w-[140px] md:min-w-[180px];
+  @apply flex-1;
+}
+
+/* Divider between stat items */
+.blog-details .stats-highlight .stat-item:not(:last-child),
+.rich-blog-content .stats-highlight .stat-item:not(:last-child) {
+  @apply border-r border-slate-600/50;
+}
+
+/* Remove border on mobile when items wrap */
+@media (max-width: 640px) {
+  .blog-details .stats-highlight .stat-item,
+  .rich-blog-content .stats-highlight .stat-item {
+    @apply border-r-0 border-b border-slate-600/30 pb-6;
+    @apply w-full;
+  }
+  .blog-details .stats-highlight .stat-item:last-child,
+  .rich-blog-content .stats-highlight .stat-item:last-child {
+    @apply border-b-0 pb-4;
+  }
+}
+
+.blog-details .stats-highlight .stat-value,
+.rich-blog-content .stats-highlight .stat-value {
+  @apply block text-4xl md:text-5xl lg:text-6xl font-extrabold;
+  @apply text-emerald-400;
+  @apply mb-3;
+  @apply whitespace-nowrap;
+}
+
+.blog-details .stats-highlight .stat-label,
+.rich-blog-content .stats-highlight .stat-label {
+  @apply block text-xs md:text-sm font-semibold;
+  @apply text-slate-300;
+  @apply uppercase tracking-widest;
+}
+
+/* Insight Quote - Highlighted blockquote */
+.blog-details .insight-quote,
+.rich-blog-content .insight-quote {
+  @apply relative my-12 py-8 px-8 md:px-12;
+  @apply bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50;
+  @apply dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-emerald-950/40;
+  @apply border-l-4 border-emerald-500 rounded-r-2xl;
+  @apply text-xl md:text-2xl italic;
+  @apply text-slate-700 dark:text-slate-200;
+  @apply font-medium leading-relaxed;
+}
+
+.blog-details .insight-quote::before,
+.rich-blog-content .insight-quote::before {
+  content: "\201C";
+  @apply absolute -top-2 left-4 text-6xl;
+  @apply text-emerald-300 dark:text-emerald-700;
+  @apply font-serif leading-none;
+}
+
+.blog-details .insight-quote p,
+.rich-blog-content .insight-quote p {
+  @apply m-0 relative z-10;
+}
+
+/* Feature List with Icons */
+.blog-details .feature-list,
+.rich-blog-content .feature-list {
+  @apply my-8 space-y-4;
+  list-style: none !important;
+  padding-left: 0 !important;
+}
+
+.blog-details .feature-list li,
+.rich-blog-content .feature-list li {
+  @apply flex items-start gap-4 p-4;
+  @apply bg-white dark:bg-slate-800/50;
+  @apply rounded-xl border border-slate-200 dark:border-slate-700;
+  @apply transition-all duration-200;
+  @apply hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700;
+}
+
+.blog-details .feature-list li::before,
+.rich-blog-content .feature-list li::before {
+  content: none !important;
+  display: none !important;
+}
+
+.blog-details .feature-list .feature-icon,
+.rich-blog-content .feature-list .feature-icon {
+  @apply text-2xl flex-shrink-0;
+}
+
+/* Tip Box */
+.blog-details .tip-box,
+.rich-blog-content .tip-box {
+  @apply my-10 p-6 md:p-8 rounded-2xl;
+  @apply bg-gradient-to-br from-blue-50 via-indigo-50 to-violet-50;
+  @apply dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-violet-950/20;
+  @apply border border-blue-200/60 dark:border-blue-700/30;
+}
+
+.blog-details .tip-box h4,
+.rich-blog-content .tip-box h4 {
+  @apply text-lg md:text-xl font-bold mb-4;
+  @apply text-blue-800 dark:text-blue-300;
+  @apply flex items-center gap-2;
+  @apply mt-0;
+}
+
+.blog-details .tip-box p,
+.rich-blog-content .tip-box p {
+  @apply text-blue-700 dark:text-blue-200;
+  @apply m-0;
+}
+
+/* FAQ Section Styling */
+.blog-details .faq-section,
+.rich-blog-content .faq-section {
+  @apply relative my-12 p-6 md:p-8 rounded-3xl;
+  @apply bg-slate-50 dark:bg-slate-900/50;
+  @apply border border-slate-200 dark:border-slate-700;
+}
+
+.blog-details .faq-section > h3,
+.rich-blog-content .faq-section > h3 {
+  @apply text-2xl md:text-3xl font-bold mb-8 text-center;
+  @apply text-slate-900 dark:text-white;
+}
+
+.blog-details .faq-item,
+.rich-blog-content .faq-item {
+  @apply py-5 px-4 mb-3 rounded-xl;
+  @apply bg-white dark:bg-slate-800;
+  @apply border border-slate-100 dark:border-slate-700;
+  @apply transition-all duration-300;
+  @apply hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-700;
+}
+
+.blog-details .faq-item .faq-question,
+.rich-blog-content .faq-item .faq-question {
+  @apply text-lg font-semibold mb-3;
+  @apply text-slate-900 dark:text-white;
+  @apply m-0;
+}
+
+.blog-details .faq-item .faq-answer,
+.rich-blog-content .faq-item .faq-answer {
+  @apply text-slate-600 dark:text-slate-400;
+  @apply m-0 leading-relaxed;
+}
+
+/* Blog Image Figures */
+.blog-details .blog-image,
+.rich-blog-content .blog-image {
+  @apply my-10 rounded-2xl overflow-hidden;
+  @apply bg-slate-100 dark:bg-slate-800;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.blog-details .blog-image img,
+.rich-blog-content .blog-image img {
+  @apply w-full h-auto;
+  @apply m-0 rounded-none;
+  box-shadow: none;
+}
+
+.blog-details .blog-image figcaption,
+.rich-blog-content .blog-image figcaption {
+  @apply py-4 px-6 text-center;
+  @apply bg-slate-50 dark:bg-slate-900;
+  @apply text-sm text-slate-500 dark:text-slate-400 italic;
+  @apply border-t border-slate-100 dark:border-slate-800;
+}
+
+/* POI Property Grid Section (Dynamic) */
+.poi-property-section {
+  @apply my-16 py-12;
+  @apply border-t border-slate-200 dark:border-slate-700;
+}
+
+.poi-property-section h3 {
+  @apply text-3xl font-bold text-center mb-4;
+  @apply text-slate-900 dark:text-white;
+}
+
+.poi-property-section .section-description {
+  @apply text-center text-slate-600 dark:text-slate-400 mb-8;
+  @apply max-w-2xl mx-auto;
+}

@@ -7,8 +7,11 @@ import { z } from "zod";
 import sharp from "sharp";
 import { notifyMatchingAlerts } from "@/lib/actions/property-alerts.actions";
 import { generateListingNumber } from "@/lib/actions/property.actions";
+import { parseLocationToSlugs } from "@/lib/property-url";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { geocodePropertyLocation } from "@/lib/services/poi/geocoding";
+import { calculatePropertyPoiDistances, calculatePropertyScores } from "@/lib/services/poi/sync";
 
 // Schema for imported property data
 const importSchema = z.object({
@@ -61,7 +64,7 @@ function filterValidImages(images: string[]): string[] {
 
 // Simple API key authentication
 // In development, if no API key is set, allow all requests
-const API_KEY = process.env.PROPPULSE_IMPORT_API_KEY;
+const API_KEY = process.env.PSM_PHUKET_IMPORT_API_KEY;
 const IS_DEV = process.env.NODE_ENV === 'development';
 
 /**
@@ -185,26 +188,80 @@ function generateImageAltText(index: number, context: AltTextContext): string {
   }
 }
 
+// Helper function to delay execution
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Download image with retry logic
+async function fetchImageWithRetry(
+  imageUrl: string, 
+  maxRetries: number = 3
+): Promise<Buffer | null> {
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Referer': new URL(imageUrl).origin + '/',
+  };
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // Add timeout using AbortController
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+      const response = await fetch(imageUrl, {
+        headers,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.error(`   ⚠️ Image download failed (attempt ${attempt}/${maxRetries}): HTTP ${response.status}`);
+        if (attempt < maxRetries) {
+          await delay(1000 * attempt); // Exponential backoff: 1s, 2s, 3s
+          continue;
+        }
+        return null;
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isAbortError = error instanceof Error && error.name === 'AbortError';
+      
+      console.error(`   ⚠️ Image fetch error (attempt ${attempt}/${maxRetries}): ${isAbortError ? 'Timeout' : errorMessage}`);
+      
+      if (attempt < maxRetries) {
+        // Wait before retry with exponential backoff
+        await delay(1000 * attempt);
+        continue;
+      }
+      return null;
+    }
+  }
+  return null;
+}
+
 async function downloadAndUploadImage(
   imageUrl: string, 
   index: number, 
   propertyTitle: string
 ): Promise<string | null> {
   try {
-    // Download the image
-    const response = await fetch(imageUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-    });
+    // Download the image with retry logic
+    const inputBuffer = await fetchImageWithRetry(imageUrl);
     
-    if (!response.ok) {
-      console.error(`Failed to download image: ${imageUrl}`);
+    if (!inputBuffer) {
+      console.error(`   ❌ Failed to download image after retries: ${imageUrl}`);
       return null;
     }
     
-    const arrayBuffer = await response.arrayBuffer();
-    const inputBuffer = Buffer.from(arrayBuffer);
     const originalSize = inputBuffer.length;
     
     // Convert to WebP with compression using Sharp
@@ -358,13 +415,18 @@ export async function POST(request: NextRequest) {
     console.log(`📥 Importing property: ${data.title}`);
     console.log(`📸 Processing ${data.images.length} images...`);
 
-    // Download and upload images to ImageKit
+    // Download and upload images to ImageKit with delay between requests
     const uploadedImageUrls: string[] = [];
     for (let i = 0; i < Math.min(data.images.length, 10); i++) {
       console.log(`   Uploading image ${i + 1}/${Math.min(data.images.length, 10)}...`);
       const uploadedUrl = await downloadAndUploadImage(data.images[i], i, data.title);
       if (uploadedUrl) {
         uploadedImageUrls.push(uploadedUrl);
+      }
+      
+      // Add a small delay between downloads to avoid rate limiting (500ms)
+      if (i < Math.min(data.images.length, 10) - 1) {
+        await delay(500);
       }
     }
 
@@ -377,9 +439,33 @@ export async function POST(request: NextRequest) {
 
     console.log(`   ✓ Uploaded ${uploadedImageUrls.length} images`);
 
+    // Geocode the property location to get coordinates for POI calculation
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    let district: string | null = null;
+    
+    try {
+      console.log(`📍 Geocoding location: ${data.location}`);
+      const geocodeResult = await geocodePropertyLocation(data.location);
+      
+      if (geocodeResult?.latitude && geocodeResult?.longitude) {
+        latitude = geocodeResult.latitude;
+        longitude = geocodeResult.longitude;
+        district = geocodeResult.district || null;
+        console.log(`   ✓ Geocoded: ${latitude}, ${longitude} (${district || 'unknown district'})`);
+      } else {
+        console.log(`   ⚠️ Could not geocode location: ${data.location}`);
+      }
+    } catch (error) {
+      console.warn("   ⚠️ Geocoding failed, property will be imported without coordinates:", error);
+    }
+
     // Create the property with optimized content
     // Generate unique listing number
     const listingNumber = await generateListingNumber();
+    
+    // Parse location to get URL slugs for hierarchical URLs
+    const { provinceSlug, areaSlug } = parseLocationToSlugs(data.location);
     
     const property = await prisma.property.create({
       data: {
@@ -406,7 +492,15 @@ export async function POST(request: NextRequest) {
         amenities: data.amenities,
         amenitiesWithIcons: data.amenitiesWithIcons,
         yearBuilt: data.yearBuilt,
+        plotSize: data.lotSize || null, // Land/plot size in m²
         userId: adminUser.id,
+        // Add geocoded coordinates
+        latitude,
+        longitude,
+        district,
+        // URL structure slugs for hierarchical URLs
+        provinceSlug,
+        areaSlug,
       },
     });
 
@@ -441,6 +535,21 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Property imported successfully: ${property.slug}`);
 
+    // Calculate POI distances if property has coordinates
+    if (latitude && longitude) {
+      try {
+        console.log(`🏖️ Calculating POI distances for property...`);
+        const poiCount = await calculatePropertyPoiDistances(property.id);
+        console.log(`   ✓ Calculated distances to ${poiCount} POIs`);
+        
+        // Calculate location scores (beach, family, convenience, quietness)
+        await calculatePropertyScores(property.id);
+        console.log(`   ✓ Calculated location scores`);
+      } catch (error) {
+        console.warn("   ⚠️ Failed to calculate POI distances:", error);
+      }
+    }
+
     // Notify matching property alerts (async, don't wait)
     notifyMatchingAlerts({
       id: property.id,
@@ -465,6 +574,8 @@ export async function POST(request: NextRequest) {
       success: true,
       id: property.id,
       slug: property.slug,
+      provinceSlug: property.provinceSlug,
+      areaSlug: property.areaSlug,
       imagesUploaded: uploadedImageUrls.length,
       message: `Property "${data.title}" imported successfully`,
     });

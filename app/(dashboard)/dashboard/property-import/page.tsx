@@ -35,6 +35,7 @@ import {
   Globe
 } from "lucide-react";
 import Image from "next/image";
+import { getPropertyUrl } from "@/lib/property-url";
 
 interface PropertyData {
   title: string;
@@ -82,6 +83,8 @@ interface ImportResult {
   success: boolean;
   id: string;
   slug: string;
+  provinceSlug: string | null;
+  areaSlug: string | null;
   imagesUploaded: number;
   message: string;
 }
@@ -154,6 +157,15 @@ export default function PropertyImportPage() {
     errors: 0,
     skipped: 0,
   });
+
+  // Single rental import state
+  const [rentalMode, setRentalMode] = useState<"single" | "overview">("single");
+  const [singleRentalUrl, setSingleRentalUrl] = useState("");
+  const [isSingleRentalLoading, setIsSingleRentalLoading] = useState(false);
+  const [isSingleRentalImporting, setIsSingleRentalImporting] = useState(false);
+  const [singleRentalResult, setSingleRentalResult] = useState<ScrapeResult | null>(null);
+  const [singleRentalImportResult, setSingleRentalImportResult] = useState<ImportResult | null>(null);
+  const [singleRentalError, setSingleRentalError] = useState<string | null>(null);
 
   const handleScrape = async () => {
     if (!url.trim()) return;
@@ -619,6 +631,78 @@ export default function PropertyImportPage() {
     isRentalPausedRef.current = false;
   };
 
+  // ============ SINGLE RENTAL FUNCTIONS ============
+
+  // Scrape single rental property
+  const handleSingleRentalScrape = async () => {
+    if (!singleRentalUrl.trim()) return;
+
+    setIsSingleRentalLoading(true);
+    setSingleRentalError(null);
+    setSingleRentalResult(null);
+    setSingleRentalImportResult(null);
+
+    try {
+      const response = await fetch("/api/properties/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          url: singleRentalUrl,
+          isRental: true,
+          forceType: "FOR_RENT"
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to scrape property");
+      }
+
+      setSingleRentalResult(result);
+    } catch (err) {
+      setSingleRentalError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsSingleRentalLoading(false);
+    }
+  };
+
+  // Import single rental property
+  const handleSingleRentalImport = async () => {
+    if (!singleRentalResult?.data) return;
+
+    setIsSingleRentalImporting(true);
+    setSingleRentalError(null);
+
+    try {
+      const response = await fetch("/api/properties/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(singleRentalResult.data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to import property");
+      }
+
+      setSingleRentalImportResult(result);
+    } catch (err) {
+      setSingleRentalError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsSingleRentalImporting(false);
+    }
+  };
+
+  // Reset single rental
+  const resetSingleRental = () => {
+    setSingleRentalUrl("");
+    setSingleRentalResult(null);
+    setSingleRentalImportResult(null);
+    setSingleRentalError(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -719,7 +803,7 @@ export default function PropertyImportPage() {
                   </p>
                 </div>
                 <Button asChild variant="outline" className="border-green-500 text-green-700">
-                  <a href={`/properties/${importResult.slug}`} target="_blank" rel="noopener noreferrer">
+                  <a href={getPropertyUrl(importResult)} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     View Property
                   </a>
@@ -928,6 +1012,7 @@ export default function PropertyImportPage() {
                           src={imageUrl}
                           alt={`Property image ${i + 1}`}
                           fill
+                          sizes="(max-width: 768px) 100vw, 400px"
                           className="object-cover"
                           unoptimized
                         />
@@ -1212,275 +1297,609 @@ export default function PropertyImportPage() {
 
         {/* Rental Import Tab */}
         <TabsContent value="rental" className="mt-6 space-y-6">
-          {/* Listing URL Input */}
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Globe className="h-4 w-4" />
-                  <span>Enter a rental listing overview URL to scrape all available properties</span>
-                </div>
-                {(scrapedListings.length > 0 || rentalBulkItems.length > 0) && !isRentalProcessing && (
-                  <Button variant="ghost" size="sm" onClick={resetRentalImport}>
-                    <RotateCcw className="h-4 w-4 mr-1" />
-                    Reset
-                  </Button>
-                )}
-              </div>
-              
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <Input
-                    type="url"
-                    placeholder="https://psmphuket.com/properties-search/?status=for-rent"
-                    value={listingUrl}
-                    onChange={(e) => setListingUrl(e.target.value)}
-                    disabled={isScrapingListings || isRentalProcessing}
-                    className="h-12"
-                  />
-                </div>
-                <div className="w-24">
-                  <Input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={listingPages}
-                    onChange={(e) => setListingPages(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
-                    disabled={isScrapingListings || isRentalProcessing}
-                    className="h-12 text-center"
-                    title="Number of pages to scrape"
-                  />
-                </div>
-                <Button
-                  onClick={scrapeListings}
-                  disabled={!listingUrl.trim() || isScrapingListings || isRentalProcessing}
-                  className="h-12 px-6"
-                >
-                  {isScrapingListings ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Scanning...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="mr-2 h-4 w-4" />
-                      Find Rentals
-                    </>
-                  )}
-                </Button>
-              </div>
-              
-              <p className="text-xs text-muted-foreground">
-                Pages to scrape: {listingPages} • Works with psmphuket.com, fazwaz.com, and similar sites
-              </p>
-            </div>
-          </Card>
+          {/* Mode Selector */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant={rentalMode === "single" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setRentalMode("single")}
+              className="gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Single Property
+            </Button>
+            <Button
+              variant={rentalMode === "overview" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setRentalMode("overview")}
+              className="gap-2"
+            >
+              <List className="h-4 w-4" />
+              Overview Page
+            </Button>
+          </div>
 
-          {/* Scraped Listings */}
-          {scrapedListings.length > 0 && rentalBulkItems.length === 0 && (
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <Building className="h-5 w-5 text-blue-500" />
-                  Found {scrapedListings.length} Rental Properties
-                </h3>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={toggleSelectAll}>
-                    {selectedListings.size === scrapedListings.length ? "Deselect All" : "Select All"}
-                  </Button>
-                  <Badge variant="secondary">
-                    {selectedListings.size} selected
-                  </Badge>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[500px] overflow-y-auto">
-                {scrapedListings.map((listing, index) => (
-                  <div
-                    key={listing.url}
-                    onClick={() => toggleListingSelection(listing.url)}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                      selectedListings.has(listing.url)
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 ${
-                        selectedListings.has(listing.url)
-                          ? "bg-blue-500 border-blue-500"
-                          : "border-gray-300"
-                      }`}>
-                        {selectedListings.has(listing.url) && (
-                          <Check className="h-3 w-3 text-white" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{listing.title || `Property ${index + 1}`}</p>
-                        <p className="text-sm text-primary font-semibold mt-1">{listing.price}</p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                          {listing.beds > 0 && (
-                            <span className="flex items-center gap-1">
-                              <Bed className="h-3 w-3" /> {listing.beds}
-                            </span>
-                          )}
-                          {listing.baths > 0 && (
-                            <span className="flex items-center gap-1">
-                              <Bath className="h-3 w-3" /> {listing.baths}
-                            </span>
-                          )}
-                          {listing.sqft && (
-                            <span className="flex items-center gap-1">
-                              <Maximize className="h-3 w-3" /> {listing.sqft}m²
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="mt-4 pt-4 border-t flex justify-end">
-                <Button
-                  onClick={startRentalImport}
-                  disabled={selectedListings.size === 0}
-                  className="h-12 px-8"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Import {selectedListings.size} Rentals
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          {/* Rental Import Progress */}
-          {rentalBulkItems.length > 0 && (
+          {/* Single Rental Mode */}
+          {rentalMode === "single" && (
             <>
               <Card className="p-6">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Rental Import Progress</h3>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="flex items-center gap-1">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        {rentalProgress.success} Success
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <X className="h-4 w-4 text-red-500" />
-                        {rentalProgress.errors} Errors
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4 text-yellow-500" />
-                        {rentalProgress.skipped} Skipped
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Sparkles className="h-4 w-4" />
+                    <span>Paste a single rental property URL to import it directly</span>
                   </div>
                   
-                  <Progress 
-                    value={(rentalProgress.processed / rentalProgress.total) * 100} 
-                    className="h-2"
-                  />
-                  <p className="text-sm text-muted-foreground text-center">
-                    {rentalProgress.processed} of {rentalProgress.total} processed
-                    {isRentalProcessing && " • Processing..."}
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <Input
+                        type="url"
+                        placeholder="https://psmphuket.com/property/stunning-modern-tropical-villa-500-sq-m/"
+                        value={singleRentalUrl}
+                        onChange={(e) => setSingleRentalUrl(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSingleRentalScrape()}
+                        disabled={isSingleRentalLoading || isSingleRentalImporting}
+                        className="h-12 text-base"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleSingleRentalScrape}
+                      disabled={!singleRentalUrl.trim() || isSingleRentalLoading || isSingleRentalImporting}
+                      className="h-12 px-6"
+                    >
+                      {isSingleRentalLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="mr-2 h-4 w-4" />
+                          Preview
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Error Display */}
+              {singleRentalError && (
+                <Card className="p-4 border-destructive bg-destructive/10">
+                  <div className="flex items-center gap-2 text-destructive">
+                    <AlertCircle className="h-5 w-5" />
+                    <span>{singleRentalError}</span>
+                  </div>
+                </Card>
+              )}
+
+              {/* Import Success */}
+              {singleRentalImportResult && (
+                <Card className="p-6 border-green-500 bg-green-50 dark:bg-green-950/20">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
+                      <Check className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-green-700 dark:text-green-400">
+                        Rental Property Imported Successfully!
+                      </h3>
+                      <p className="text-sm text-green-600 dark:text-green-500">
+                        {singleRentalImportResult.message} • {singleRentalImportResult.imagesUploaded} images uploaded
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button asChild variant="outline" className="border-green-500 text-green-700">
+                        <a href={getPropertyUrl(singleRentalImportResult)} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          View Property
+                        </a>
+                      </Button>
+                      <Button variant="outline" onClick={resetSingleRental}>
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Import Another
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* Preview Results */}
+              {singleRentalResult && !singleRentalImportResult && (
+                <div className="space-y-6">
+                  {/* Validation Status */}
+                  <Card className={`p-4 ${singleRentalResult.validation.isValid ? "border-green-500 bg-green-50 dark:bg-green-950/20" : "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20"}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {singleRentalResult.validation.isValid ? (
+                          <>
+                            <Check className="h-5 w-5 text-green-600" />
+                            <span className="font-medium text-green-700 dark:text-green-400">
+                              All data validated successfully
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="h-5 w-5 text-yellow-600" />
+                            <span className="font-medium text-yellow-700 dark:text-yellow-400">
+                              {singleRentalResult.validation.issues.length} validation warning(s)
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Badge variant="outline" className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                          For Rent
+                        </Badge>
+                        {singleRentalResult.stats.contentOptimized && (
+                          <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            AI Optimized
+                          </Badge>
+                        )}
+                        <span>{singleRentalResult.stats.textLength.toLocaleString()} chars • {singleRentalResult.stats.imagesFound} images</span>
+                      </div>
+                    </div>
+                    {singleRentalResult.validation.issues.length > 0 && (
+                      <ul className="mt-2 text-sm text-yellow-600 dark:text-yellow-400 list-disc list-inside">
+                        {singleRentalResult.validation.issues.map((issue, i) => (
+                          <li key={i}>{issue}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </Card>
+
+                  {/* Property Preview */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Main Info */}
+                    <Card className="lg:col-span-2 p-6 space-y-6">
+                      <div>
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h2 className="text-xl font-bold">{singleRentalResult.data.title}</h2>
+                            <div className="flex items-center gap-2 mt-1 text-muted-foreground">
+                              <MapPin className="h-4 w-4" />
+                              <span>{singleRentalResult.data.location}</span>
+                            </div>
+                            {singleRentalResult.data.slug && (
+                              <div className="mt-2 flex items-center gap-2">
+                                <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs font-mono">
+                                  🔗 /properties/{singleRentalResult.data.slug}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">SEO-optimized URL</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-primary">{singleRentalResult.data.price}</div>
+                            <div className="flex gap-2 mt-1">
+                              <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                                For Rent
+                              </Badge>
+                              <Badge variant="outline">{getCategoryLabel(singleRentalResult.data.category)}</Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Key Stats */}
+                      <div className="grid grid-cols-4 gap-4 py-4 border-y">
+                        <div className="text-center">
+                          <Bed className="h-5 w-5 mx-auto text-muted-foreground" />
+                          <div className="font-semibold mt-1">{singleRentalResult.data.beds}</div>
+                          <div className="text-xs text-muted-foreground">Bedrooms</div>
+                        </div>
+                        <div className="text-center">
+                          <Bath className="h-5 w-5 mx-auto text-muted-foreground" />
+                          <div className="font-semibold mt-1">{singleRentalResult.data.baths}</div>
+                          <div className="text-xs text-muted-foreground">Bathrooms</div>
+                        </div>
+                        <div className="text-center">
+                          <Maximize className="h-5 w-5 mx-auto text-muted-foreground" />
+                          <div className="font-semibold mt-1">{singleRentalResult.data.sqft}</div>
+                          <div className="text-xs text-muted-foreground">m²</div>
+                        </div>
+                        <div className="text-center">
+                          <Home className="h-5 w-5 mx-auto text-muted-foreground" />
+                          <div className="font-semibold mt-1">{singleRentalResult.data.garage || "-"}</div>
+                          <div className="text-xs text-muted-foreground">Garage</div>
+                        </div>
+                      </div>
+
+                      {/* Short Description */}
+                      <div>
+                        <h3 className="font-semibold mb-2">Short Description</h3>
+                        <p className="text-muted-foreground">{singleRentalResult.data.shortDescription}</p>
+                      </div>
+
+                      {/* Full Description */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold">Full Description</h3>
+                          {singleRentalResult.data.isOptimized && (
+                            <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-xs">
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              AI Rewritten - Unique Content
+                            </Badge>
+                          )}
+                        </div>
+                        {singleRentalResult.data.contentHtml ? (
+                          <div 
+                            className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground [&>h3]:text-base [&>h3]:font-semibold [&>h3]:mt-4 [&>h3]:mb-2 [&>p]:mb-3 [&>ul]:my-2 [&>ul]:pl-5 [&>li]:mb-1"
+                            dangerouslySetInnerHTML={{ __html: singleRentalResult.data.contentHtml }}
+                          />
+                        ) : (
+                          <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+                            {singleRentalResult.data.content}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Amenities */}
+                      <div>
+                        <h3 className="font-semibold mb-3">Amenities ({singleRentalResult.data.amenities?.length || 0})</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {singleRentalResult.data.amenities?.map((amenity, i) => (
+                            <Badge key={i} variant="secondary" className="py-1">
+                              <Tag className="h-3 w-3 mr-1" />
+                              {amenity}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </Card>
+
+                    {/* Images Sidebar */}
+                    <Card className="p-6 space-y-4">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4" />
+                        Images ({singleRentalResult.data.images?.length || 0})
+                      </h3>
+                      <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                        {singleRentalResult.data.images?.map((imageUrl, i) => (
+                          <div key={i} className="relative aspect-video rounded-lg overflow-hidden border bg-muted">
+                            <Image
+                              src={imageUrl}
+                              alt={`Property image ${i + 1}`}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 400px"
+                              className="object-cover"
+                              unoptimized
+                            />
+                            <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                              {i + 1}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Import Button */}
+                      <div className="pt-4 border-t">
+                        <Button
+                          onClick={handleSingleRentalImport}
+                          disabled={isSingleRentalImporting || !singleRentalResult.validation.isValid}
+                          className="w-full h-12"
+                          size="lg"
+                        >
+                          {isSingleRentalImporting ? (
+                            <>
+                              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                              Importing & Uploading Images...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="mr-2 h-5 w-5" />
+                              Import Rental
+                            </>
+                          )}
+                        </Button>
+                        {!singleRentalResult.validation.isValid && (
+                          <p className="text-xs text-muted-foreground mt-2 text-center">
+                            Fix validation issues before importing
+                          </p>
+                        )}
+                      </div>
+                    </Card>
+                  </div>
+                </div>
+              )}
+
+              {/* Empty State for Single Rental Import */}
+              {!singleRentalResult && !singleRentalError && !isSingleRentalLoading && (
+                <Card className="p-12 text-center">
+                  <div className="mx-auto w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
+                    <Building className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Import Single Rental Property</h3>
+                  <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+                    Paste a direct URL to a rental property listing above. The AI will extract all the data 
+                    and mark it as a rental property automatically.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2 mt-4">
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                      ✓ Marked as &quot;For Rent&quot;
+                    </Badge>
+                    <Badge variant="secondary">✓ AI Content Optimization</Badge>
+                    <Badge variant="secondary">✓ Auto Image Upload</Badge>
+                  </div>
+                </Card>
+              )}
+            </>
+          )}
+
+          {/* Overview Mode */}
+          {rentalMode === "overview" && (
+            <>
+              {/* Listing URL Input */}
+              <Card className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Globe className="h-4 w-4" />
+                      <span>Enter a rental listing overview URL to scrape all available properties</span>
+                    </div>
+                    {(scrapedListings.length > 0 || rentalBulkItems.length > 0) && !isRentalProcessing && (
+                      <Button variant="ghost" size="sm" onClick={resetRentalImport}>
+                        <RotateCcw className="h-4 w-4 mr-1" />
+                        Reset
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <Input
+                        type="url"
+                        placeholder="https://psmphuket.com/properties-search/?status=for-rent"
+                        value={listingUrl}
+                        onChange={(e) => setListingUrl(e.target.value)}
+                        disabled={isScrapingListings || isRentalProcessing}
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="w-24">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={50}
+                        value={listingPages}
+                        onChange={(e) => setListingPages(Math.min(50, Math.max(1, parseInt(e.target.value) || 1)))}
+                        disabled={isScrapingListings || isRentalProcessing}
+                        className="h-12 text-center"
+                        title="Number of pages to scrape (max 50)"
+                      />
+                    </div>
+                    <Button
+                      onClick={scrapeListings}
+                      disabled={!listingUrl.trim() || isScrapingListings || isRentalProcessing}
+                      className="h-12 px-6"
+                    >
+                      {isScrapingListings ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Scanning...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="mr-2 h-4 w-4" />
+                          Find Rentals
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground">
+                    Pages to scrape: {listingPages} • Works with psmphuket.com, fazwaz.com, and similar sites
                   </p>
                 </div>
               </Card>
 
-              <Card className="p-6">
-                <h3 className="font-semibold mb-4">Rental Properties ({rentalBulkItems.length})</h3>
-                <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                  {rentalBulkItems.map((item, index) => (
-                    <div 
-                      key={index} 
-                      className={`p-4 rounded-lg border ${
-                        item.status === "success" ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800" :
-                        item.status === "error" ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800" :
-                        item.status === "skipped" ? "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800" :
-                        item.status === "processing" ? "bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800" :
-                        "bg-muted/50"
-                      }`}
+              {/* Scraped Listings */}
+              {scrapedListings.length > 0 && rentalBulkItems.length === 0 && (
+                <Card className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Building className="h-5 w-5 text-blue-500" />
+                      Found {scrapedListings.length} Rental Properties
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={toggleSelectAll}>
+                        {selectedListings.size === scrapedListings.length ? "Deselect All" : "Select All"}
+                      </Button>
+                      <Badge variant="secondary">
+                        {selectedListings.size} selected
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[500px] overflow-y-auto">
+                    {scrapedListings.map((listing, index) => (
+                      <div
+                        key={listing.url}
+                        onClick={() => toggleListingSelection(listing.url)}
+                        className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                          selectedListings.has(listing.url)
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+                            selectedListings.has(listing.url)
+                              ? "bg-blue-500 border-blue-500"
+                              : "border-gray-300"
+                          }`}>
+                            {selectedListings.has(listing.url) && (
+                              <Check className="h-3 w-3 text-white" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{listing.title || `Property ${index + 1}`}</p>
+                            <p className="text-sm text-primary font-semibold mt-1">{listing.price}</p>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                              {listing.beds > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <Bed className="h-3 w-3" /> {listing.beds}
+                                </span>
+                              )}
+                              {listing.baths > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <Bath className="h-3 w-3" /> {listing.baths}
+                                </span>
+                              )}
+                              {listing.sqft && (
+                                <span className="flex items-center gap-1">
+                                  <Maximize className="h-3 w-3" /> {listing.sqft}m²
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t flex justify-end">
+                    <Button
+                      onClick={startRentalImport}
+                      disabled={selectedListings.size === 0}
+                      className="h-12 px-8"
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            {item.status === "pending" && <Clock className="h-4 w-4 text-muted-foreground" />}
-                            {item.status === "processing" && <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />}
-                            {item.status === "success" && <CheckCircle className="h-4 w-4 text-green-500" />}
-                            {item.status === "error" && <X className="h-4 w-4 text-red-500" />}
-                            {item.status === "skipped" && <AlertCircle className="h-4 w-4 text-yellow-500" />}
+                      <Download className="mr-2 h-4 w-4" />
+                      Import {selectedListings.size} Rentals
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
+              {/* Rental Import Progress */}
+              {rentalBulkItems.length > 0 && (
+                <>
+                  <Card className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold">Rental Import Progress</h3>
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="flex items-center gap-1">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            {rentalProgress.success} Success
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <X className="h-4 w-4 text-red-500" />
+                            {rentalProgress.errors} Errors
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-4 w-4 text-yellow-500" />
+                            {rentalProgress.skipped} Skipped
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <Progress 
+                        value={(rentalProgress.processed / rentalProgress.total) * 100} 
+                        className="h-2"
+                      />
+                      <p className="text-sm text-muted-foreground text-center">
+                        {rentalProgress.processed} of {rentalProgress.total} processed
+                        {isRentalProcessing && " • Processing..."}
+                      </p>
+                    </div>
+                  </Card>
+
+                  <Card className="p-6">
+                    <h3 className="font-semibold mb-4">Rental Properties ({rentalBulkItems.length})</h3>
+                    <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                      {rentalBulkItems.map((item, index) => (
+                        <div 
+                          key={index} 
+                          className={`p-4 rounded-lg border ${
+                            item.status === "success" ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800" :
+                            item.status === "error" ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800" :
+                            item.status === "skipped" ? "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800" :
+                            item.status === "processing" ? "bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800" :
+                            "bg-muted/50"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                {item.status === "pending" && <Clock className="h-4 w-4 text-muted-foreground" />}
+                                {item.status === "processing" && <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />}
+                                {item.status === "success" && <CheckCircle className="h-4 w-4 text-green-500" />}
+                                {item.status === "error" && <X className="h-4 w-4 text-red-500" />}
+                                {item.status === "skipped" && <AlertCircle className="h-4 w-4 text-yellow-500" />}
+                                
+                                <span className="font-medium text-sm truncate">
+                                  {item.title || `Rental ${index + 1}`}
+                                </span>
+                                <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                                  For Rent
+                                </Badge>
+                              </div>
+                              
+                              <p className="text-xs text-muted-foreground truncate font-mono">
+                                {item.url}
+                              </p>
+                              
+                              {item.status === "success" && item.slug && (
+                                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                  ✓ Imported as /properties/{item.slug}
+                                </p>
+                              )}
+                              
+                              {item.status === "error" && item.error && (
+                                <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                                  ✗ {item.error}
+                                </p>
+                              )}
+                              
+                              {item.status === "skipped" && item.error && (
+                                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                                  ⚠ {item.error}
+                                </p>
+                              )}
+                            </div>
                             
-                            <span className="font-medium text-sm truncate">
-                              {item.title || `Rental ${index + 1}`}
-                            </span>
-                            <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                              For Rent
+                            <Badge 
+                              variant={
+                                item.status === "success" ? "default" :
+                                item.status === "error" ? "destructive" :
+                                item.status === "skipped" ? "secondary" :
+                                "outline"
+                              }
+                              className="shrink-0"
+                            >
+                              {item.status === "processing" ? "Processing..." : item.status}
                             </Badge>
                           </div>
-                          
-                          <p className="text-xs text-muted-foreground truncate font-mono">
-                            {item.url}
-                          </p>
-                          
-                          {item.status === "success" && item.slug && (
-                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                              ✓ Imported as /properties/{item.slug}
-                            </p>
-                          )}
-                          
-                          {item.status === "error" && item.error && (
-                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                              ✗ {item.error}
-                            </p>
-                          )}
-                          
-                          {item.status === "skipped" && item.error && (
-                            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                              ⚠ {item.error}
-                            </p>
-                          )}
                         </div>
-                        
-                        <Badge 
-                          variant={
-                            item.status === "success" ? "default" :
-                            item.status === "error" ? "destructive" :
-                            item.status === "skipped" ? "secondary" :
-                            "outline"
-                          }
-                          className="shrink-0"
-                        >
-                          {item.status === "processing" ? "Processing..." : item.status}
-                        </Badge>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </Card>
-            </>
-          )}
+                  </Card>
+                </>
+              )}
 
-          {/* Empty State for Rental Import */}
-          {scrapedListings.length === 0 && rentalBulkItems.length === 0 && !isScrapingListings && (
-            <Card className="p-12 text-center">
-              <div className="mx-auto w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
-                <Building className="h-8 w-8 text-purple-600 dark:text-purple-400" />
-              </div>
-              <h3 className="text-lg font-semibold">Import Rental Properties</h3>
-              <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-                Enter a rental listing overview URL (like psmphuket.com/properties-search/?status=for-rent) 
-                and we&apos;ll find all available rental properties automatically.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2 mt-4">
-                <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                  ✓ Rental-Optimized Content
-                </Badge>
-                <Badge variant="secondary">✓ Multi-Page Scraping</Badge>
-                <Badge variant="secondary">✓ Select Which to Import</Badge>
-                <Badge variant="secondary">✓ Expat/Digital Nomad Focus</Badge>
-              </div>
-            </Card>
+              {/* Empty State for Overview Rental Import */}
+              {scrapedListings.length === 0 && rentalBulkItems.length === 0 && !isScrapingListings && (
+                <Card className="p-12 text-center">
+                  <div className="mx-auto w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
+                    <Building className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Import Multiple Rental Properties</h3>
+                  <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+                    Enter a rental listing overview URL (like psmphuket.com/properties-search/?status=for-rent) 
+                    and we&apos;ll find all available rental properties automatically.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2 mt-4">
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                      ✓ Rental-Optimized Content
+                    </Badge>
+                    <Badge variant="secondary">✓ Multi-Page Scraping</Badge>
+                    <Badge variant="secondary">✓ Select Which to Import</Badge>
+                    <Badge variant="secondary">✓ Expat/Digital Nomad Focus</Badge>
+                  </div>
+                </Card>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>

@@ -1,23 +1,11 @@
 "use client";
 import Link from "next/link";
 import { Icon } from "@iconify/react"
-import { useEffect, useState } from "react";
+import { useLayoutData } from "@/lib/contexts/layout-data-context";
 
 const Footer = () => {
-  const [footerLinks, setFooterLinks] = useState<any>(null);
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch('/api/layout-data')
-        if (!res.ok) throw new Error('Failed to fetch')
-        const data = await res.json()
-        setFooterLinks(data?.footerLinks)
-      } catch (error) {
-        console.error('Error fetching services:', error)
-      }
-    }
-    fetchData()
-  }, [])
+  const { data: layoutData } = useLayoutData();
+  const footerLinks = layoutData?.footerLinks ?? null;
   return (
     <footer className="relative z-10 bg-dark mb-0 pb-0">
       <div className="container mx-auto max-w-8xl pt-14 px-4 sm:px-6 lg:px-0">
@@ -38,13 +26,13 @@ const Footer = () => {
             </p>
           </div>
           <div className="flex items-center gap-6" role="list" aria-label="Social media links">
-            <Link href="https://twitter.com/psmphuket" target="_blank" rel="noopener noreferrer" aria-label="Follow us on X (Twitter)" role="listitem">
+            <Link href="https://twitter.com/psmphuket" prefetch={false} target="_blank" rel="noopener noreferrer" aria-label="Follow us on X (Twitter)" role="listitem">
               <Icon icon="ph:x-logo-bold" width={24} height={24} className="text-white hover:text-primary duration-300" aria-hidden="true" />
             </Link>
-            <Link href="https://facebook.com/psmphuket" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Facebook" role="listitem">
+            <Link href="https://facebook.com/psmphuket" prefetch={false} target="_blank" rel="noopener noreferrer" aria-label="Follow us on Facebook" role="listitem">
               <Icon icon="ph:facebook-logo-bold" width={24} height={24} className="text-white hover:text-primary duration-300" aria-hidden="true" />
             </Link>
-            <Link href="https://instagram.com/psmphuket" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Instagram" role="listitem">
+            <Link href="https://instagram.com/psmphuket" prefetch={false} target="_blank" rel="noopener noreferrer" aria-label="Follow us on Instagram" role="listitem">
               <Icon icon="ph:instagram-logo-bold" width={24} height={24} className="text-white hover:text-primary duration-300" aria-hidden="true" />
             </Link>
           </div>
@@ -55,7 +43,7 @@ const Footer = () => {
               <h2 className="text-white leading-[1.2] text-40 font-medium mb-6 lg:max-w-3/4">
                 Ready to find your tropical paradise? Let's start your property journey today.
               </h2>
-              <Link href="/contactus" className="bg-primary text-base font-semibold py-4 px-8 rounded-full text-white hover:bg-white hover:text-dark duration-300 hover:cursor-pointer">
+              <Link href="/contactus" prefetch={false} className="bg-primary text-base font-semibold py-4 px-8 rounded-full text-white hover:bg-white hover:text-dark duration-300 hover:cursor-pointer">
                 Contact PSM Phuket
               </Link>
             </div>
@@ -63,7 +51,7 @@ const Footer = () => {
               <div className="flex flex-col gap-4 w-fit">
                 {footerLinks?.slice(0, 4)?.map((item:any, index:any) => (
                   <div key={index}>
-                    <Link href={item.href} className="text-white/40 text-xm hover:text-white">
+                    <Link href={item.href} prefetch={false} className="text-white/40 text-xm hover:text-white">
                       {item.label}
                     </Link>
                   </div>
@@ -74,7 +62,7 @@ const Footer = () => {
               <div className="flex flex-col gap-4 w-fit">
                 {footerLinks?.slice(4, 8)?.map((item:any, index:any) => (
                   <div key={index}>
-                    <Link href={item.href} className="text-white/40 text-xm hover:text-white">
+                    <Link href={item.href} prefetch={false} className="text-white/40 text-xm hover:text-white">
                       {item.label}
                     </Link>
                   </div>
@@ -88,10 +76,10 @@ const Footer = () => {
             ©2025 PSM Phuket - Premium Property Management in Phuket & Pattaya, Thailand
           </p>
           <div className="flex gap-8 items-center">
-            <Link href="/terms-and-conditions" className="text-white/40 hover:text-primary text-sm">
+            <Link href="/terms-and-conditions" prefetch={false} className="text-white/40 hover:text-primary text-sm">
               Terms & Conditions
             </Link>
-            <Link href="/privacy-policy" className="text-white/40 hover:text-primary text-sm">
+            <Link href="/privacy-policy" prefetch={false} className="text-white/40 hover:text-primary text-sm">
               Privacy policy
             </Link>
           </div>

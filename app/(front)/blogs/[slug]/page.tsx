@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { BlogSections } from "@/components/new-design/blog/BlogSections";
 import { RelatedBlogs } from "@/components/new-design/blog/RelatedBlogs";
+import { PoiPropertyGrid } from "@/components/new-design/blog/PoiPropertyGrid";
 import { generateArticleSchema, generateFAQSchema, generateBreadcrumbSchema, renderJsonLd } from "@/lib/utils/structured-data";
 import { calculateReadTime, formatReadTime } from "@/lib/utils";
 import Breadcrumb from "@/components/new-design/breadcrumb";
@@ -233,6 +234,16 @@ export default async function Post({ params }: Props) {
             <section className="pt-12 pb-16">
                 <div className="container max-w-6xl mx-auto px-4">
                     <BlogSections content={blog.content} showFaq={true} />
+                    
+                    {/* Dynamic POI Property Section - Shows live listings */}
+                    {blog.hasDynamicProperties && blog.poiTemplateId && (
+                        <PoiPropertyGrid
+                            templateId={blog.poiTemplateId}
+                            queryParams={(blog.poiQueryParams as Record<string, unknown>) || {}}
+                            title="Featured Properties"
+                            maxItems={6}
+                        />
+                    )}
                     
                     {/* Related Blogs Section */}
                     <RelatedBlogs currentSlug={blog.slug} limit={3} />

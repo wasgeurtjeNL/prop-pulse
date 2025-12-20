@@ -2,19 +2,31 @@
 import React from "react";
 import { authClient } from "@/lib/auth-client";
 
+interface SocialSignUpProps {
+    inviteCode?: string;
+}
 
-const SocialSignUp = () => {
+const SocialSignUp = ({ inviteCode }: SocialSignUpProps) => {
+    // Use role-based redirect after social sign-up
+    // If invite code is provided, include it in the callback URL
+    const getCallbackUrl = () => {
+        if (inviteCode?.trim()) {
+            return `/api/auth/social-invite?code=${encodeURIComponent(inviteCode.trim())}`;
+        }
+        return "/api/auth/redirect";
+    };
+
     const handleGoogleSignUp = async () => {
         await authClient.signIn.social({
             provider: "google",
-            callbackURL: "/dashboard",
+            callbackURL: getCallbackUrl(),
         });
     };
 
     const handleGithubSignUp = async () => {
         await authClient.signIn.social({
             provider: "github",
-            callbackURL: "/dashboard",
+            callbackURL: getCallbackUrl(),
         });
     };
 

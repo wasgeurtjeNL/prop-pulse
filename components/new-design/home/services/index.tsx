@@ -11,7 +11,7 @@ const Services = () => {
           alt="vector"
           width={800}
           height={1050}
-          className="dark:hidden max-w-[50vw] sm:max-w-none"
+          className="dark:hidden max-w-[50vw] sm:max-w-none h-auto"
           unoptimized={true}
         />
         <Image
@@ -36,23 +36,23 @@ const Services = () => {
             <p className="text-dark/50 dark:text-white/50 text-sm sm:text-base lg:text-lg leading-relaxed">
               From beachfront villas in Phuket to modern condos in Pattaya - discover Thailand's finest properties with expert local guidance and full property management services.
             </p>
-            <Link href="/properties" className="py-3 sm:py-3.5 lg:py-4 px-6 sm:px-7 lg:px-8 bg-primary text-sm sm:text-base leading-4 inline-block w-full xs:w-auto text-center text-white rounded-full font-semibold mt-6 sm:mt-8 hover:bg-dark duration-300">
+            <Link href="/properties" prefetch={false} className="py-3 sm:py-3.5 lg:py-4 px-6 sm:px-7 lg:px-8 bg-primary text-sm sm:text-base leading-4 inline-block w-full xs:w-auto text-center text-white rounded-full font-semibold mt-6 sm:mt-8 hover:bg-dark duration-300">
               View properties
             </Link>
           </div>
           <div className="hidden lg:block lg:col-span-6">
             <div className="relative rounded-xl sm:rounded-2xl overflow-hidden group">
-              <Link href="/properties?category=residential-home">
+              <Link href="/properties?category=residential-home" prefetch={false}>
                 <Image
                   src="/images/categories/villas.jpg"
                   alt="Residential homes in Thailand"
                   width={680}
                   height={386}
-                  className="w-full aspect-[16/10] object-cover"
+                  className="w-full h-auto aspect-[16/10] object-cover"
                   unoptimized={true}
                 />
               </Link>
-              <Link href="/properties?category=residential-home" className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 lg:p-10 group-hover:top-0 duration-500">
+              <Link href="/properties?category=residential-home" prefetch={false} className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 lg:p-10 group-hover:top-0 duration-500">
                 <div className="flex justify-end">
                   <div className="bg-white text-dark rounded-full w-fit p-2.5 sm:p-3 lg:p-4">
                     <Icon icon="ph:arrow-right" className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -71,17 +71,17 @@ const Services = () => {
           </div>
           <div className="hidden lg:block lg:col-span-6">
             <div className="relative rounded-xl sm:rounded-2xl overflow-hidden group">
-              <Link href="/properties?category=luxury-villa">
+              <Link href="/properties?category=luxury-villa" prefetch={false}>
                 <Image
                   src="/images/categories/luxury-villa.jpg"
                   alt="Luxury villas in Phuket"
                   width={680}
                   height={386}
-                  className="w-full aspect-[16/10] object-cover"
+                  className="w-full h-auto aspect-[16/10] object-cover"
                   unoptimized={true}
                 />
               </Link>
-              <Link href="/properties?category=luxury-villa" className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 lg:p-10 group-hover:top-0 duration-500">
+              <Link href="/properties?category=luxury-villa" prefetch={false} className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 lg:p-10 group-hover:top-0 duration-500">
                 <div className="flex justify-end">
                   <div className="bg-white text-dark rounded-full w-fit p-2.5 sm:p-3 lg:p-4">
                     <Icon icon="ph:arrow-right" className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -100,17 +100,17 @@ const Services = () => {
           </div>
           <div className="hidden lg:block lg:col-span-3">
             <div className="relative rounded-xl sm:rounded-2xl overflow-hidden group">
-              <Link href="/properties?category=apartment">
+              <Link href="/properties?category=apartment" prefetch={false}>
                 <Image
                   src="/images/categories/appartment.jpg"
                   alt="Apartments in Thailand"
                   width={320}
                   height={386}
-                  className="w-full aspect-[4/5] sm:aspect-[3/4] object-cover"
+                  className="w-full h-auto aspect-[4/5] sm:aspect-[3/4] object-cover"
                   unoptimized={true}
                 />
               </Link>
-              <Link href="/properties?category=apartment" className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 group-hover:top-0 duration-500">
+              <Link href="/properties?category=apartment" prefetch={false} className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 group-hover:top-0 duration-500">
                 <div className="flex justify-end">
                   <div className="bg-white text-dark rounded-full w-fit p-2.5 sm:p-3">
                     <Icon icon="ph:arrow-right" className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -129,17 +129,17 @@ const Services = () => {
           </div>
           <div className="hidden lg:block lg:col-span-3">
             <div className="relative rounded-xl sm:rounded-2xl overflow-hidden group">
-              <Link href="/properties?type=FOR_RENT">
+              <Link href="/properties?type=FOR_RENT" prefetch={false}>
                 <Image
                   src="https://ik.imagekit.io/slydc8kod/landing-pages/ai-generated/phuket-luxury-real-estate-section-1-1765803415374_vObjyLDkE.webp?updatedAt=1765803416903"
                   alt="Rental properties in Thailand"
                   width={320}
                   height={386}
-                  className="w-full aspect-[4/5] sm:aspect-[3/4] object-cover"
+                  className="w-full h-auto aspect-[4/5] sm:aspect-[3/4] object-cover"
                   unoptimized={true}
                 />
               </Link>
-              <Link href="/properties?type=FOR_RENT" className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 group-hover:top-0 duration-500">
+              <Link href="/properties?type=FOR_RENT" prefetch={false} className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 group-hover:top-0 duration-500">
                 <div className="flex justify-end">
                   <div className="bg-white text-dark rounded-full w-fit p-2.5 sm:p-3">
                     <Icon icon="ph:arrow-right" className="w-4 h-4 sm:w-5 sm:h-5" />

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Property Scraper - Scrapes property listings and converts them to PropPulse format.
+Property Scraper - Scrapes property listings and converts them to PSM Phuket format.
 
 Usage:
     python scrape_property.py <url> [--preview] [--import]
@@ -35,9 +35,9 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
-# PropPulse API configuration
-PROPPULSE_API_URL = os.getenv('PROPPULSE_API_URL', 'http://localhost:3000')
-PROPPULSE_API_KEY = os.getenv('PROPPULSE_IMPORT_API_KEY', '')
+# PSM Phuket API configuration
+PSM_PHUKET_API_URL = os.getenv('PSM_PHUKET_API_URL', 'http://localhost:3000')
+PSM_PHUKET_API_KEY = os.getenv('PSM_PHUKET_IMPORT_API_KEY', '')
 
 # Mapping of common amenities to Lucide icons
 AMENITY_ICONS = {
@@ -182,7 +182,7 @@ def extract_property_data_with_ai(text: str, images: list[str], source_url: str)
     
     prompt = f"""You are a real estate data extraction expert. Extract property information from the following webpage content and return it as a structured JSON object.
 
-The property must match this exact schema for our PropPulse platform:
+The property must match this exact schema for our PSM Phuket platform:
 
 {{
     "title": "Property title (string, required)",
@@ -287,14 +287,14 @@ def validate_property_data(data: dict) -> list[str]:
     return issues
 
 
-def import_to_proppulse(data: dict) -> dict:
-    """Send the property data to PropPulse API for import."""
+def import_to_psm_phuket(data: dict) -> dict:
+    """Send the property data to PSM Phuket API for import."""
     
-    api_url = f"{PROPPULSE_API_URL}/api/properties/import"
+    api_url = f"{PSM_PHUKET_API_URL}/api/properties/import"
     
     headers = {
         'Content-Type': 'application/json',
-        'X-API-Key': PROPPULSE_API_KEY
+        'X-API-Key': PSM_PHUKET_API_KEY
     }
     
     try:
@@ -307,7 +307,7 @@ def import_to_proppulse(data: dict) -> dict:
                 raise Exception(f"API Error ({response.status_code}): {response.text}")
         return response.json()
     except requests.RequestException as e:
-        raise Exception(f"Failed to import to PropPulse: {e}")
+        raise Exception(f"Failed to import to PSM Phuket: {e}")
 
 
 def save_to_file(data: dict, url: str):
@@ -331,17 +331,17 @@ def save_to_file(data: dict, url: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Scrape property listings for PropPulse')
+    parser = argparse.ArgumentParser(description='Scrape property listings for PSM Phuket')
     parser.add_argument('url', help='URL of the property listing to scrape, or path to a JSON file')
     parser.add_argument('--preview', action='store_true', help='Only preview the extracted data, do not import')
-    parser.add_argument('--import', dest='do_import', action='store_true', help='Import the data to PropPulse')
+    parser.add_argument('--import', dest='do_import', action='store_true', help='Import the data to PSM Phuket')
     parser.add_argument('--save', action='store_true', help='Save the extracted data to a JSON file')
     parser.add_argument('--from-file', action='store_true', help='Load data from a JSON file instead of scraping')
     
     args = parser.parse_args()
     
     print(f"\n{'='*60}")
-    print(f"🏠 PropPulse Property Scraper")
+    print(f"🏠 PSM Phuket Property Scraper")
     print(f"{'='*60}")
     print(f"\n📍 Input: {args.url}\n")
     
@@ -424,9 +424,9 @@ def main():
             print("   Fix the issues or use --save to save and edit manually")
             sys.exit(1)
         
-        print(f"\n🚀 Step 4: Importing to PropPulse...")
+        print(f"\n🚀 Step 4: Importing to PSM Phuket...")
         try:
-            result = import_to_proppulse(property_data)
+            result = import_to_psm_phuket(property_data)
             print(f"   ✓ Successfully imported!")
             print(f"   📎 Property ID: {result.get('id', 'N/A')}")
             print(f"   🔗 Slug: {result.get('slug', 'N/A')}")

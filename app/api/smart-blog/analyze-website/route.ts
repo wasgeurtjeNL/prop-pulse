@@ -33,7 +33,7 @@ async function fetchPage(baseUrl: string, path: string): Promise<PageContent | n
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; PropPulse/1.0; Website Analyzer)",
+        "User-Agent": "Mozilla/5.0 (compatible; PSMPhuket/1.0; Website Analyzer)",
         "Accept": "text/html,application/xhtml+xml",
       }
     });
@@ -150,7 +150,7 @@ export async function POST(request: Request) {
 
     // Step 2: Discover navigation links + use default paths
     const homepageHtml = await fetch(baseUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; PropPulse/1.0)" }
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; PSMPhuket/1.0)" }
     }).then(r => r.text()).catch(() => "");
     
     const discoveredPaths = extractNavLinks(homepageHtml, baseUrl);

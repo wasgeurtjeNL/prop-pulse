@@ -1,6 +1,6 @@
 # Property Scraper Tool
 
-Een slim Python script dat property listings scraped van externe websites en deze automatisch importeert in PropPulse.
+Een slim Python script dat property listings scraped van externe websites en deze automatisch importeert in PSM Phuket.
 
 ## 📋 Vereisten
 
@@ -67,7 +67,7 @@ output/
 
 Voor productie, voeg een API key toe aan `.env`:
 ```
-PROPPULSE_IMPORT_API_KEY=je-geheime-api-key
+PSM_PHUKET_IMPORT_API_KEY=je-geheime-api-key
 ```
 
 In development mode werkt de API ook zonder key.

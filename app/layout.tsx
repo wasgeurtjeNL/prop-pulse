@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import NextTopLoader from "nextjs-toploader";
 import SessionProvider from "@/components/providers/SessionProvider";
 import { LanguageProvider } from "@/lib/contexts/language-context";
+import { LayoutDataProvider } from "@/lib/contexts/layout-data-context";
 
 const font = Bricolage_Grotesque({ 
   subsets: ["latin"],
@@ -16,10 +17,10 @@ const font = Bricolage_Grotesque({
   fallback: ["system-ui", "sans-serif"],
 });
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
 export const metadata: Metadata = {
-  ...(baseUrl && { metadataBase: new URL(baseUrl) }),
+  metadataBase: new URL(baseUrl),
   title: {
     default: "Real Estate Pulse - Premium Properties & Real Estate Services",
     template: "%s | Real Estate Pulse",
@@ -87,7 +88,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="h-full">
+    <html lang="en" suppressHydrationWarning className="h-full" data-scroll-behavior="smooth">
       <head>
         {/* Preconnect to external resources for faster loading */}
         <link rel="preconnect" href="https://ik.imagekit.io" crossOrigin="anonymous" />
@@ -107,8 +108,10 @@ export default function RootLayout({
             defaultTheme="light"
           >
             <LanguageProvider>
-              {children}
-              <Toaster richColors />
+              <LayoutDataProvider>
+                {children}
+                <Toaster richColors />
+              </LayoutDataProvider>
             </LanguageProvider>
           </ThemeProvider>
         </SessionProvider>

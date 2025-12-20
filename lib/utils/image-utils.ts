@@ -143,7 +143,7 @@ export function generateBlogCoverAlt(title: string, topic?: string): string {
     altText = `${cleanTitle} - real estate guide`;
   } else {
     // Generic blog post without specific context
-    altText = `${cleanTitle} - PropPulse blog`;
+    altText = `${cleanTitle} - PSM Phuket blog`;
   }
 
   // Ensure ALT text doesn't exceed ~125 characters
@@ -174,14 +174,14 @@ export function generateBlogImageFilename(title: string, suffix: string = "cover
 }
 
 /**
- * Build an optimized DALL-E 3 prompt for real estate blog images
+ * Build an optimized prompt for real estate blog images
  * 
- * Creates professional, high-quality prompts that produce
- * consistent, branded imagery suitable for a luxury real estate website.
+ * Creates hyperrealistic, professional prompts that produce
+ * photographic-quality imagery indistinguishable from real photos.
  * 
  * @param topic - The blog topic/title
  * @param style - Image style preference
- * @returns Optimized prompt for DALL-E 3
+ * @returns Optimized prompt for GPT Image 1.5
  */
 export function buildBlogImagePrompt(
   topic: string,
@@ -298,7 +298,7 @@ export function buildBlogImagePrompt(
   const variationLine = variationKey ? `Variation key: ${variationKey}` : "";
 
   return [
-    "Create a photorealistic, natural-looking blog header image (NOT CGI).",
+    "Create a HYPERREALISTIC photograph indistinguishable from a real photo taken by a professional photographer.",
     `Subject: ${contextualPrompt}`,
     `Topic context: "${topic}"`,
     localeLine,
@@ -307,12 +307,15 @@ export function buildBlogImagePrompt(
     `Camera: ${cameraLook}`,
     `Composition: ${composition}`,
     `Color mood: ${colorMood}`,
-    "Hard requirements:",
-    "- No text, no watermarks, no logos, no UI elements",
-    "- No illustration, no 3D render, no overly smooth/plastic surfaces",
-    "- Realistic proportions and perspective; believable materials and shadows",
-    "- Avoid uncanny faces; if people appear, they must be unidentifiable (no clear faces)",
-    "- Wide landscape header format",
+    "CRITICAL REQUIREMENTS for hyperrealism:",
+    "- Must look like a REAL photograph, NOT AI-generated",
+    "- Real camera imperfections: subtle lens distortion, natural depth of field, slight vignetting",
+    "- Natural material textures: wood grain, fabric weave, metal reflections, concrete pores",
+    "- Realistic lighting with natural shadows, ambient occlusion, and light falloff",
+    "- NO plastic/smooth CGI surfaces, NO illustration style, NO 3D render look",
+    "- NO text, watermarks, logos, or UI elements anywhere",
+    "- If people appear, they must be unidentifiable (silhouettes, back view, or partial views only)",
+    "- Wide landscape header format suitable for blog cover",
     variationLine,
   ]
     .filter(Boolean)
@@ -320,7 +323,7 @@ export function buildBlogImagePrompt(
 }
 
 /**
- * Build a DALL-E 3 prompt for landing page section images
+ * Build a prompt for landing page section images
  * 
  * Creates hyperrealistic, professional prompts for section images
  * that match the content of each H2 section.
@@ -328,7 +331,7 @@ export function buildBlogImagePrompt(
  * @param sectionHeading - The H2 heading of the section
  * @param pageTitle - The overall page title for context
  * @param sectionIndex - Index for variation
- * @returns Optimized prompt for DALL-E 3
+ * @returns Optimized prompt for GPT Image 1.5
  */
 export function buildSectionImagePrompt(
   sectionHeading: string,
@@ -398,7 +401,7 @@ export function buildSectionImagePrompt(
   const cameraLook = cameraVariants[sectionIndex % cameraVariants.length];
 
   return [
-    "Create a hyperrealistic, editorial-quality photograph (NOT CGI, NOT illustration).",
+    "Create a HYPERREALISTIC photograph that looks exactly like a professional real estate magazine photo.",
     `Scene: ${scenePrompt}`,
     `Context: Section about "${sectionHeading}" in an article about "${pageTitle}"`,
     localeHint ? `Location atmosphere: ${localeHint}` : "",
@@ -406,11 +409,14 @@ export function buildSectionImagePrompt(
     `Technical: ${cameraLook}`,
     "Style: Premium real estate magazine editorial photography, natural colors, realistic textures",
     "Aspect ratio: 4:3 landscape format",
-    "REQUIREMENTS:",
+    "CRITICAL REQUIREMENTS for hyperrealism:",
+    "- Must be INDISTINGUISHABLE from a real photograph taken by a professional photographer",
+    "- Real camera characteristics: natural depth of field, subtle lens aberrations, realistic bokeh",
+    "- Natural material textures: visible wood grain, fabric weave, stone pores, metal reflections",
+    "- Realistic lighting: natural shadows, ambient occlusion, proper light falloff, subtle reflections",
     "- Absolutely NO text, watermarks, logos, or UI elements",
     "- NO illustration style, NO 3D render look, NO plastic/smooth CGI surfaces",
-    "- Realistic materials, shadows, and perspective",
-    "- If people appear, they must be unidentifiable (silhouettes or partial views only)",
+    "- If people appear, they must be unidentifiable (silhouettes, back view, or blurred)",
     "- High-end luxury real estate publication quality"
   ].filter(Boolean).join("\n");
 }

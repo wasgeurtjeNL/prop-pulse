@@ -79,7 +79,7 @@ export function PropertySearch() {
       <div className="relative flex-1 max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Zoek op titel, locatie..."
+          placeholder="Search by title, location, listing number (PP-XXXX)..."
           defaultValue={currentSearch}
           onChange={(e) => handleSearch(e.target.value)}
           className="pl-10 pr-10"
@@ -98,7 +98,7 @@ export function PropertySearch() {
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Alle Status</SelectItem>
+          <SelectItem value="all">All Status</SelectItem>
           <SelectItem value="ACTIVE">Active</SelectItem>
           <SelectItem value="PENDING">Pending</SelectItem>
           <SelectItem value="SOLD">Sold</SelectItem>
@@ -115,7 +115,7 @@ export function PropertySearch() {
           <SelectValue placeholder="Type" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Alle Types</SelectItem>
+          <SelectItem value="all">All Types</SelectItem>
           <SelectItem value="FOR_SALE">For Sale</SelectItem>
           <SelectItem value="FOR_RENT">For Rent</SelectItem>
         </SelectContent>

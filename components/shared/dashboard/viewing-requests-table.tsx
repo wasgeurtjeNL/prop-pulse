@@ -19,10 +19,15 @@ import {
   CheckCircle, 
   XCircle, 
   Clock,
-  ExternalLink
+  ExternalLink,
+  User,
+  Building,
+  Send
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { getPropertyUrl } from '@/lib/property-url';
+import { SendLeadModal } from './send-lead-modal';
 
 interface ViewingRequest {
   id: string;
@@ -50,8 +55,17 @@ interface ViewingRequest {
     id: string;
     title: string;
     slug: string;
+    provinceSlug: string | null;
+    areaSlug: string | null;
     location: string;
     price: string;
+    ownerName: string | null;
+    ownerEmail: string | null;
+    ownerPhone: string | null;
+    ownerCountryCode: string | null;
+    ownerCompany: string | null;
+    ownerNotes: string | null;
+    commissionRate: number | null;
   } | null;
 }
 
@@ -59,6 +73,10 @@ export default function ViewingRequestsTable() {
   const [requests, setRequests] = useState<ViewingRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
+  const [sendLeadModal, setSendLeadModal] = useState<{
+    open: boolean;
+    request: ViewingRequest | null;
+  }>({ open: false, request: null });
 
   useEffect(() => {
     fetchRequests();
@@ -188,7 +206,8 @@ export default function ViewingRequestsTable() {
               <TableRow>
                 <TableHead>Type</TableHead>
                 <TableHead>Property</TableHead>
-                <TableHead>Contact</TableHead>
+                <TableHead>Lead Contact</TableHead>
+                <TableHead>Owner/Agency</TableHead>
                 <TableHead>Date/Offer</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Agent</TableHead>
@@ -207,7 +226,7 @@ export default function ViewingRequestsTable() {
                     {request.property ? (
                       <div className="flex flex-col gap-1">
                         <Link 
-                          href={`/properties/${request.property.slug}`}
+                          href={getPropertyUrl(request.property)}
                           className="font-medium hover:text-primary transition-colors"
                           target="_blank"
                         >
@@ -251,6 +270,50 @@ export default function ViewingRequestsTable() {
                         </a>
                       </div>
                     </div>
+                  </TableCell>
+                  
+                  {/* Owner/Agency Contact */}
+                  <TableCell>
+                    {request.property?.ownerName ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1">
+                          <User className="w-3 h-3 text-emerald-600" />
+                          <span className="font-medium text-sm">{request.property.ownerName}</span>
+                        </div>
+                        {request.property.ownerCompany && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Building className="w-3 h-3" />
+                            <span>{request.property.ownerCompany}</span>
+                          </div>
+                        )}
+                        {request.property.ownerPhone && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Phone className="w-3 h-3 text-emerald-600" />
+                            <a 
+                              href={`tel:${request.property.ownerCountryCode || '+66'}${request.property.ownerPhone}`}
+                              className="hover:text-emerald-600 font-medium"
+                            >
+                              {request.property.ownerCountryCode || '+66'} {request.property.ownerPhone}
+                            </a>
+                          </div>
+                        )}
+                        {request.property.ownerEmail && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Mail className="w-3 h-3 text-emerald-600" />
+                            <a 
+                              href={`mailto:${request.property.ownerEmail}`}
+                              className="hover:text-emerald-600"
+                            >
+                              {request.property.ownerEmail}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic">
+                        No owner info
+                      </span>
+                    )}
                   </TableCell>
                   
                   <TableCell>
@@ -326,6 +389,19 @@ export default function ViewingRequestsTable() {
                   
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
+                      {/* Send to Owner button */}
+                      {request.property && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSendLeadModal({ open: true, request })}
+                          className="h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                          title="Send lead to owner/agency"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      )}
+                      
                       {request.status === 'PENDING' && (
                         <>
                           <Button
@@ -373,6 +449,40 @@ export default function ViewingRequestsTable() {
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {/* Send Lead Modal */}
+      {sendLeadModal.request && sendLeadModal.request.property && (
+        <SendLeadModal
+          open={sendLeadModal.open}
+          onOpenChange={(open) => setSendLeadModal({ ...sendLeadModal, open })}
+          lead={{
+            id: sendLeadModal.request.id,
+            name: sendLeadModal.request.name,
+            email: sendLeadModal.request.email,
+            phone: sendLeadModal.request.phone,
+            countryCode: sendLeadModal.request.countryCode,
+            message: sendLeadModal.request.message,
+            requestType: sendLeadModal.request.requestType,
+            viewingDate: sendLeadModal.request.viewingDate,
+            offerAmount: sendLeadModal.request.offerAmount,
+          }}
+          property={{
+            id: sendLeadModal.request.property.id,
+            title: sendLeadModal.request.property.title,
+            slug: sendLeadModal.request.property.slug,
+            provinceSlug: sendLeadModal.request.property.provinceSlug,
+            areaSlug: sendLeadModal.request.property.areaSlug,
+            location: sendLeadModal.request.property.location,
+            price: sendLeadModal.request.property.price,
+            ownerName: sendLeadModal.request.property.ownerName,
+            ownerEmail: sendLeadModal.request.property.ownerEmail,
+            ownerPhone: sendLeadModal.request.property.ownerPhone,
+            ownerCountryCode: sendLeadModal.request.property.ownerCountryCode,
+            ownerCompany: sendLeadModal.request.property.ownerCompany,
+            commissionRate: sendLeadModal.request.property.commissionRate,
+          }}
+        />
       )}
     </div>
   );

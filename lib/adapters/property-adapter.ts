@@ -4,6 +4,7 @@
  */
 
 import type { Property, PropertyImage } from "@/lib/generated/prisma/client";
+import { getOptimizedImageUrl, getBlurPlaceholderUrl } from "@/lib/imagekit";
 
 export interface PropertyTemplateFormat {
   id: string; // Property ID - required for viewing requests
@@ -18,7 +19,8 @@ export interface PropertyTemplateFormat {
   beds: number;
   baths: number;
   area: number;
-  images: Array<{ src: string }>;
+  plotSize?: number | null; // Land/plot size in m²
+  images: Array<{ src: string; blurDataURL?: string }>;
   
   // Detail page fields
   content?: string; // Full description HTML from rich text editor
@@ -40,6 +42,25 @@ export interface PropertyTemplateFormat {
   // Ownership details (only for FOR_SALE properties)
   ownershipType?: "FREEHOLD" | "LEASEHOLD" | null;
   isResale?: boolean | null;
+  
+  // POI Location data (for badges)
+  beachScore?: number | null;
+  familyScore?: number | null;
+  convenienceScore?: number | null;
+  quietnessScore?: number | null;
+  hasSeaView?: boolean | null;
+  seaDistance?: number | null;
+  district?: string | null;
+  
+  // Hierarchical URL slugs
+  provinceSlug?: string | null;
+  areaSlug?: string | null;
+  
+  // Daily rental configuration
+  enableDailyRental?: boolean;
+  monthlyRentalPrice?: number | null;
+  maxGuests?: number | null;
+  allowPets?: boolean;
 }
 
 type PropertyWithImages = Property & {
@@ -52,15 +73,23 @@ type PropertyWithImages = Property & {
 export function transformPropertyToTemplate(
   property: PropertyWithImages
 ): PropertyTemplateFormat {
-  // Get images in correct order (position 1-4)
+  // Get images in correct order (position 1-4) with ImageKit optimization
+  // Card images: 800px width, 75% quality for fast loading
+  // Also generate blur placeholders for instant perceived loading
   const sortedImages = property.images
     ?.sort((a, b) => a.position - b.position)
-    .map(img => ({ src: img.url })) || [];
+    .map(img => ({ 
+      src: getOptimizedImageUrl(img.url, { width: 800, quality: 75 }),
+      blurDataURL: getBlurPlaceholderUrl(img.url),
+    })) || [];
   
-  // Fallback to main image if no images array
+  // Fallback to main image if no images array (also optimized)
   const images = sortedImages.length > 0 
     ? sortedImages 
-    : [{ src: property.image }];
+    : [{ 
+        src: getOptimizedImageUrl(property.image, { width: 800, quality: 75 }),
+        blurDataURL: getBlurPlaceholderUrl(property.image),
+      }];
 
   // Parse JSON fields safely
   const descriptionParagraphs = parseJsonField<string[]>(
@@ -91,6 +120,7 @@ export function transformPropertyToTemplate(
     beds: property.beds,
     baths: property.baths,
     area: property.sqft,
+    plotSize: (property as any).plotSize ?? null,
     images,
     
     // Content fields
@@ -108,6 +138,25 @@ export function transformPropertyToTemplate(
     // Ownership details (only for FOR_SALE properties)
     ownershipType: (property as any).ownershipType || undefined,
     isResale: (property as any).isResale || undefined,
+    
+    // POI Location data (for badges)
+    beachScore: (property as any).beachScore ?? null,
+    familyScore: (property as any).familyScore ?? null,
+    convenienceScore: (property as any).convenienceScore ?? null,
+    quietnessScore: (property as any).quietnessScore ?? null,
+    hasSeaView: (property as any).hasSeaView ?? null,
+    seaDistance: (property as any).seaDistance ?? null,
+    district: (property as any).district ?? null,
+    
+    // Hierarchical URL slugs
+    provinceSlug: (property as any).provinceSlug ?? null,
+    areaSlug: (property as any).areaSlug ?? null,
+    
+    // Daily rental configuration
+    enableDailyRental: (property as any).enableDailyRental ?? false,
+    monthlyRentalPrice: (property as any).monthlyRentalPrice ?? null,
+    maxGuests: (property as any).maxGuests ?? null,
+    allowPets: (property as any).allowPets ?? false,
   };
 }
 

@@ -6,7 +6,7 @@
  */
 
 export const APP_CONFIG = {
-  name: "PropPulse",
+  name: "PSM Phuket",
   version: "0.1.0",
   
   developer: {
@@ -15,7 +15,7 @@ export const APP_CONFIG = {
   },
   
   meta: {
-    description: "Real Estate Platform - PropPulse",
+    description: "Real Estate Platform - PSM Phuket",
     createdAt: "2024",
   },
 } as const;

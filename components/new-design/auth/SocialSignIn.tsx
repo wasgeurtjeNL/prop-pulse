@@ -4,16 +4,17 @@ import { authClient } from "@/lib/auth-client";
 
 
 const SocialSignIn = () => {
+  // Use role-based redirect after social sign-in
   const handleGoogleSignIn = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: "/api/auth/redirect",
     });
   };
   const handleGithubSignIn = async () => {
     await authClient.signIn.social({
       provider: "github",
-      callbackURL: "/dashboard",
+      callbackURL: "/api/auth/redirect",
     });
   };
   return (

@@ -1,13 +1,13 @@
-# PropPulse
+# PSM Phuket
 
-**PropPulse** is a modern and minimal real estate web application\*\* built with Next.js 16, Prisma,BetterAuth, and ShadCN/UI.  
+**PSM Phuket** is a modern and minimal real estate web application built with Next.js 16, Prisma, BetterAuth, and ShadCN/UI.  
 Users can browse properties, add listings, and manage their real estate posts through a clean and fast interface.
 
 ---
 
 ## 🚀 Live Demo
 
-🔗 _(https://proppulse-next.netlify.app/)_
+🔗 _(https://psmphuket.com/)_
 
 ---
 
@@ -61,7 +61,7 @@ Create a `.env` file in the root:
 DATABASE_URL="postgresql://..."
 
 # BetterAuth
-BETTER_AUTH_BASE_URL="https://proppulse-next.netlify.app"
+BETTER_AUTH_BASE_URL="https://psmphuket.com"
 BETTER_AUTH_SECRET="your_betterauth_secret"
 
 # ImageKit

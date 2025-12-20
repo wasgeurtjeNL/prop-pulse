@@ -57,6 +57,7 @@ const Mission = () => {
               src="/team-meeting.avif"
               alt="Team Meeting"
               fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover"
             />
           </div>

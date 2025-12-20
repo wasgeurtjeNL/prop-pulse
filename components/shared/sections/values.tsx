@@ -11,6 +11,7 @@ const Values = () => {
           src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?q=80&w=1200&auto=format&fit=crop"
           alt="Luxury Pool Villa Thailand"
             fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
             className="object-cover"
           />
         </div>

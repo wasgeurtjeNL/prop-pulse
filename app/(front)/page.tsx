@@ -1,15 +1,16 @@
 import dynamic from 'next/dynamic';
 import { Metadata } from 'next';
 import { generateOrganizationSchema, renderJsonLd } from '@/lib/utils/structured-data';
+import { getProperties } from '@/lib/actions/property.actions';
+import { transformPropertiesToTemplate } from '@/lib/adapters/property-adapter';
+import HeroImagePreloader from './HeroImagePreloader';
 
 // Critical above-the-fold components - load immediately for best LCP
 import Hero from '@/components/new-design/home/hero';
 import Services from '@/components/new-design/home/services';
 
-// Below-the-fold components - lazy load with dynamic imports to reduce initial bundle
-const Properties = dynamic(() => import('@/components/new-design/home/properties'), {
-  loading: () => <div className="animate-pulse h-96 bg-slate-100 dark:bg-slate-800" />,
-});
+// Properties component - NOT lazy loaded since we have server-side data
+import Properties from '@/components/new-design/home/properties';
 
 const FeaturedProperty = dynamic(() => import('@/components/new-design/home/featured-property'), {
   loading: () => <div className="animate-pulse h-[500px] bg-slate-100 dark:bg-slate-800" />,
@@ -52,8 +53,12 @@ export const metadata: Metadata = {
   },
 }
 
-export default function HomePage() {
+export default async function HomePage() {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://realestatepulse.com';
+  
+  // Fetch properties data server-side for instant rendering (no waterfall)
+  const properties = await getProperties({});
+  const propertyHomes = transformPropertiesToTemplate(properties);
   
   // Organization structured data for homepage
   const organizationSchema = generateOrganizationSchema({
@@ -71,6 +76,8 @@ export default function HomePage() {
 
   return (
     <>
+      {/* Preload hero images for faster LCP - only on homepage */}
+      <HeroImagePreloader />
       {/* JSON-LD Structured Data for Organization */}
       <script
         type="application/ld+json"
@@ -81,8 +88,10 @@ export default function HomePage() {
         <Hero />
         <Services />
         
+        {/* Properties - server-side data for instant image loading */}
+        <Properties initialProperties={propertyHomes} />
+        
         {/* Below-the-fold - lazy loaded for faster initial load */}
-        <Properties />
         <FeaturedProperty />
         <Testimonial />
         <WhyChooseUs />

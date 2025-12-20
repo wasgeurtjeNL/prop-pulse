@@ -6,6 +6,7 @@ import { Send, X, Loader2, ExternalLink, Calendar, ArrowLeft, CheckCircle } from
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getPropertyUrl } from '@/lib/property-url';
 
 interface Message {
   id: string;
@@ -29,6 +30,8 @@ interface PropertyResult {
   type: string;
   category: string;
   image: string;
+  provinceSlug?: string | null;
+  areaSlug?: string | null;
 }
 
 interface Action {
@@ -678,7 +681,7 @@ function PropertyCard({
   return (
     <div className="bg-slate-50 dark:bg-slate-600 rounded-lg overflow-hidden">
       <Link
-        href={`/properties/${property.slug}`}
+        href={getPropertyUrl(property)}
         target="_blank"
         className="block hover:bg-slate-100 dark:hover:bg-slate-500 transition-colors"
       >

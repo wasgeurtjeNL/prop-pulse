@@ -9,7 +9,7 @@ import NavLink from './navigation/NavLink'
 import { authClient } from '@/lib/auth-client'
 import LanguageToggle from '../language-toggle'
 import { cn } from '@/lib/utils'
-import type { NavLinks } from '@/types/navlink'
+import { useLayoutData } from '@/lib/contexts/layout-data-context'
 
 // Social media links
 const socialLinks = [
@@ -22,7 +22,8 @@ const socialLinks = [
 
 const Header: React.FC = () => {
   const { data: session } = authClient.useSession();
-  const [navLinks, setNavLinks] = useState<NavLinks[] | null>(null);
+  const { data: layoutData } = useLayoutData();
+  const navLinks = layoutData?.navLinks ?? null;
   const [sticky, setSticky] = useState(false)
   const [navbarOpen, setNavbarOpen] = useState(false)
   const { theme, setTheme } = useTheme()
@@ -39,20 +40,6 @@ const Header: React.FC = () => {
 
   const handleScroll = useCallback(() => {
     setSticky(window.scrollY >= 50)
-  }, [])
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch('/api/layout-data')
-        if (!res.ok) throw new Error('Failed to fetch')
-        const data = await res.json()
-        setNavLinks(data?.navLinks)
-      } catch (error) {
-        console.error('Error fetching services:', error)
-      }
-    }
-    fetchData()
   }, [])
 
   useEffect(() => {
@@ -135,6 +122,7 @@ const Header: React.FC = () => {
             <div className="flex items-center gap-6">
               <Link 
                 href="mailto:info@psmphuket.com" 
+                prefetch={false}
                 className="flex items-center gap-2 hover:text-primary transition-colors"
               >
                 <Icon icon="ph:envelope" className="w-4 h-4" />
@@ -142,6 +130,7 @@ const Header: React.FC = () => {
               </Link>
               <Link 
                 href="tel:+66986261646" 
+                prefetch={false}
                 className="flex items-center gap-2 hover:text-primary transition-colors"
               >
                 <Icon icon="ph:phone" className="w-4 h-4" />
@@ -153,6 +142,7 @@ const Header: React.FC = () => {
                 <Link 
                   key={index}
                   href={social.href} 
+                  prefetch={false}
                   target="_blank" 
                   rel="noopener noreferrer"
                   aria-label={social.label}
@@ -175,7 +165,7 @@ const Header: React.FC = () => {
       )}>
         {/* Left: Logo */}
         <div className="flex items-center gap-5 lg:gap-6">
-          <Link href='/' className="transition-transform duration-300 hover:scale-105">
+          <Link href='/' prefetch={false} className="transition-transform duration-300 hover:scale-105">
             <Image
               src='https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?updatedAt=1765040666333'
               alt='PSM Phuket Real Estate Logo'
@@ -204,6 +194,7 @@ const Header: React.FC = () => {
                     <Link
                       key={`${item.label}:${item.href}`}
                       href={item.href}
+                      prefetch={false}
                       className={cn(
                         "px-3 py-2 rounded-full text-sm font-semibold transition-all duration-200",
                         active
@@ -222,6 +213,7 @@ const Header: React.FC = () => {
                   <div key={`${item.label}:${item.href}`} className="relative group">
                     <Link
                       href={item.href}
+                      prefetch={false}
                       className={cn(
                         "inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-semibold transition-all duration-200",
                         active
@@ -247,6 +239,7 @@ const Header: React.FC = () => {
                             <Link
                               key={`${child.label}:${child.href}`}
                               href={child.href}
+                              prefetch={false}
                               className="flex items-start gap-3 rounded-xl px-3 py-2.5 hover:bg-white/5 transition-colors"
                             >
                               {child.icon && (
@@ -266,6 +259,7 @@ const Header: React.FC = () => {
                         <div className="mt-2 pt-2 border-t border-white/10">
                           <Link
                             href={item.href}
+                            prefetch={false}
                             className="inline-flex items-center gap-2 text-xs font-semibold text-white/70 hover:text-primary transition-colors px-2 py-1"
                           >
                             View all {item.label}
@@ -280,6 +274,7 @@ const Header: React.FC = () => {
             {/* Add a visible Contact link on desktop */}
             <Link
               href="/contactus"
+              prefetch={false}
               className={cn(
                 "px-3 py-2 rounded-full text-sm font-semibold transition-all duration-200",
                 pathname.startsWith('/contact')
@@ -299,6 +294,7 @@ const Header: React.FC = () => {
           {/* WhatsApp Quick Contact - Desktop */}
           <Link
             href="https://wa.me/66986261646?text=Hello%2C%20I'm%20interested%20in%20PSM%20Phuket%20properties"
+            prefetch={false}
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
@@ -313,6 +309,7 @@ const Header: React.FC = () => {
           {/* List Your Property CTA - Desktop */}
           <Link
             href="/list-your-property"
+            prefetch={false}
             className={cn(
               "hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all duration-300",
               "bg-primary text-white hover:bg-primary/90 hover:scale-105 shadow-lg shadow-primary/25"
@@ -365,6 +362,7 @@ const Header: React.FC = () => {
           {/* Phone Number - Tablet+ */}
           <Link 
             href="tel:+66986261646" 
+            prefetch={false}
             className={cn(
               "hidden md:flex lg:hidden items-center gap-2 text-sm font-medium transition-colors",
               isHomepage && !sticky
@@ -425,7 +423,7 @@ const Header: React.FC = () => {
         <div className="relative flex flex-col h-full overflow-y-auto no-scrollbar">
           {/* Header - Compact */}
           <div className="sticky top-0 z-10 flex items-center justify-between p-4 sm:p-5 bg-gradient-to-b from-dark via-dark to-transparent">
-            <Link href="/" onClick={() => setNavbarOpen(false)}>
+            <Link href="/" prefetch={false} onClick={() => setNavbarOpen(false)}>
               <Image
                 src='https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?updatedAt=1765040666333'
                 alt='PSM Phuket Real Estate Logo'
@@ -476,6 +474,7 @@ const Header: React.FC = () => {
                   <div className="flex gap-2">
                     <Link 
                       href="/dashboard" 
+                      prefetch={false}
                       onClick={() => setNavbarOpen(false)}
                       className="flex-1 py-2.5 px-4 bg-primary text-white text-center rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors"
                     >
@@ -494,6 +493,7 @@ const Header: React.FC = () => {
                   <Link 
                     onClick={() => setNavbarOpen(false)} 
                     href="/sign-in" 
+                    prefetch={false}
                     className="flex-1 py-2.5 px-6 bg-primary text-white text-center rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors"
                   >
                     Sign In
@@ -501,6 +501,7 @@ const Header: React.FC = () => {
                   <Link 
                     onClick={() => setNavbarOpen(false)} 
                     href="/sign-up" 
+                    prefetch={false}
                     className="flex-1 py-2.5 px-6 bg-white/10 text-white text-center rounded-full text-sm font-semibold hover:bg-white hover:text-dark transition-all duration-300"
                   >
                     Create Account
@@ -516,6 +517,7 @@ const Header: React.FC = () => {
             <div className="flex gap-2 mb-4">
               <Link
                 href="https://wa.me/66986261646?text=Hello%2C%20I'm%20interested%20in%20PSM%20Phuket%20properties"
+                prefetch={false}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-[#25D366] text-white text-sm font-semibold hover:bg-[#128C7E] transition-colors"
@@ -525,6 +527,7 @@ const Header: React.FC = () => {
               </Link>
               <Link
                 href="tel:+66986261646"
+                prefetch={false}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white hover:text-dark transition-all duration-300"
               >
                 <Icon icon="ph:phone-bold" className="w-4 h-4" />
@@ -540,6 +543,7 @@ const Header: React.FC = () => {
               <div className="flex flex-col gap-0.5">
                 <Link 
                   href="mailto:info@psmphuket.com" 
+                  prefetch={false}
                   className="text-white/80 hover:text-primary transition-colors text-xs flex items-center gap-1.5"
                 >
                   <Icon icon="ph:envelope" className="w-3.5 h-3.5 text-primary" />
@@ -547,6 +551,7 @@ const Header: React.FC = () => {
                 </Link>
                 <Link 
                   href="tel:+66986261646" 
+                  prefetch={false}
                   className="text-white/80 hover:text-primary transition-colors text-xs flex items-center gap-1.5"
                 >
                   <Icon icon="ph:phone" className="w-3.5 h-3.5 text-primary" />
@@ -565,6 +570,7 @@ const Header: React.FC = () => {
                 <Link
                   key={index}
                   href={social.href}
+                  prefetch={false}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}

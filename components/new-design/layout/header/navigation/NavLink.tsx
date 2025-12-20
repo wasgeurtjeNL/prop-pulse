@@ -27,6 +27,7 @@ const NavLink: React.FC<NavLinkProps> = ({ item, onClick }) => {
       <li className="w-full mt-2 mb-1">
         <Link 
           href={item.href} 
+          prefetch={false}
           className="group flex items-center gap-2 py-2.5 px-4 bg-gradient-to-r from-primary to-primary/80 text-white text-sm sm:text-base font-semibold rounded-xl hover:from-primary/90 hover:to-primary transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/25"
           onClick={onClick}
         >
@@ -93,6 +94,7 @@ const NavLink: React.FC<NavLinkProps> = ({ item, onClick }) => {
             >
               <Link 
                 href={child.href}
+                prefetch={false}
                 onClick={onClick}
                 className={cn(
                   "flex items-center gap-2 py-1.5 px-3 ml-1 rounded-lg transition-all duration-300",
@@ -141,6 +143,7 @@ const NavLink: React.FC<NavLinkProps> = ({ item, onClick }) => {
     <li className="w-full">
       <Link 
         href={item.href} 
+        prefetch={false}
         className={cn(
           'group flex items-center gap-2 py-2 px-2 rounded-lg transition-all duration-300',
           isActiveLink(item.href) 

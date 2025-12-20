@@ -8,14 +8,22 @@ type PropertyType = 'all' | 'FOR_SALE' | 'FOR_RENT';
 
 const ITEMS_PER_PAGE = 6;
 
-const Properties: React.FC = () => {
+interface PropertiesProps {
+  initialProperties?: any[];
+}
 
-  const [propertyHomes, setPropertyHomes] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+const Properties: React.FC<PropertiesProps> = ({ initialProperties }) => {
+
+  // Use initial properties if provided, otherwise fetch client-side
+  const [propertyHomes, setPropertyHomes] = useState<any>(initialProperties || null);
+  const [loading, setLoading] = useState(!initialProperties);
   const [activeFilter, setActiveFilter] = useState<PropertyType>('all');
   const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
+    // Skip fetching if we already have initial properties
+    if (initialProperties) return;
+    
     const fetchData = async () => {
       try {
         const res = await fetch('/api/property-data')
@@ -29,7 +37,7 @@ const Properties: React.FC = () => {
       }
     }
     fetchData()
-  }, [])  
+  }, [initialProperties])  
 
   // Reset to first page when filter changes
   useEffect(() => {

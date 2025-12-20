@@ -139,7 +139,7 @@ export default function BlogForm({ blog }: BlogFormProps) {
     setAiImageStats(null);
   };
 
-  // Generate AI Cover Image with DALL-E 3
+  // Generate AI Cover Image (hyperrealistic)
   const handleGenerateAICover = async () => {
     const currentTitle = title;
     if (!currentTitle || currentTitle.trim().length < 3) {
@@ -293,6 +293,7 @@ export default function BlogForm({ blog }: BlogFormProps) {
                   src={coverImagePreview}
                   alt={coverImageAlt || "Cover image preview"}
                   fill
+                  sizes="(max-width: 768px) 100vw, 672px"
                   className="object-cover"
                   unoptimized={coverImagePreview.startsWith("blob:")}
                 />
@@ -416,7 +417,7 @@ export default function BlogForm({ blog }: BlogFormProps) {
             </div>
             
             <p className="text-sm text-muted-foreground">
-              Genereer automatisch een professionele cover image gebaseerd op de blog titel met DALL-E 3.
+              Genereer automatisch een hyperrealistische cover image gebaseerd op de blog titel.
               De afbeelding wordt geoptimaliseerd naar WebP formaat met SEO-geoptimaliseerde ALT tekst.
             </p>
 

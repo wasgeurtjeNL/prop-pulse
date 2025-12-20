@@ -1,7 +1,6 @@
 import Header from "@/components/new-design/layout/header";
 import Footer from "@/components/new-design/layout/footer";
 import ScrollToTop from "@/components/new-design/scroll-to-top";
-import HeroImagePreloader from "./HeroImagePreloader";
 import ChatWidgetLoader from "@/components/chatbot/ChatWidgetLoader";
 
 export default function FrontLayout({
@@ -11,8 +10,7 @@ export default function FrontLayout({
 }>) {
   return (
     <>
-      {/* Preload hero images for faster LCP */}
-      <HeroImagePreloader />
+      {/* Note: HeroImagePreloader moved to homepage only to avoid unused preloads on other pages */}
       <Header />
       <div
         className="min-h-screen"

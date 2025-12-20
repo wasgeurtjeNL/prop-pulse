@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { LayoutDashboard, PlusCircle, List, Settings, Calendar, Key, TrendingUp, FileText, Inbox, Download, Files, ExternalLink, Home, ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { LayoutDashboard, PlusCircle, Settings, FileText, Files, ExternalLink, ImageIcon, BarChart3, MessageCircle, UserPlus } from "lucide-react";
 import AgentProfileCard from "@/components/shared/dashboard/agent-profile-card";
 import NavLink from "@/components/shared/dashboard/nav-link";
+import DashboardChatProvider from "@/components/shared/dashboard/dashboard-chat-provider";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -42,29 +42,15 @@ export default async function DashboardLayout({
   const hasAccess = allowedRoles.includes(session.user.role || "");
   
   if (!hasAccess) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="text-center max-w-md p-8">
-          <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-          <p className="text-muted-foreground mb-6">
-            You don't have permission to access the dashboard. Only agents and admins can access this area.
-          </p>
-          <Link
-            href="/"
-            className="inline-block px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
-          >
-            Go to Home
-          </Link>
-        </div>
-      </div>
-    );
+    // Customer users should be redirected to their bookings
+    redirect("/my-bookings");
   }
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <aside className="hidden w-64 flex-col border-r bg-white dark:bg-slate-900 md:flex">
         <div className="flex h-16 items-center justify-between border-b px-6">
-          <span className="text-xl font-bold tracking-tight">Proppulse</span>
+          <span className="text-xl font-bold tracking-tight">PSM Phuket</span>
           <Link 
             href="/" 
             target="_blank"
@@ -77,21 +63,21 @@ export default async function DashboardLayout({
         </div>
 
         <nav className="flex-1 space-y-1 p-4">
+          {/* Main Navigation */}
           <NavLink href="/dashboard" icon={<LayoutDashboard className="h-4 w-4" />}>
             Overview
           </NavLink>
-          <NavLink href="/dashboard/submissions" icon={<Inbox className="h-4 w-4" />}>
-            Property Submissions
+          <NavLink href="/dashboard/analytics" icon={<BarChart3 className="h-4 w-4" />}>
+            Analytics
           </NavLink>
-          <NavLink href="/dashboard/viewing-requests" icon={<Calendar className="h-4 w-4" />}>
-            Viewing Requests
+          <NavLink href="/dashboard/messages" icon={<MessageCircle className="h-4 w-4" />}>
+            Messages
           </NavLink>
-          <NavLink href="/dashboard/rental-leads" icon={<Key className="h-4 w-4" />}>
-            Rental Leads
-          </NavLink>
-          <NavLink href="/dashboard/investor-leads" icon={<TrendingUp className="h-4 w-4" />}>
-            Investor Leads
-          </NavLink>
+          
+          
+          <div className="my-4 border-t border-slate-200 dark:border-slate-700" />
+          
+          {/* Content Management */}
           <NavLink href="/dashboard/blogs" icon={<FileText className="h-4 w-4" />}>
             Blog Posts
           </NavLink>
@@ -101,17 +87,20 @@ export default async function DashboardLayout({
           <NavLink href="/dashboard/add" icon={<PlusCircle className="h-4 w-4" />}>
             Add Property
           </NavLink>
-          <NavLink href="/dashboard/property-import" icon={<Download className="h-4 w-4" />}>
-            Import Property
-          </NavLink>
           
           <div className="my-4 border-t border-slate-200 dark:border-slate-700" />
           
+          {/* Settings */}
           <NavLink href="/dashboard/hero-images" icon={<ImageIcon className="h-4 w-4" />}>
             Hero Images
           </NavLink>
+          {session.user.role === "ADMIN" && (
+            <NavLink href="/dashboard/invites" icon={<UserPlus className="h-4 w-4" />}>
+              Agent Invites
+            </NavLink>
+          )}
           <NavLink href="/dashboard/settings" icon={<Settings className="h-4 w-4" />}>
-            Instellingen
+            Settings
           </NavLink>
         </nav>
 
@@ -120,9 +109,11 @@ export default async function DashboardLayout({
 
       <main className="flex-1 flex flex-col">
         <header className="flex h-16 items-center border-b bg-white px-6 md:hidden dark:bg-slate-900">
-          <span className="font-bold">Proppulse Agent</span>
+          <span className="font-bold">PSM Phuket Agent</span>
         </header>
-        <div className="flex-1 p-6 md:p-8 overflow-auto">{children}</div>
+        <DashboardChatProvider>
+          <div className="flex-1 p-6 md:p-8 overflow-auto">{children}</div>
+        </DashboardChatProvider>
       </main>
     </div>
   );

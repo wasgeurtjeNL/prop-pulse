@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import OpenAI from "openai";
 import prisma from "@/lib/prisma";
+import { geocodePropertyLocation } from "@/lib/services/poi/geocoding";
+import { haversineDistance, formatDistance } from "@/lib/services/poi/distance";
+import { PoiCategory } from "@/lib/generated/prisma";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -159,9 +162,15 @@ async function scrapeWebpage(url: string): Promise<{ text: string; images: strin
   const images: string[] = [];
   const baseUrl = new URL(url);
 
-  // Get images from img tags
+  // Get images from img tags (including lazy-loaded images)
   $("img").each((_, el) => {
-    const src = $(el).attr("src") || $(el).attr("data-src");
+    // Try multiple attributes for lazy-loaded images
+    const src = $(el).attr("src") || 
+                $(el).attr("data-src") || 
+                $(el).attr("data-lazy-src") || 
+                $(el).attr("data-original") ||
+                $(el).attr("data-srcset")?.split(",")[0]?.trim()?.split(" ")[0];
+    
     if (src && !src.toLowerCase().includes("logo") && !src.toLowerCase().includes("icon") && !src.toLowerCase().includes("avatar")) {
       let absoluteUrl = src;
       if (src.startsWith("//")) {
@@ -175,15 +184,20 @@ async function scrapeWebpage(url: string): Promise<{ text: string; images: strin
     }
   });
 
-  // Get images from links (often used in galleries)
-  $("a[href]").each((_, el) => {
-    const href = $(el).attr("href");
-    if (href && (href.includes(".jpg") || href.includes(".jpeg") || href.includes(".png") || href.includes(".webp"))) {
-      let absoluteUrl = href;
-      if (href.startsWith("//")) {
-        absoluteUrl = "https:" + href;
-      } else if (href.startsWith("/")) {
-        absoluteUrl = `${baseUrl.protocol}//${baseUrl.host}${href}`;
+  // Get images from figure elements (often used in galleries)
+  $("figure img, .gallery img, .property-gallery img, .fotorama img, .swiper-slide img").each((_, el) => {
+    const src = $(el).attr("src") || 
+                $(el).attr("data-src") || 
+                $(el).attr("data-lazy-src") ||
+                $(el).attr("data-full") ||
+                $(el).attr("data-large-file");
+    
+    if (src && !src.toLowerCase().includes("logo") && !src.toLowerCase().includes("icon")) {
+      let absoluteUrl = src;
+      if (src.startsWith("//")) {
+        absoluteUrl = "https:" + src;
+      } else if (src.startsWith("/")) {
+        absoluteUrl = `${baseUrl.protocol}//${baseUrl.host}${src}`;
       }
       if (!images.includes(absoluteUrl)) {
         images.push(absoluteUrl);
@@ -191,15 +205,102 @@ async function scrapeWebpage(url: string): Promise<{ text: string; images: strin
     }
   });
 
-  // Filter out QR codes and chart images
+  // Get images from links (often used in galleries/lightboxes)
+  $("a[href]").each((_, el) => {
+    const href = $(el).attr("href");
+    // Check for direct image links or WordPress attachment URLs
+    if (href && (
+      href.includes(".jpg") || 
+      href.includes(".jpeg") || 
+      href.includes(".png") || 
+      href.includes(".webp") ||
+      href.includes("/uploads/") ||
+      href.includes("wp-content")
+    )) {
+      let absoluteUrl = href;
+      if (href.startsWith("//")) {
+        absoluteUrl = "https:" + href;
+      } else if (href.startsWith("/")) {
+        absoluteUrl = `${baseUrl.protocol}//${baseUrl.host}${href}`;
+      }
+      // Skip if it's just a thumbnail link
+      if (!images.includes(absoluteUrl) && !absoluteUrl.includes("-150x") && !absoluteUrl.includes("-300x")) {
+        images.push(absoluteUrl);
+      }
+    }
+  });
+
+  // Get images from srcset attributes (responsive images)
+  $("img[srcset]").each((_, el) => {
+    const srcset = $(el).attr("srcset");
+    if (srcset) {
+      // Parse srcset and get the largest image
+      const srcsetParts = srcset.split(",").map(s => s.trim());
+      for (const part of srcsetParts) {
+        const [imgUrl] = part.split(" ");
+        if (imgUrl && !imgUrl.includes("-150x") && !imgUrl.includes("-300x")) {
+          let absoluteUrl = imgUrl;
+          if (imgUrl.startsWith("//")) {
+            absoluteUrl = "https:" + imgUrl;
+          } else if (imgUrl.startsWith("/")) {
+            absoluteUrl = `${baseUrl.protocol}//${baseUrl.host}${imgUrl}`;
+          }
+          if (!images.includes(absoluteUrl)) {
+            images.push(absoluteUrl);
+          }
+        }
+      }
+    }
+  });
+
+  // Get images from data attributes (used by many gallery plugins)
+  $("[data-image], [data-bg], [data-background-image]").each((_, el) => {
+    const dataImage = $(el).attr("data-image") || 
+                      $(el).attr("data-bg") || 
+                      $(el).attr("data-background-image");
+    if (dataImage && !dataImage.includes("logo") && !dataImage.includes("icon")) {
+      let absoluteUrl = dataImage;
+      if (dataImage.startsWith("//")) {
+        absoluteUrl = "https:" + dataImage;
+      } else if (dataImage.startsWith("/")) {
+        absoluteUrl = `${baseUrl.protocol}//${baseUrl.host}${dataImage}`;
+      }
+      if (!images.includes(absoluteUrl)) {
+        images.push(absoluteUrl);
+      }
+    }
+  });
+
+  // Filter out QR codes, chart images, placeholder images, and duplicates
   const filteredImages = images.filter(img => {
     const lowerImg = img.toLowerCase();
     return !lowerImg.includes("chart.googleapis.com") && 
            !lowerImg.includes("chart.apis.google.com") &&
-           !(lowerImg.includes("qr") && lowerImg.includes("chart"));
+           !(lowerImg.includes("qr") && lowerImg.includes("chart")) &&
+           !lowerImg.includes("placeholder") &&
+           !lowerImg.includes("loading") &&
+           !lowerImg.includes("spinner") &&
+           !lowerImg.includes("blank.gif") &&
+           !lowerImg.includes("data:image") && // Skip base64 images
+           img.length > 10; // Skip very short URLs
   });
 
-  return { text: text.slice(0, 20000), images: filteredImages.slice(0, 20) };
+  // Remove duplicates (same image different sizes)
+  const uniqueImages: string[] = [];
+  const seenBaseNames = new Set<string>();
+  
+  for (const img of filteredImages) {
+    // Extract base filename without size suffixes
+    const baseName = img.replace(/-\d+x\d+\./, '.').replace(/\?.*$/, '');
+    if (!seenBaseNames.has(baseName)) {
+      seenBaseNames.add(baseName);
+      uniqueImages.push(img);
+    }
+  }
+
+  console.log(`🖼️ Found ${uniqueImages.length} unique images`);
+
+  return { text: text.slice(0, 20000), images: uniqueImages.slice(0, 30) };
 }
 
 interface PropertyData {
@@ -332,14 +433,45 @@ async function getRelatedProperties(location: string, category: string, excludeS
   }
 }
 
-// Get internal links from database
-async function getInternalLinks(): Promise<Array<{
+// Get internal links from database - prioritize LandingPages
+async function getInternalLinks(isRental: boolean = false): Promise<Array<{
   url: string;
   title: string;
   keywords: string;
   category: string;
 }>> {
   try {
+    // First, try to get relevant LandingPages
+    const landingPages = await prisma.landingPage.findMany({
+      where: { 
+        published: true,
+        OR: [
+          { category: isRental ? "service" : "guide" },
+          { category: "location" },
+        ],
+      },
+      select: {
+        url: true,
+        title: true,
+        category: true,
+      },
+      take: 10,
+    });
+
+    // Convert to internal link format
+    const pageLinks = landingPages.map((p: { url: string; title: string; category: string | null }) => ({
+      url: p.url,
+      title: p.title,
+      keywords: "",
+      category: p.category || "page",
+    }));
+
+    // If we have enough landing pages, use those
+    if (pageLinks.length >= 3) {
+      return pageLinks.slice(0, 5);
+    }
+
+    // Fallback to InternalLinks if not enough LandingPages
     const links = await prisma.internalLink.findMany({
       where: { isActive: true, pageExists: true },
       select: {
@@ -351,14 +483,116 @@ async function getInternalLinks(): Promise<Array<{
       orderBy: { priority: "desc" },
       take: 20,
     });
-    return links.map((l: { url: string; title: string; keywords: string | null; category: string | null }) => ({
+    
+    const internalLinks = links.map((l: { url: string; title: string; keywords: string | null; category: string | null }) => ({
       url: l.url,
       title: l.title,
       keywords: l.keywords || "",
       category: l.category || "page",
     }));
+
+    // Combine: LandingPages first, then InternalLinks
+    return [...pageLinks, ...internalLinks].slice(0, 5);
   } catch (error) {
     console.error("Error fetching internal links:", error);
+    return [];
+  }
+}
+
+// Nearby POI interface for AI content
+interface NearbyPoi {
+  name: string;
+  category: string;
+  categoryLabel: string;
+  distanceMeters: number;
+  distanceText: string;
+}
+
+// POI category labels for AI content
+const POI_CATEGORY_LABELS: Record<string, string> = {
+  BEACH: "Beach",
+  INTERNATIONAL_SCHOOL: "International School",
+  LOCAL_SCHOOL: "School",
+  KINDERGARTEN: "Kindergarten",
+  HOSPITAL: "Hospital",
+  CLINIC: "Medical Clinic",
+  SHOPPING_MALL: "Shopping Mall",
+  SUPERMARKET: "Supermarket",
+  AIRPORT: "Airport",
+  GOLF_COURSE: "Golf Course",
+  MARINA: "Marina",
+  TEMPLE: "Temple",
+  GYM: "Fitness Center",
+  RESTAURANT: "Restaurant",
+  CAFE: "Cafe",
+  COWORKING: "Co-working Space",
+};
+
+// Find nearby POIs for a given location (for AI content generation)
+async function findNearbyPoisForLocation(
+  latitude: number,
+  longitude: number
+): Promise<NearbyPoi[]> {
+  try {
+    // Calculate bounding box for 5km radius
+    const radiusKm = 5;
+    const latDelta = radiusKm / 111;
+    const lngDelta = radiusKm / (111 * Math.cos(latitude * Math.PI / 180));
+
+    // Priority POI categories for property descriptions
+    const priorityCategories: PoiCategory[] = [
+      "BEACH",
+      "INTERNATIONAL_SCHOOL", 
+      "HOSPITAL",
+      "SHOPPING_MALL",
+      "SUPERMARKET",
+      "AIRPORT",
+      "GOLF_COURSE",
+    ];
+
+    const pois = await prisma.poi.findMany({
+      where: {
+        isActive: true,
+        latitude: {
+          gte: latitude - latDelta,
+          lte: latitude + latDelta,
+        },
+        longitude: {
+          gte: longitude - lngDelta,
+          lte: longitude + lngDelta,
+        },
+        category: { in: priorityCategories },
+        importance: { gte: 5 }, // Only important POIs
+      },
+      take: 30,
+    });
+
+    // Calculate distances and sort
+    const poisWithDistance = pois.map((poi: { name: string; category: string; latitude: number; longitude: number }) => {
+      const distanceMeters = haversineDistance(latitude, longitude, poi.latitude, poi.longitude);
+      return {
+        name: poi.name,
+        category: poi.category,
+        categoryLabel: POI_CATEGORY_LABELS[poi.category] || poi.category,
+        distanceMeters,
+        distanceText: formatDistance(distanceMeters),
+      };
+    }).sort((a: NearbyPoi, b: NearbyPoi) => a.distanceMeters - b.distanceMeters);
+
+    // Select top POI from each category (max 4 total)
+    const selected: NearbyPoi[] = [];
+    const usedCategories = new Set<string>();
+    
+    for (const poi of poisWithDistance) {
+      if (!usedCategories.has(poi.category) && selected.length < 4) {
+        selected.push(poi);
+        usedCategories.add(poi.category);
+      }
+    }
+
+    return selected;
+  } catch (error) {
+    console.error("Error finding nearby POIs:", error);
     return [];
   }
 }
@@ -371,7 +605,7 @@ The property must match this exact schema:
 {
     "title": "Property title (string, required)",
     "location": "Full address or location (string, required)",
-    "price": "Price with currency symbol (string, e.g., '฿34,800,000' or '$500,000')",
+    "price": "Price with currency symbol (string, see price rules below)",
     "beds": "Number of bedrooms (integer)",
     "baths": "Number of bathrooms (number, can be 2.5 for half baths)",
     "sqft": "Size in square meters (integer) - convert from sq ft if needed",
@@ -386,17 +620,32 @@ The property must match this exact schema:
     "yearBuilt": "Year built (integer, optional, if mentioned)"
 }
 
-Important rules:
+PRICE EXTRACTION RULES (VERY IMPORTANT):
+1. For RENTALS (For Rent listings):
+   - Look for prices with "Month", "Monthly", "/mo", "per month", "฿" followed by numbers
+   - Thai Baht rentals: "฿50,000" or "50,000฿" or "50,000 THB" means 50,000 THB/month
+   - Format rental prices as: "฿XX,XXX/month" (e.g., "฿50,000/month")
+   - If price shows "200,000฿" on a rental = "฿200,000/month"
+2. For SALES (For Sale listings):
+   - Format as "฿XX,XXX,XXX" (e.g., "฿34,800,000")
+3. ALWAYS include the ฿ symbol for Thai properties
+4. The number shown on the page IS the price - don't convert or modify it
+
+TYPE DETECTION RULES:
 1. If the listing says "For Sale" -> type = "FOR_SALE"
 2. If the listing says "For Rent" -> type = "FOR_RENT"
-3. For category:
-   - Villas, large houses with pool -> LUXURY_VILLA
-   - Condos, apartments, flats -> APARTMENT
-   - Regular houses, townhouses -> RESIDENTIAL_HOME
-   - Offices, commercial -> OFFICE_SPACES
-4. Convert any imperial units to metric (sqft to sqm: divide by 10.764)
-5. Extract ALL amenities/features mentioned
-6. Make the shortDescription compelling for SEO
+3. If price mentions "month", "monthly", "/mo" -> type = "FOR_RENT"
+
+CATEGORY RULES:
+- Villas, large houses with pool -> LUXURY_VILLA
+- Condos, apartments, flats -> APARTMENT
+- Regular houses, townhouses -> RESIDENTIAL_HOME
+- Offices, commercial -> OFFICE_SPACES
+
+OTHER RULES:
+- Convert any imperial units to metric (sqft to sqm: divide by 10.764)
+- Extract ALL amenities/features mentioned
+- Make the shortDescription compelling for SEO
 
 Source URL: ${sourceUrl}
 
@@ -473,6 +722,67 @@ COMPANY CONTEXT:
   const area = locationParts[0]?.trim() || "";
   const region = locationParts.length > 1 ? locationParts[1]?.trim() : "";
 
+  // Geocode location and find nearby POIs
+  let nearbyPois: NearbyPoi[] = [];
+  let poiContext = "";
+  
+  try {
+    console.log(`📍 Geocoding location: ${propertyData.location}`);
+    const geocodeResult = await geocodePropertyLocation(propertyData.location);
+    
+    if (geocodeResult?.latitude && geocodeResult?.longitude) {
+      console.log(`✅ Geocoded: ${geocodeResult.latitude}, ${geocodeResult.longitude} (${geocodeResult.district || 'unknown district'})`);
+      
+      nearbyPois = await findNearbyPoisForLocation(
+        geocodeResult.latitude, 
+        geocodeResult.longitude
+      );
+      
+      if (nearbyPois.length > 0) {
+        console.log(`🏖️ Found ${nearbyPois.length} nearby POIs for AI content`);
+        
+        // Build detailed POI descriptions with specific distances
+        const poiDescriptions = nearbyPois.map(poi => {
+          const distanceNum = poi.distanceMeters;
+          let distanceDescription = "";
+          
+          if (distanceNum < 500) {
+            distanceDescription = `just ${poi.distanceText}`;
+          } else if (distanceNum < 1000) {
+            distanceDescription = `only ${poi.distanceText} (about ${Math.round(distanceNum / 83)} minutes walk)`;
+          } else if (distanceNum < 2000) {
+            distanceDescription = `${poi.distanceText} (a short ${Math.round(distanceNum / 500)} minute drive)`;
+          } else {
+            distanceDescription = `${poi.distanceText} (approximately ${Math.round(distanceNum / 500)} minutes by car)`;
+          }
+          
+          return `- ${poi.name} (${poi.categoryLabel}): ${distanceDescription}`;
+        }).join('\n');
+
+        poiContext = `
+NEARBY POINTS OF INTEREST - MUST INCLUDE WITH SPECIFIC DISTANCES:
+${poiDescriptions}
+
+CRITICAL INSTRUCTIONS FOR POI INTEGRATION:
+1. You MUST mention these POIs with their EXACT distances in the "Location & Lifestyle" section
+2. Use natural, conversational language like:
+   - "Located just 800m from the pristine Nai Harn Beach..."
+   - "Families will appreciate British International School, only 2.3km away..."
+   - "For healthcare needs, Bangkok Hospital Phuket is a convenient 4.5km drive..."
+   - "Daily shopping is easy with Villa Market just 1.2km from your doorstep..."
+3. Group related POIs: beaches together, schools/hospitals for families, shopping for convenience
+4. The DISTANCES are REAL and ACCURATE - always include them to build trust with buyers/renters
+5. For beaches within 1km: emphasize "beachfront living" or "steps from the beach"
+6. For schools/hospitals: reassure families about safety and accessibility
+`;
+      }
+    } else {
+      console.log(`⚠️ Could not geocode location: ${propertyData.location}`);
+    }
+  } catch (error) {
+    console.warn("Could not geocode location for POI lookup:", error);
+  }
+
   // Different prompts for rental vs sale
   const rentalContext = isRental ? `
 RENTAL-SPECIFIC FOCUS:
@@ -496,6 +806,7 @@ RENTAL-SPECIFIC FOCUS:
 
 ${companyContext}
 ${rentalContext}
+${poiContext}
 
 PROPERTY TO ${propertyAction}:
 - Title: ${propertyData.title}
@@ -560,7 +871,7 @@ STRUCTURE YOUR RESPONSE:
     </ul>
     
     <h3>Location & Lifestyle</h3>
-    <p>[What's the area like? What's nearby? Beaches, dining, activities? Why is this location desirable? For international ${isRental ? "renters" : "buyers"}: mention expat community, safety, infrastructure.]</p>
+    <p>[IMPORTANT: If POI data is provided above, you MUST include the specific distances here. Example: 'Just 800m from Nai Harn Beach, this property offers...' or 'Families will love the proximity to British International School (2.3km) and Bangkok Hospital (4.5km).' Include at least 2-3 POIs with their exact distances. Also mention: What's the area like? Dining, activities? Expat community, safety, infrastructure.]</p>
     
     ${isRental ? `<h3>Why Rent Here?</h3>
     <p>[Emphasize flexibility, affordability, no maintenance hassles, included services, ideal for expats/digital nomads/professionals.]</p>` : `<h3>Investment Opportunity</h3>
@@ -586,6 +897,7 @@ CRITICAL RULES:
 - ALWAYS write in ENGLISH - this is mandatory
 - Write 100% UNIQUE content - NO copying from original
 - Make it SCANNABLE with clear headers and bullet points
+- If POI data is provided: ALWAYS mention at least 2-3 nearby places WITH their exact distances (e.g., "800m", "2.3km", "5 minute drive")
 - Every sentence should make the reader more interested
 - Focus on BENEFITS, not just features
 - Include specific details about ${area} and ${region} lifestyle
@@ -640,8 +952,8 @@ You ALWAYS output valid JSON with no markdown formatting.`
       propertyData.slug
     );
 
-    // Get internal links from database
-    const internalLinks = await getInternalLinks();
+    // Get internal links from database (prioritize rental or sale content)
+    const internalLinks = await getInternalLinks(isRental);
 
     // Related properties will be loaded dynamically in the frontend component
     // to prevent 404s when properties are deleted

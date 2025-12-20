@@ -80,6 +80,7 @@ export default async function PropertyDetailsPage({
           src={property.image}
           alt={property.title}
           fill
+          sizes="100vw"
           priority
           className="object-cover"
         />
@@ -129,7 +130,7 @@ export default async function PropertyDetailsPage({
               </div>
               <div className="flex flex-col border-l pl-4 md:pl-8">
                 <span className="flex items-center text-muted-foreground text-sm mb-1">
-                  <Square className="w-4 h-4 mr-2" /> SqFt
+                  <Square className="w-4 h-4 mr-2" /> m²
                 </span>
                 <span className="font-bold text-xl">
                   {property.sqft.toLocaleString()}

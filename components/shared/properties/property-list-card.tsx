@@ -28,6 +28,7 @@ const PropertyListCard = ({
           src={image}
           alt={title}
           fill
+          sizes="(max-width: 640px) 100vw, 320px"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
@@ -65,7 +66,7 @@ const PropertyListCard = ({
             </div>
             <div className="flex items-center gap-1">
               <Square className="h-4 w-4" />
-              <span className="font-medium text-foreground">{sqft}</span> SqFt
+              <span className="font-medium text-foreground">{sqft}</span> m²
             </div>
           </div>
         </CardContent>

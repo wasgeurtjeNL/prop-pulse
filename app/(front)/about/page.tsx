@@ -36,6 +36,7 @@ export default function AboutPage() {
             src="/about-image.avif"
             alt="Office background"
             fill
+            sizes="100vw"
             className="object-cover"
           />
         </div>

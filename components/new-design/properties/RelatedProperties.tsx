@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Icon } from "@iconify/react";
 import PropertyAlertForm from "./PropertyAlertForm";
 import { formatPrice } from "@/lib/utils";
+import { getPropertyUrl } from "@/lib/property-url";
 
 export interface RelatedProperty {
   id: string;
@@ -15,9 +16,12 @@ export interface RelatedProperty {
   location: string;
   type: "FOR_SALE" | "FOR_RENT";
   image: string;
+  blurDataURL?: string;
   beds: number;
   baths: number;
   sqft: number;
+  provinceSlug?: string | null;
+  areaSlug?: string | null;
 }
 
 interface RelatedPropertiesProps {
@@ -115,9 +119,9 @@ export default function RelatedProperties({
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-1 h-8 bg-gradient-to-b from-primary to-primary/50 rounded-full"></div>
-            <h3 className="text-2xl sm:text-3xl font-semibold text-dark dark:text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-dark dark:text-white tracking-tight">
               {isRental ? "Explore More Rentals" : "Discover Similar Properties"}
-            </h3>
+            </h2>
           </div>
           <p className="text-dark/60 dark:text-white/60 ml-4 text-sm sm:text-base">
             Handpicked selections in {area} that match your lifestyle
@@ -126,6 +130,7 @@ export default function RelatedProperties({
         
         <Link
           href={`/properties?type=${isRental ? "rent" : "sale"}`}
+          prefetch={false}
           className="group flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium text-sm"
         >
           View all {isRental ? "rentals" : "properties"}
@@ -144,7 +149,8 @@ export default function RelatedProperties({
           {properties.map((property, index) => (
             <Link
               key={property.id}
-              href={`/properties/${property.slug}`}
+              href={getPropertyUrl(property)}
+              prefetch={false}
               className="group block flex-shrink-0 w-[80%] snap-start"
               style={{ animationDelay: `${index * 100}ms` }}
             >
@@ -156,6 +162,9 @@ export default function RelatedProperties({
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                   sizes="(max-width: 768px) 80vw, 33vw"
+                  placeholder={property.blurDataURL ? "blur" : "empty"}
+                  blurDataURL={property.blurDataURL}
+                  unoptimized={true}
                 />
                 
                 {/* Gradient Overlay */}
@@ -168,7 +177,7 @@ export default function RelatedProperties({
                       {formatPrice(property.price)}
                     </span>
                     {isRental && (
-                      <span className="text-dark/50 dark:text-white/50 text-sm font-normal">
+                      <span className="text-dark/60 dark:text-white/50 text-sm font-normal">
                         /mo
                       </span>
                     )}
@@ -191,9 +200,9 @@ export default function RelatedProperties({
 
               {/* Property Info */}
               <div className="space-y-2">
-                <h4 className="font-semibold text-dark dark:text-white text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                <h3 className="font-semibold text-dark dark:text-white text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                   {property.title}
-                </h4>
+                </h3>
                 
                 {/* Location */}
                 <div className="flex items-center gap-1.5 text-dark/60 dark:text-white/60 text-sm">
@@ -233,7 +242,8 @@ export default function RelatedProperties({
         {properties.map((property, index) => (
           <Link
             key={property.id}
-            href={`/properties/${property.slug}`}
+            href={getPropertyUrl(property)}
+            prefetch={false}
             className="group block"
             style={{ animationDelay: `${index * 100}ms` }}
           >
@@ -245,6 +255,9 @@ export default function RelatedProperties({
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
                 sizes="(max-width: 768px) 100vw, 33vw"
+                placeholder={property.blurDataURL ? "blur" : "empty"}
+                blurDataURL={property.blurDataURL}
+                unoptimized={true}
               />
               
               {/* Gradient Overlay */}
@@ -257,7 +270,7 @@ export default function RelatedProperties({
                     {formatPrice(property.price)}
                   </span>
                   {isRental && (
-                    <span className="text-dark/50 dark:text-white/50 text-sm font-normal">
+                    <span className="text-dark/60 dark:text-white/50 text-sm font-normal">
                       /mo
                     </span>
                   )}
@@ -288,9 +301,9 @@ export default function RelatedProperties({
 
             {/* Property Info */}
             <div className="space-y-2">
-              <h4 className="font-semibold text-dark dark:text-white text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+              <h3 className="font-semibold text-dark dark:text-white text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                 {property.title}
-              </h4>
+              </h3>
               
               {/* Location */}
               <div className="flex items-center gap-1.5 text-dark/60 dark:text-white/60 text-sm">
@@ -359,6 +372,7 @@ export default function RelatedProperties({
               {/* Contact Us Link */}
               <Link 
                 href="/contactus" 
+                prefetch={false}
                 className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-dark border border-dark/10 dark:border-white/10 hover:border-primary/50 text-dark dark:text-white rounded-xl font-semibold text-sm transition-all hover:scale-105"
               >
                 <Icon icon="ph:envelope" width={18} height={18} />

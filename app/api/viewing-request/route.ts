@@ -96,8 +96,17 @@ export async function POST(request: NextRequest) {
             id: true,
             title: true,
             slug: true,
+            provinceSlug: true,
+            areaSlug: true,
             location: true,
             price: true,
+            ownerName: true,
+            ownerEmail: true,
+            ownerPhone: true,
+            ownerCountryCode: true,
+            ownerCompany: true,
+            ownerNotes: true,
+            commissionRate: true,
           },
         },
       },
@@ -134,7 +143,7 @@ export async function POST(request: NextRequest) {
       // Send notification email to admin
       try {
         const adminEmail = offerAdminNotificationTemplate(emailData);
-        const adminEmailAddress = process.env.ADMIN_EMAIL || 'admin@proppulse.com';
+        const adminEmailAddress = process.env.ADMIN_EMAIL || 'admin@psmphuket.com';
         await sendEmail({
           to: adminEmailAddress,
           subject: adminEmail.subject,
@@ -201,8 +210,17 @@ export async function GET(request: NextRequest) {
             id: true,
             title: true,
             slug: true,
+            provinceSlug: true,
+            areaSlug: true,
             location: true,
             price: true,
+            ownerName: true,
+            ownerEmail: true,
+            ownerPhone: true,
+            ownerCountryCode: true,
+            ownerCompany: true,
+            ownerNotes: true,
+            commissionRate: true,
           },
         },
       },

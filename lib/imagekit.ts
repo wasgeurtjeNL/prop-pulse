@@ -71,3 +71,24 @@ export function getImageKitSrcSet(
     .map(width => `${getOptimizedImageUrl(url, { width, quality })} ${width}w`)
     .join(', ');
 }
+
+/**
+ * Generate a tiny blur placeholder URL for LQIP (Low Quality Image Placeholder)
+ * Returns a very small, blurred version of the image (~1-2KB)
+ * 
+ * @example
+ * getBlurPlaceholderUrl('https://ik.imagekit.io/xxx/image.jpg')
+ * // Returns: https://ik.imagekit.io/xxx/image.jpg?tr=w-40,q-20,bl-10,f-auto
+ */
+export function getBlurPlaceholderUrl(url: string): string {
+  if (!url || !url.includes('ik.imagekit.io')) {
+    return '';
+  }
+  
+  // Generate a tiny blurred version: 40px wide, 20% quality, blur 10
+  return getOptimizedImageUrl(url, { 
+    width: 40, 
+    quality: 20, 
+    blur: 10 
+  });
+}

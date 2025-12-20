@@ -64,6 +64,8 @@ export async function GET(request: NextRequest) {
         beds: true,
         baths: true,
         sqft: true,
+        provinceSlug: true,
+        areaSlug: true,
         images: {
           select: { url: true },
           take: 1,
@@ -85,6 +87,8 @@ export async function GET(request: NextRequest) {
       beds: p.beds,
       baths: p.baths,
       sqft: p.sqft,
+      provinceSlug: p.provinceSlug,
+      areaSlug: p.areaSlug,
     }));
 
     return NextResponse.json({

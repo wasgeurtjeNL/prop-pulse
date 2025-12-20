@@ -202,23 +202,29 @@ Restructure into 4-5 sections with visual headings that would work well with AI-
           const imagePrompt = buildSectionImagePrompt(section.heading, blog.title, i);
 
           const imageResponse = await openai.images.generate({
-            model: "dall-e-3",
+            model: "gpt-image-1.5",
             prompt: imagePrompt,
             n: 1,
             size: "1024x1024",
-            quality: "standard",
-            style: "natural",
           });
 
-          const generatedImageUrl = imageResponse.data[0]?.url;
-          if (!generatedImageUrl) throw new Error("No image URL returned");
+          // GPT Image 1.5 returns base64 data by default
+          const imageData = imageResponse.data?.[0];
+          const b64Data = (imageData as { b64_json?: string })?.b64_json;
+          const generatedImageUrl = imageData?.url;
 
-          // Download and compress
-          const imgResponse = await fetch(generatedImageUrl);
-          if (!imgResponse.ok) throw new Error("Failed to download image");
+          let inputBuffer: Buffer;
 
-          const imageArrayBuffer = await imgResponse.arrayBuffer();
-          const inputBuffer = Buffer.from(imageArrayBuffer);
+          if (b64Data) {
+            inputBuffer = Buffer.from(b64Data, "base64");
+          } else if (generatedImageUrl) {
+            const imgResponse = await fetch(generatedImageUrl);
+            if (!imgResponse.ok) throw new Error("Failed to download image");
+            const imageArrayBuffer = await imgResponse.arrayBuffer();
+            inputBuffer = Buffer.from(imageArrayBuffer);
+          } else {
+            throw new Error("No image data returned");
+          }
 
           const webpResult = await convertToWebP(inputBuffer, {
             quality: 80,

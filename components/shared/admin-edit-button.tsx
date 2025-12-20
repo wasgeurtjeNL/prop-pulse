@@ -34,9 +34,9 @@ export default function AdminEditButton({
     const checkAuth = async () => {
       try {
         const session = await authClient.getSession();
-        const role = session?.data?.user?.role;
-        // Check if user has admin or agent role
-        setIsAdmin(role === 'admin' || role === 'AGENT');
+        const role = session?.data?.user?.role?.toUpperCase();
+        // Check if user has admin or agent role (roles are always UPPERCASE in database)
+        setIsAdmin(role === 'ADMIN' || role === 'AGENT');
       } catch (error) {
         setIsAdmin(false);
       } finally {

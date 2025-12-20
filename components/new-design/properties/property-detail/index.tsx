@@ -29,8 +29,18 @@ const NearbyPois = dynamic(
   { loading: () => <div className="animate-pulse h-48 rounded-xl bg-slate-100 dark:bg-slate-800" /> }
 );
 
+const PropertyAmenities = dynamic(
+  () => import('@/components/new-design/properties/PropertyAmenities'),
+  { loading: () => <div className="animate-pulse h-32 rounded-xl bg-slate-100 dark:bg-slate-800" /> }
+);
+
 const AdminEditButton = dynamic(
   () => import('@/components/shared/admin-edit-button'),
+  { ssr: false }
+);
+
+const RentalBookingWidget = dynamic(
+  () => import('@/components/shared/rental/RentalBookingWidget'),
   { ssr: false }
 );
 
@@ -46,7 +56,7 @@ const ImageSkeleton = ({ className = "", aspectRatio = "4/3" }: { className?: st
   </div>
 );
 
-// Optimized property image component with loading state and CLS prevention
+// Optimized property image component with blur placeholder for instant perceived loading
 const PropertyImage = ({ 
   src, 
   alt, 
@@ -54,7 +64,8 @@ const PropertyImage = ({
   className = "",
   containerClassName = "",
   sizes = "(max-width: 768px) 100vw, 50vw",
-  aspectRatio = "4/3"
+  aspectRatio = "4/3",
+  blurDataURL
 }: { 
   src: string; 
   alt: string; 
@@ -63,8 +74,8 @@ const PropertyImage = ({
   containerClassName?: string;
   sizes?: string;
   aspectRatio?: string;
+  blurDataURL?: string;
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
   return (
@@ -72,10 +83,6 @@ const PropertyImage = ({
       className={`relative overflow-hidden ${containerClassName}`}
       style={{ aspectRatio }}
     >
-      {/* Skeleton placeholder shown while loading - matches container aspect ratio */}
-      {isLoading && !error && (
-        <ImageSkeleton className="absolute inset-0 rounded-xl sm:rounded-2xl" aspectRatio={aspectRatio} />
-      )}
       {/* Error state */}
       {error && (
         <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center rounded-xl sm:rounded-2xl">
@@ -90,12 +97,11 @@ const PropertyImage = ({
         priority={priority}
         loading={priority ? "eager" : "lazy"}
         fetchPriority={priority ? "high" : "auto"}
-        className={`object-cover transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} ${className}`}
-        onLoad={() => setIsLoading(false)}
-        onError={() => {
-          setIsLoading(false);
-          setError(true);
-        }}
+        placeholder={blurDataURL ? "blur" : "empty"}
+        blurDataURL={blurDataURL}
+        className={`object-cover ${className}`}
+        onError={() => setError(true)}
+        unoptimized={true}
       />
     </div>
   );
@@ -116,6 +122,28 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
     const [propertyHomes, setPropertyHomes] = useState<any>(null);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [pricingConfig, setPricingConfig] = useState<any>(null);
+
+    // Fetch pricing config for rentals with daily rental enabled
+    useEffect(() => {
+        const fetchPricingConfig = async () => {
+            try {
+                const response = await fetch('/api/rental-pricing-config');
+                if (response.ok) {
+                    const data = await response.json();
+                    setPricingConfig(data.config);
+                }
+            } catch (error) {
+                console.error('Failed to fetch pricing config:', error);
+            }
+        };
+        
+        // Only fetch if we have a rental property with daily rental enabled
+        const property = initialProperty || propertyHomes;
+        if (property?.type === 'FOR_RENT' && property?.enableDailyRental) {
+            fetchPricingConfig();
+        }
+    }, [initialProperty, propertyHomes]);
 
    useEffect(() => {
     // Skip fetch if we have initial property data
@@ -256,8 +284,8 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                         </div>
                         <h1 className='text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-52 font-semibold text-dark dark:text-white leading-tight'>{sanitizeText(item?.name)}</h1>
                         <div className="flex gap-2 mt-1.5 sm:mt-2">
-                            <Icon icon="ph:map-pin" width={16} height={16} className="text-dark/50 dark:text-white/50 flex-shrink-0 sm:w-5 sm:h-5" />
-                            <p className='text-dark/50 dark:text-white/50 text-xs sm:text-sm md:text-base'>{sanitizeText(item?.location)}</p>
+                            <Icon icon="ph:map-pin" width={16} height={16} className="text-dark/60 dark:text-white/50 flex-shrink-0 sm:w-5 sm:h-5" />
+                            <p className='text-dark/60 dark:text-white/50 text-xs sm:text-sm md:text-base'>{sanitizeText(item?.location)}</p>
                         </div>
                         {/* Price Display */}
                         {item?.rate && (
@@ -266,7 +294,7 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                     {formatPrice(item.rate)}
                                 </span>
                                 {item?.type === 'FOR_RENT' && !item.rate.toString().toLowerCase().includes('month') && (
-                                    <span className="text-sm sm:text-base md:text-lg text-dark/50 dark:text-white/50 font-medium">
+                                    <span className="text-sm sm:text-base md:text-lg text-dark/60 dark:text-white/50 font-medium">
                                         / month
                                     </span>
                                 )}
@@ -298,6 +326,19 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                     {item?.area}m<sup>2</sup>
                                 </p>
                             </div>
+                            {item?.plotSize && item.plotSize > 0 && (
+                                <div className='flex flex-col gap-1 sm:gap-2 border-l border-black/10 dark:border-white/20 pl-2 sm:pl-3 md:pl-4 flex-shrink-0 min-w-[70px] sm:min-w-0 sm:flex-1 snap-start'>
+                                    <Icon
+                                        icon={'ph:selection-all'}
+                                        width={18}
+                                        height={18}
+                                        className="sm:w-5 sm:h-5"
+                                    />
+                                    <p className='text-[11px] sm:text-xs md:text-sm font-normal text-black dark:text-white whitespace-nowrap'>
+                                        {item.plotSize}m<sup>2</sup> Plot
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -319,6 +360,7 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                         priority={index === 0}
                                         sizes="85vw"
                                         className="rounded-xl"
+                                        blurDataURL={image.blurDataURL}
                                         containerClassName="w-full"
                                         aspectRatio="4/3"
                                     />
@@ -357,6 +399,7 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                     priority={true}
                                     sizes="(max-width: 1024px) 100vw, 66vw"
                                     className="rounded-xl sm:rounded-2xl transition-transform duration-300 group-hover:scale-105"
+                                    blurDataURL={item.images[0]?.blurDataURL}
                                     containerClassName="w-full"
                                     aspectRatio="16/10"
                                 />
@@ -381,6 +424,7 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                     sizes="(max-width: 1024px) 50vw, 33vw"
                                     className="rounded-xl sm:rounded-2xl transition-transform duration-300 group-hover:scale-105"
                                     containerClassName="w-full"
+                                    blurDataURL={item.images[1]?.blurDataURL}
                                     aspectRatio="4/3"
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center z-10" aria-hidden="true">
@@ -403,6 +447,7 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                     sizes="(max-width: 1024px) 50vw, 16vw"
                                     className="rounded-xl sm:rounded-2xl transition-transform duration-300 group-hover:scale-105"
                                     containerClassName="w-full"
+                                    blurDataURL={item.images[2]?.blurDataURL}
                                     aspectRatio="16/9"
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center z-10" aria-hidden="true">
@@ -425,6 +470,7 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                     sizes="(max-width: 1024px) 50vw, 16vw"
                                     className="rounded-xl sm:rounded-2xl transition-transform duration-300 group-hover:scale-105"
                                     containerClassName="w-full"
+                                    blurDataURL={item.images[3]?.blurDataURL}
                                     aspectRatio="16/9"
                                 />
                                 
@@ -446,7 +492,7 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                 </div>
                 <div className="grid grid-cols-12 gap-4 sm:gap-6 lg:gap-8 mt-5 sm:mt-8">
                     <div className="lg:col-span-8 col-span-12">
-                        <h3 className='text-base sm:text-lg md:text-xl font-medium'>Property details</h3>
+                        <h2 className='text-base sm:text-lg md:text-xl font-medium'>Property details</h2>
                         <div className="py-4 sm:py-6 md:py-8 my-4 sm:my-6 md:my-8 border-y border-dark/10 dark:border-white/20 flex flex-col gap-4 sm:gap-6">
                             {item?.propertyFeatures && item.propertyFeatures.length > 0 ? (
                                 item.propertyFeatures.map((feature: any, index: number) => (
@@ -460,8 +506,8 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                             />
                                         </div>
                                         <div>
-                                            <h3 className='text-dark dark:text-white text-base sm:text-xm'>{feature.title}</h3>
-                                            <p className='text-sm sm:text-base text-dark/50 dark:text-white/50'>
+                                            <h3 className='text-dark dark:text-white text-base sm:text-sm'>{feature.title}</h3>
+                                            <p className='text-sm sm:text-base text-dark/60 dark:text-white/50'>
                                                 {feature.description}
                                             </p>
                                         </div>
@@ -476,8 +522,8 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                             <Image src="/images/SVGs/property-details-white.svg" width={32} height={32} alt="" className='w-7 h-7 sm:w-8 sm:h-8 dark:block hidden' unoptimized={true} />
                                         </div>
                                         <div>
-                                            <h3 className='text-dark dark:text-white text-base sm:text-xm'>Property details</h3>
-                                            <p className='text-sm sm:text-base text-dark/50 dark:text-white/50'>
+                                            <h3 className='text-dark dark:text-white text-base sm:text-sm'>Property details</h3>
+                                            <p className='text-sm sm:text-base text-dark/60 dark:text-white/50'>
                                                 One of the few homes in the area with a private pool.
                                             </p>
                                         </div>
@@ -488,8 +534,8 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                             <Image src="/images/SVGs/smart-home-access-white.svg" width={400} height={500} alt="" className='w-8 h-8 dark:block hidden' unoptimized={true} />
                                         </div>
                                         <div>
-                                            <h3 className='text-dark dark:text-white text-xm'>Smart home access</h3>
-                                            <p className='text-base text-dark/50 dark:text-white/50'>
+                                            <h3 className='text-dark dark:text-white text-sm'>Smart home access</h3>
+                                            <p className='text-base text-dark/60 dark:text-white/50'>
                                                 Easily check yourself in with a modern keypad system.
                                             </p>
                                         </div>
@@ -500,10 +546,10 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                             <Image src="/images/SVGs/energyefficient-white.svg" width={400} height={500} alt="" className='w-8 h-8 dark:block hidden' unoptimized={true} />
                                         </div>
                                         <div>
-                                            <h3 className='text-dark dark:text-white text-xm'>
+                                            <h3 className='text-dark dark:text-white text-sm'>
                                                 {item?.yearBuilt ? `Built in ${item.yearBuilt}` : 'Energy efficient'}
                                             </h3>
-                                            <p className='text-base text-dark/50 dark:text-white/50'>
+                                            <p className='text-base text-dark/60 dark:text-white/50'>
                                                 {item?.yearBuilt 
                                                     ? `Modern construction with sustainable features.`
                                                     : 'Built with sustainable and smart-home features.'
@@ -531,18 +577,9 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                 </p>
                             )}
                         </div>
+                        {/* Property Amenities - Interactive Component */}
                         {item?.amenities && item.amenities.length > 0 && (
-                            <div className="py-4 sm:py-6 md:py-8 mt-4 sm:mt-6 border-t border-dark/5 dark:border-white/15">
-                                <h3 className='text-base sm:text-lg md:text-xl font-medium'>What this property offers</h3>
-                                <div className="grid grid-cols-2 md:grid-cols-3 mt-3 sm:mt-4 gap-3 sm:gap-4">
-                                    {item.amenities.map((amenity: string, index: number) => (
-                                        <div key={index} className="flex items-center gap-2.5">
-                                            <Icon icon="ph:check-circle" width={20} height={20} className="text-primary flex-shrink-0 sm:w-6 sm:h-6" />
-                                            <p className='text-sm sm:text-base dark:text-white text-dark'>{amenity}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                            <PropertyAmenities amenities={item.amenities} />
                         )}
                         {/* Nearby Points of Interest */}
                         {item?.id && (
@@ -569,6 +606,26 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                         )}
                     </div>
                     <div className="lg:col-span-4 col-span-12 mt-4 sm:mt-6 lg:mt-0">
+                        {/* Rental Booking Widget - Only for FOR_RENT with daily rental enabled */}
+                        {item?.type === 'FOR_RENT' && item?.enableDailyRental && item?.monthlyRentalPrice && (
+                            <div className="mb-6">
+                                <RentalBookingWidget
+                                    monthlyPrice={item.monthlyRentalPrice}
+                                    maxGuests={item.maxGuests || 10}
+                                    allowPets={item.allowPets || false}
+                                    pricingConfig={pricingConfig}
+                                    property={{
+                                        id: item.id,
+                                        title: item.title,
+                                        image: item.images?.[0]?.src || item.image || '/images/properties/property7.jpg',
+                                        location: item.location,
+                                    }}
+                                    onBookingConfirmed={(booking) => {
+                                        console.log('Booking confirmed:', booking);
+                                    }}
+                                />
+                            </div>
+                        )}
                         {/* Property Request Tabs */}
                         {item && (
                             <PropertyRequestTabs
@@ -586,7 +643,7 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                     <Image src={item.image} alt={item.name} width={80} height={80} className='w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex-shrink-0' unoptimized={true} />
                                     <div className="">
                                         <h3 className='text-sm sm:text-base text-dark dark:text-white'>{item.name}</h3>
-                                        <h4 className='text-xs sm:text-sm text-dark/50 dark:text-white/50'>{item.position}</h4>
+                                        <h4 className='text-xs sm:text-sm text-dark/60 dark:text-white/50'>{item.position}</h4>
                                     </div>
                                 </div>
                             </div>
@@ -673,6 +730,8 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                             ? 'border-white scale-110'
                                             : 'border-transparent opacity-60 hover:opacity-100'
                                     }`}
+                                    aria-label={`View image ${index + 1} of ${item.images.length}`}
+                                    aria-current={currentImageIndex === index ? 'true' : undefined}
                                 >
                                     <Image
                                         src={image.src}

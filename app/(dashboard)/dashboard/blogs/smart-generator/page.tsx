@@ -337,7 +337,7 @@ export default function SmartBlogGeneratorPage() {
     }
   };
 
-  // Generate AI Cover Image with DALL-E 3
+  // Generate AI Cover Image (hyperrealistic)
   const generateCoverImage = async () => {
     if (!generatedBlog) return;
 
@@ -1195,7 +1195,7 @@ export default function SmartBlogGeneratorPage() {
                     Cover Image
                   </CardTitle>
                   <CardDescription>
-                    Genereer een AI-afbeelding gebaseerd op het blog onderwerp met DALL-E 3
+                    Genereer een hyperrealistische AI-afbeelding gebaseerd op het blog onderwerp
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1283,7 +1283,7 @@ export default function SmartBlogGeneratorPage() {
                         {isGeneratingImage ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Image genereren met DALL-E 3...
+                            Hyperrealistische image genereren...
                           </>
                         ) : (
                           <>

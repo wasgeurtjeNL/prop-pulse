@@ -11,10 +11,12 @@ import { propertySchema } from "../validations";
 import { withRetry } from "../db-utils";
 import { geocodePropertyLocation } from "../services/poi/geocoding";
 import { analyzeProperty } from "../services/poi/sync";
+import { getOptimizedImageUrl } from "../imagekit";
+import { parseLocationToSlugs } from "../property-url";
 
 /**
  * Generate the next unique listing number in format "PP-XXXX"
- * PP = PropPulse prefix, XXXX = zero-padded sequential number
+ * PP = PSM Phuket prefix, XXXX = zero-padded sequential number
  */
 export async function generateListingNumber(): Promise<string> {
   const PREFIX = "PP";
@@ -144,6 +146,35 @@ export async function getPropertyDetails(slug: string) {
     return null;
   }
 }
+
+/**
+ * Get property by full hierarchical slug: /properties/{province}/{area}/{slug}
+ */
+export async function getPropertyByFullSlug(province: string, area: string, slug: string) {
+  try {
+    return await withRetry(() =>
+      prisma.property.findFirst({
+        where: {
+          slug: slug,
+          provinceSlug: province,
+          areaSlug: area,
+        },
+        include: {
+          user: {
+            select: { name: true, email: true, image: true },
+          },
+          images: {
+            orderBy: { position: "asc" },
+          },
+        },
+      })
+    );
+  } catch (error) {
+    console.error("Error fetching property by full slug:", error);
+    return null;
+  }
+}
+
 
 export async function getProperties(params: PropertyFilterParams) {
   try {
@@ -349,6 +380,8 @@ export async function getAgentPropertiesPaginated(
         listingNumber: true,
         title: true,
         slug: true,
+        provinceSlug: true,
+        areaSlug: true,
         location: true,
         price: true,
         status: true,
@@ -375,35 +408,44 @@ export async function getAgentPropertiesPaginated(
   }
 }
 
+// Cached dashboard stats - revalidates every 60 seconds
 export async function getDashboardStats(userId: string) {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const getCachedStats = unstable_cache(
+    async (uid: string) => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const [totalListings, activeListings, newInLast30Days] = await Promise.all([
-    prisma.property.count({
-      where: { userId },
-    }),
+      const [totalListings, activeListings, newInLast30Days] = await Promise.all([
+        prisma.property.count({
+          where: { userId: uid },
+        }),
 
-    prisma.property.count({
-      where: {
-        userId,
-        status: Status.ACTIVE,
-      },
-    }),
+        prisma.property.count({
+          where: {
+            userId: uid,
+            status: Status.ACTIVE,
+          },
+        }),
 
-    prisma.property.count({
-      where: {
-        userId,
-        createdAt: { gte: thirtyDaysAgo },
-      },
-    }),
-  ]);
+        prisma.property.count({
+          where: {
+            userId: uid,
+            createdAt: { gte: thirtyDaysAgo },
+          },
+        }),
+      ]);
 
-  return {
-    totalListings,
-    activeListings,
-    newInLast30Days,
-  };
+      return {
+        totalListings,
+        activeListings,
+        newInLast30Days,
+      };
+    },
+    [`dashboard-stats-${userId}`],
+    { revalidate: 60, tags: ["dashboard-stats"] }
+  );
+
+  return getCachedStats(userId);
 }
 
 type CreatePropertyArgs = z.infer<typeof propertySchema> & { 
@@ -414,10 +456,16 @@ type CreatePropertyArgs = z.infer<typeof propertySchema> & {
   propertyFeatures?: Array<{ title: string; description: string; icon: string }>;
   amenitiesWithIcons?: Array<{ name: string; icon: string }>;
   yearBuilt?: number;
+  plotSize?: number; // Land/plot size in m²
   mapUrl?: string;
   // Ownership details (only for FOR_SALE properties)
   ownershipType?: OwnershipType | null;
   isResale?: boolean | null;
+  // Daily rental configuration (only for FOR_RENT properties)
+  enableDailyRental?: boolean;
+  monthlyRentalPrice?: number | null;
+  maxGuests?: number | null;
+  allowPets?: boolean;
 };
 
 export async function createProperty(data: CreatePropertyArgs) {
@@ -432,6 +480,9 @@ export async function createProperty(data: CreatePropertyArgs) {
   try {
     // Generate unique listing number
     const listingNumber = await generateListingNumber();
+    
+    // Parse location to get URL slugs for hierarchical URLs
+    const { provinceSlug, areaSlug } = parseLocationToSlugs(data.location);
     
     const property = await prisma.property.create({
       data: {
@@ -458,11 +509,42 @@ export async function createProperty(data: CreatePropertyArgs) {
         propertyFeatures: data.propertyFeatures as any,
         amenitiesWithIcons: data.amenitiesWithIcons as any,
         yearBuilt: data.yearBuilt,
+        plotSize: data.plotSize || null,
         mapUrl: data.mapUrl,
         
         // Ownership details (only relevant for FOR_SALE)
         ownershipType: data.type === "FOR_SALE" ? data.ownershipType : null,
         isResale: data.type === "FOR_SALE" ? data.isResale : null,
+        
+        // Daily rental configuration (only relevant for FOR_RENT)
+        enableDailyRental: data.type === "FOR_RENT" ? (data.enableDailyRental || false) : false,
+        monthlyRentalPrice: data.type === "FOR_RENT" && data.enableDailyRental ? data.monthlyRentalPrice : null,
+        maxGuests: data.type === "FOR_RENT" && data.enableDailyRental ? data.maxGuests : null,
+        allowPets: data.type === "FOR_RENT" && data.enableDailyRental ? (data.allowPets || false) : false,
+        
+        // Owner/Agency contact details
+        ownerName: data.ownerName || null,
+        ownerEmail: data.ownerEmail || null,
+        ownerPhone: data.ownerPhone || null,
+        ownerCountryCode: data.ownerCountryCode || "+66",
+        ownerCompany: data.ownerCompany || null,
+        ownerNotes: data.ownerNotes || null,
+        commissionRate: data.commissionRate || null,
+        
+        // Property Access Details (for daily rentals)
+        defaultCheckInTime: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultCheckInTime || "14:00") : null,
+        defaultCheckOutTime: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultCheckOutTime || "11:00") : null,
+        defaultPropertyAddress: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultPropertyAddress || null) : null,
+        defaultWifiName: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultWifiName || null) : null,
+        defaultWifiPassword: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultWifiPassword || null) : null,
+        defaultAccessCode: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultAccessCode || null) : null,
+        defaultEmergencyContact: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultEmergencyContact || null) : null,
+        defaultPropertyInstructions: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultPropertyInstructions || null) : null,
+        defaultHouseRules: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultHouseRules || null) : null,
+        
+        // URL structure slugs for hierarchical URLs
+        provinceSlug,
+        areaSlug,
       },
     });
 
@@ -570,6 +652,77 @@ export async function deleteProperty(propertyId: string, userId: string) {
   revalidateTag("highlighted-property");
 }
 
+/**
+ * Bulk delete multiple properties
+ */
+export async function bulkDeleteProperties(propertyIds: string[]): Promise<{
+  success: boolean;
+  deletedCount: number;
+  error?: string;
+}> {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    return { success: false, deletedCount: 0, error: "Unauthorized" };
+  }
+
+  const userId = session.user.id;
+  const userRole = session.user.role;
+
+  try {
+    // For admins, allow deleting any property
+    // For agents, only allow deleting their own properties
+    const whereClause = userRole === "ADMIN" 
+      ? { id: { in: propertyIds } }
+      : { id: { in: propertyIds }, userId };
+
+    // Get properties to verify they exist
+    const properties = await prisma.property.findMany({
+      where: whereClause,
+      select: { id: true },
+    });
+
+    if (properties.length === 0) {
+      return { success: false, deletedCount: 0, error: "No properties found to delete" };
+    }
+
+    const idsToDelete = properties.map(p => p.id);
+
+    // Delete related PropertyPoiDistances first (foreign key constraint)
+    await prisma.propertyPoiDistance.deleteMany({
+      where: { propertyId: { in: idsToDelete } },
+    });
+
+    // Delete related PropertyImages
+    await prisma.propertyImage.deleteMany({
+      where: { propertyId: { in: idsToDelete } },
+    });
+
+    // Delete the properties
+    const result = await prisma.property.deleteMany({
+      where: { id: { in: idsToDelete } },
+    });
+
+    // Revalidate paths
+    revalidatePath("/dashboard");
+    revalidatePath("/properties");
+    revalidatePath("/");
+    revalidateTag("featured-properties");
+    revalidateTag("highlighted-property");
+
+    return { success: true, deletedCount: result.count };
+  } catch (error) {
+    console.error("Error bulk deleting properties:", error);
+    return { 
+      success: false, 
+      deletedCount: 0, 
+      error: error instanceof Error ? error.message : "Failed to delete properties" 
+    };
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function updateProperty(id: string, data: any) {
   try {
@@ -581,37 +734,87 @@ export async function updateProperty(id: string, data: any) {
       throw new Error("Property not found");
     }
 
+    // Parse location to get URL slugs for hierarchical URLs
+    const { provinceSlug, areaSlug } = parseLocationToSlugs(data.location);
+
+    // Build update data object, handling undefined values properly
+    const updateData: any = {
+      title: data.title,
+      slug:
+        property.title !== data.title ? slugify(data.title) : property.slug,
+      location: data.location,
+      price: data.price,
+      beds: data.beds,
+      baths: data.baths,
+      sqft: data.sqft,
+      type: data.type,
+      category: data.category,
+      tag: data.tag || "",
+      image: data.imageUrl,
+      content: data.content,
+      amenities: data.amenities,
+      status: data.status,
+      
+      // New fields
+      shortDescription: data.shortDescription,
+      descriptionParagraphs: data.descriptionParagraphs as any,
+      propertyFeatures: data.propertyFeatures as any,
+      amenitiesWithIcons: data.amenitiesWithIcons as any,
+      yearBuilt: data.yearBuilt,
+      plotSize: data.plotSize !== undefined ? (data.plotSize || null) : undefined,
+      mapUrl: data.mapUrl,
+      
+      // Ownership details (only relevant for FOR_SALE)
+      ownershipType: data.type === "FOR_SALE" ? (data.ownershipType || null) : null,
+      isResale: data.type === "FOR_SALE" ? (data.isResale !== undefined ? data.isResale : null) : null,
+      
+      // Daily rental configuration (only relevant for FOR_RENT)
+      enableDailyRental: data.type === "FOR_RENT" ? (data.enableDailyRental || false) : false,
+      monthlyRentalPrice: data.type === "FOR_RENT" && data.enableDailyRental 
+        ? (data.monthlyRentalPrice !== undefined ? data.monthlyRentalPrice : null)
+        : null,
+      maxGuests: data.type === "FOR_RENT" && data.enableDailyRental 
+        ? (data.maxGuests !== undefined ? data.maxGuests : null)
+        : null,
+      allowPets: data.type === "FOR_RENT" && data.enableDailyRental 
+        ? (data.allowPets || false) 
+        : false,
+      
+      // Owner/Agency contact details
+      ownerName: data.ownerName !== undefined ? (data.ownerName || null) : undefined,
+      ownerEmail: data.ownerEmail !== undefined ? (data.ownerEmail || null) : undefined,
+      ownerPhone: data.ownerPhone !== undefined ? (data.ownerPhone || null) : undefined,
+      ownerCountryCode: data.ownerCountryCode || "+66",
+      ownerCompany: data.ownerCompany !== undefined ? (data.ownerCompany || null) : undefined,
+      ownerNotes: data.ownerNotes !== undefined ? (data.ownerNotes || null) : undefined,
+      commissionRate: data.commissionRate !== undefined ? data.commissionRate : null,
+      
+      // Property Access Details (for daily rentals)
+      defaultCheckInTime: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultCheckInTime || "14:00") : null,
+      defaultCheckOutTime: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultCheckOutTime || "11:00") : null,
+      defaultPropertyAddress: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultPropertyAddress || null) : null,
+      defaultWifiName: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultWifiName || null) : null,
+      defaultWifiPassword: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultWifiPassword || null) : null,
+      defaultAccessCode: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultAccessCode || null) : null,
+      defaultEmergencyContact: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultEmergencyContact || null) : null,
+      defaultPropertyInstructions: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultPropertyInstructions || null) : null,
+      defaultHouseRules: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultHouseRules || null) : null,
+      
+      // URL structure slugs for hierarchical URLs
+      provinceSlug,
+      areaSlug,
+    };
+
+    // Remove undefined values to avoid Prisma errors
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
+
     await prisma.property.update({
       where: { id: property.id },
-      data: {
-        title: data.title,
-        slug:
-          property.title !== data.title ? slugify(data.title) : property.slug,
-        location: data.location,
-        price: data.price,
-        beds: data.beds,
-        baths: data.baths,
-        sqft: data.sqft,
-        type: data.type,
-        category: data.category,
-        tag: data.tag || "",
-        image: data.imageUrl,
-        content: data.content,
-        amenities: data.amenities,
-        status: data.status,
-        
-        // New fields
-        shortDescription: data.shortDescription,
-        descriptionParagraphs: data.descriptionParagraphs as any,
-        propertyFeatures: data.propertyFeatures as any,
-        amenitiesWithIcons: data.amenitiesWithIcons as any,
-        yearBuilt: data.yearBuilt,
-        mapUrl: data.mapUrl,
-        
-        // Ownership details (only relevant for FOR_SALE)
-        ownershipType: data.type === "FOR_SALE" ? data.ownershipType : null,
-        isResale: data.type === "FOR_SALE" ? data.isResale : null,
-      },
+      data: updateData,
     });
 
     // Update images - create slots for all uploaded images
@@ -658,8 +861,9 @@ export async function updateProperty(id: string, data: any) {
     revalidateTag("featured-properties");
     revalidateTag("highlighted-property");
   } catch (error) {
-    console.error(error);
-    throw new Error("Failed to update property listing");
+    console.error("Error updating property:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to update property listing: ${errorMessage}`);
   }
 }
 
@@ -783,6 +987,8 @@ export async function getRelatedProperties(
         beds: true,
         baths: true,
         sqft: true,
+        provinceSlug: true,
+        areaSlug: true,
         image: true, // Fallback image field on property table
         images: {
           select: { url: true },
@@ -794,19 +1000,28 @@ export async function getRelatedProperties(
       take: limit,
     });
 
-    return properties.map((p: typeof properties[number]) => ({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      price: p.price,
-      location: p.location,
-      type: p.type as "FOR_SALE" | "FOR_RENT",
-      beds: p.beds,
-      baths: p.baths,
-      sqft: p.sqft,
-      // Use linked image first, fallback to main image field
-      image: p.images[0]?.url || p.image || '',
-    }));
+    return properties.map((p: typeof properties[number]) => {
+      // Get original image URL
+      const originalImage = p.images[0]?.url || p.image || '';
+      
+      return {
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        price: p.price,
+        location: p.location,
+        type: p.type as "FOR_SALE" | "FOR_RENT",
+        beds: p.beds,
+        baths: p.baths,
+        sqft: p.sqft,
+        provinceSlug: p.provinceSlug,
+        areaSlug: p.areaSlug,
+        // Optimized image: 600px width for related property cards
+        image: getOptimizedImageUrl(originalImage, { width: 600, quality: 75 }),
+        // Blur placeholder for instant perceived loading
+        blurDataURL: getOptimizedImageUrl(originalImage, { width: 40, quality: 20, blur: 10 }),
+      };
+    });
   } catch (error) {
     console.error('Error fetching related properties:', error);
     return [];

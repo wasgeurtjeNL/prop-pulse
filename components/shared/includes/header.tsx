@@ -17,7 +17,7 @@ const Header = async () => {
         <Link href="/" className="flex items-center gap-2">
           <Image
             src="https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?updatedAt=1765040666333"
-            alt="Proppulse Logo"
+            alt="PSM Phuket Logo"
             width={200}
             height={70}
             className="h-8 w-auto"

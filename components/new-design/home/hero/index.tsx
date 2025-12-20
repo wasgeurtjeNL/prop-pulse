@@ -4,18 +4,19 @@ import { getHeroImages } from '@/lib/actions/hero-image.actions'
 import { getHighlightedProperty, HighlightedProperty } from '@/lib/actions/property.actions'
 import { formatPrice, sanitizeText } from '@/lib/utils'
 import { getOptimizedImageUrl } from '@/lib/imagekit'
+import { getPropertyUrl } from '@/lib/property-url'
 
 // Default fallback images
 const DEFAULT_HERO_IMAGE = {
   desktop: {
     src: '/images/hero/heroBanner.png',
-    alt: 'PropPulse Thailand - Premium Real Estate Investment hero image - desktop view',
+    alt: 'PSM Phuket - Premium Real Estate Investment hero image - desktop view',
     width: 1082,
     height: 1016,
   },
   mobile: {
     src: '/images/hero/heroBanner.png',
-    alt: 'PropPulse Thailand - Premium Real Estate Investment hero image - mobile view',
+    alt: 'PSM Phuket - Premium Real Estate Investment hero image - mobile view',
     width: 750,
     height: 1334,
   },
@@ -110,7 +111,7 @@ const Hero: React.FC<HeroProps> = async ({ page = 'home' }) => {
         {/* Property Info Bar - Only show if highlighted property exists */}
         {highlightedProperty && (
           <Link 
-            href={`/properties/${highlightedProperty.slug}`}
+            href={getPropertyUrl(highlightedProperty)}
             className='w-full md:w-auto md:absolute bottom-0 md:-right-68 xl:right-0 bg-white dark:bg-black py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8 lg:px-16 md:pr-[295px] rounded-none md:rounded-none md:rounded-tl-2xl mt-0 md:mt-44 block hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors group z-20 cursor-pointer'
           >
             <div className='grid grid-cols-2 sm:grid-cols-4 md:flex gap-4 sm:gap-6 md:gap-10 lg:gap-16 xl:gap-24 text-left sm:text-center dark:text-white text-black'>
@@ -120,7 +121,7 @@ const Hero: React.FC<HeroProps> = async ({ page = 'home' }) => {
                   alt='bedrooms'
                   width={28}
                   height={28}
-                  className='block dark:hidden w-6 h-6 sm:w-8 sm:h-8'
+                  className='block dark:hidden w-6 sm:w-8 h-auto'
                   unoptimized={true}
                 />
                 <Image
@@ -128,7 +129,7 @@ const Hero: React.FC<HeroProps> = async ({ page = 'home' }) => {
                   alt='bedrooms'
                   width={28}
                   height={28}
-                  className='hidden dark:block w-6 h-6 sm:w-8 sm:h-8'
+                  className='hidden dark:block w-6 sm:w-8 h-auto'
                   unoptimized={true}
                 />
                 <p className='text-xs sm:text-sm md:text-base font-normal text-inherit'>
@@ -141,7 +142,7 @@ const Hero: React.FC<HeroProps> = async ({ page = 'home' }) => {
                   alt='bathrooms'
                   width={28}
                   height={28}
-                  className='block dark:hidden w-6 h-6 sm:w-8 sm:h-8'
+                  className='block dark:hidden w-6 sm:w-8 h-auto'
                   unoptimized={true}
                 />
                 <Image
@@ -149,7 +150,7 @@ const Hero: React.FC<HeroProps> = async ({ page = 'home' }) => {
                   alt='bathrooms'
                   width={28}
                   height={28}
-                  className='hidden dark:block w-6 h-6 sm:w-8 sm:h-8'
+                  className='hidden dark:block w-6 sm:w-8 h-auto'
                   unoptimized={true}
                 />
                 <p className='text-xs sm:text-sm md:text-base font-normal text-inherit'>

@@ -91,7 +91,7 @@ export async function POST(request: Request) {
             method: "HEAD",
             signal: controller.signal,
             headers: { 
-              "User-Agent": "PropPulse Link Validator/1.0",
+              "User-Agent": "PSM Phuket Link Validator/1.0",
               "Accept": "text/html"
             }
           });

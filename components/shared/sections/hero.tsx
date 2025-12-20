@@ -28,6 +28,7 @@ const Hero = () => {
           src="https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=1920&auto=format&fit=crop"
           alt="Luxury Villa Phuket Thailand"
           fill
+          sizes="100vw"
           priority
           className="object-cover"
         />

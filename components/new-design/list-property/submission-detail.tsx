@@ -251,6 +251,7 @@ export default function SubmissionDetail({ submission }: { submission: Submissio
                       src={URL.createObjectURL(file)}
                       alt={`Preview ${index + 1}`}
                       fill
+                      sizes="(max-width: 768px) 50vw, 150px"
                       className="object-cover"
                     />
                   </div>
@@ -305,6 +306,7 @@ export default function SubmissionDetail({ submission }: { submission: Submissio
                   src={image}
                   alt={`Property ${index + 1}`}
                   fill
+                  sizes="(max-width: 768px) 50vw, 150px"
                   className="object-cover"
                 />
               </div>

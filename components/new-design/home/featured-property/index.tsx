@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Icon } from "@iconify/react";
 import { getHighlightedProperty } from "@/lib/actions/property.actions";
 import { formatPrice, sanitizeText } from "@/lib/utils";
+import { getPropertyUrl } from "@/lib/property-url";
+import { getOptimizedImageUrl } from "@/lib/imagekit";
 import FeaturedPropertyCarousel from "./carousel";
 
 const FeaturedProperty = async () => {
@@ -14,13 +16,17 @@ const FeaturedProperty = async () => {
     return null;
   }
 
-  // Get property images for the carousel
+  // Get property images for the carousel with ImageKit optimization
+  // Featured property carousel: 1024px width for high-quality display
   const carouselImages = highlightedProperty.images.length > 0
     ? highlightedProperty.images.map((img) => ({
-        src: img.url || highlightedProperty.image,
+        src: getOptimizedImageUrl(img.url || highlightedProperty.image, { width: 1024, quality: 80 }),
         alt: img.alt || highlightedProperty.title,
       }))
-    : [{ src: highlightedProperty.image, alt: highlightedProperty.title }];
+    : [{ 
+        src: getOptimizedImageUrl(highlightedProperty.image, { width: 1024, quality: 80 }), 
+        alt: highlightedProperty.title 
+      }];
 
   // Format the short description or use a truncated version of the content
   const description = highlightedProperty.shortDescription || 
@@ -154,7 +160,7 @@ const FeaturedProperty = async () => {
             
             <div className="flex flex-col xs:flex-row gap-4 sm:gap-6 lg:gap-10 items-start xs:items-center">
               <Link 
-                href={`/properties/${highlightedProperty.slug}`} 
+                href={getPropertyUrl(highlightedProperty)} 
                 className="w-full xs:w-auto text-center py-3 sm:py-3.5 lg:py-4 px-5 sm:px-6 lg:px-8 bg-primary hover:bg-dark duration-300 rounded-full text-white text-sm sm:text-base font-semibold"
               >
                 View Property

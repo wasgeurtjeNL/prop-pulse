@@ -397,7 +397,7 @@ export default function HeroImageManager({
               <DialogHeader>
                 <DialogTitle>Generate Hero Image with AI</DialogTitle>
                 <DialogDescription>
-                  Use DALL-E 3 to generate a professional hero image optimized
+                  Generate a hyperrealistic, professional hero image optimized
                   for SEO.
                 </DialogDescription>
               </DialogHeader>

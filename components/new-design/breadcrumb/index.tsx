@@ -76,6 +76,7 @@ const Breadcrumb: FC<BreadcrumbProps> = ({ items, className = '' }) => {
                   <>
                     <Link
                       href={item.href}
+                      prefetch={false}
                       itemProp="item"
                       className="flex items-center gap-1.5 text-dark/70 dark:text-white/70 hover:text-primary dark:hover:text-primary transition-colors duration-200"
                     >

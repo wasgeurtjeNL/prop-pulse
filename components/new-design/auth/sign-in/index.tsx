@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useState } from "react";
 import SocialSignIn from "../SocialSignIn";
 import toast, { Toaster } from 'react-hot-toast';
-import Logo from "../../layout/header/brand-logo/Logo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { validateEmail, validatePassword } from "@/lib/validation";
 import { authClient } from "@/lib/auth-client";
@@ -11,7 +10,8 @@ import { authClient } from "@/lib/auth-client";
 const Signin = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  // If there's an explicit callbackUrl, use it. Otherwise, use role-based redirect.
+  const explicitCallbackUrl = searchParams.get('callbackUrl');
   
   const [loginData, setLoginData] = useState({
     email: "",
@@ -60,8 +60,14 @@ const Signin = () => {
         toast.success("Successfully signed in!", {
           id: loadingToast,
         });
-        // Use window.location for a full page reload to ensure session is recognized
-        window.location.href = callbackUrl;
+        
+        // If there's an explicit callback URL, use it
+        if (explicitCallbackUrl) {
+          window.location.href = explicitCallbackUrl;
+        } else {
+          // Otherwise, use role-based redirect via API
+          window.location.href = "/api/auth/redirect";
+        }
       }
     } catch (error) {
       toast.error("An error occurred. Please try again.", {
@@ -73,10 +79,6 @@ const Signin = () => {
 
   return (
     <>
-      <div className="mb-10 text-center flex justify-center">
-        <Logo />
-      </div>
-
       <SocialSignIn />
 
       <span className="z-1 relative my-8 block text-center">

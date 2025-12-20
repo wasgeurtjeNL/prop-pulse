@@ -66,6 +66,8 @@ model User {
   investorLeads InvestorLead[]
   rentalLeads   RentalLead[]   @relation("RentalLeadAssignee")
   blogs         Blog[]
+  rentalBookings RentalBooking[]
+  bookingsAsAgent RentalBooking[] @relation("BookingAgent")
 
   @@map("user")
 }
@@ -81,6 +83,36 @@ model Verification {
   @@map("verification")
 }
 
+// Agent Invite Codes - For agent registration
+model AgentInvite {
+  id          String    @id @default(cuid())
+  code        String    @unique // The invite code (e.g., "AGENT-ABC123")
+  email       String?   // Optional: restrict to specific email
+  role        String    @default("AGENT") // AGENT or ADMIN
+  
+  // Usage tracking
+  maxUses     Int       @default(1) // How many times this code can be used
+  usedCount   Int       @default(0) // How many times it has been used
+  usedBy      String?   // User ID who used it (for single-use codes)
+  usedAt      DateTime? // When it was used
+  
+  // Validity
+  expiresAt   DateTime? // Optional expiration date
+  isActive    Boolean   @default(true)
+  
+  // Metadata
+  createdBy   String    // Admin user ID who created the invite
+  note        String?   // Optional note about who this invite is for
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([code])
+  @@index([email])
+  @@index([isActive])
+  @@map("agent_invite")
+}
+
 model Property {
   id            String  @id @default(cuid())
   listingNumber String? @unique // Unique listing number for easy reference (e.g., "PP-0001")
@@ -91,6 +123,7 @@ model Property {
   beds          Int
   baths         Float
   sqft          Int
+  plotSize      Int?    // Land/plot size in m² (optional, mainly for villas/houses)
 
   // Property classification
   type          PropertyType
@@ -106,6 +139,7 @@ model Property {
   // Images - Main image kept for backward compatibility
   image  String
   images PropertyImage[]
+  views  PropertyView[]
 
   // Content
   shortDescription      String? @db.Text
@@ -122,6 +156,46 @@ model Property {
   content   String  @db.Text // Kept for backward compatibility
   yearBuilt Int?
   mapUrl    String?
+  
+  // Daily rental pricing
+  monthlyRentalPrice Float?   // Monthly rental price (used to calculate daily rates)
+  allowPets          Boolean  @default(false) // Allow pets in the property
+  enableDailyRental  Boolean  @default(false) // Enable daily rental for this property
+  maxGuests          Int?     // Maximum number of guests for daily rental
+  
+  // URL slugs for SEO-friendly URLs
+  provinceSlug       String?  // e.g., "phuket"
+  areaSlug           String?  // e.g., "rawai"
+  
+  // Owner contact information
+  ownerName          String?
+  ownerEmail         String?
+  ownerPhone         String?
+  ownerCountryCode   String?  @default("+66")
+  ownerCompany       String?
+  ownerNotes         String?  @db.Text
+  
+  // Commission rate for the property
+  commissionRate     Float?   @default(3.0)
+
+  // ============================================
+  // TM30 THAILAND IMMIGRATION
+  // ============================================
+  tm30AccommodationId   String?  @map("tm30_accommodation_id")   // ID/naam in TM30 systeem
+  tm30AccommodationName String?  @map("tm30_accommodation_name") // Volledige naam voor display
+
+  // ============================================
+  // PROPERTY ACCESS DEFAULTS (for rental bookings)
+  // ============================================
+  defaultCheckInTime       String?  @default("14:00") @map("default_check_in_time")
+  defaultCheckOutTime      String?  @default("11:00") @map("default_check_out_time")
+  defaultPropertyAddress   String?  @db.Text @map("default_property_address")
+  defaultWifiName          String?  @map("default_wifi_name")
+  defaultWifiPassword      String?  @map("default_wifi_password")
+  defaultAccessCode        String?  @map("default_access_code")
+  defaultEmergencyContact  String?  @map("default_emergency_contact")
+  defaultPropertyInstructions String? @db.Text @map("default_property_instructions")
+  defaultHouseRules        String?  @db.Text @map("default_house_rules")
 
   // ============================================
   // GEO & POI DATA
@@ -155,6 +229,8 @@ model Property {
   userId          String
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   viewingRequests ViewingRequest[]
+  rentalBookings  RentalBooking[]
+  blockedDates    PropertyBlockedDate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -181,6 +257,28 @@ model PropertyImage {
 
   @@unique([propertyId, position])
   @@map("property_image")
+}
+
+// Property Views - Track views on properties for analytics
+model PropertyView {
+  id         String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  viewedAt   DateTime @default(now())
+  country    String?  // Country code of the viewer (e.g., "US", "NL", "TH")
+  city       String?  // City of the viewer
+  
+  // Optional metadata for more detailed analytics
+  ipHash     String?  // Hashed IP for privacy
+  userAgent  String?
+  referrer   String?
+  sessionId  String?
+  
+  @@index([propertyId])
+  @@index([viewedAt])
+  @@index([country])
+  @@map("property_view")
 }
 
 enum PropertyType {
@@ -398,6 +496,11 @@ model Blog {
   originalContent     String?   @db.Text  // Backup of content before link optimization
   linkOptimizedAt     DateTime?           // When links were last optimized
   internalLinkCount   Int       @default(0) // Number of internal links in content
+  
+  // Dynamic properties for POI-based content
+  hasDynamicProperties Boolean  @default(false) @map("has_dynamic_properties")
+  poiQueryParams       String?  @db.Text @map("poi_query_params")
+  poiTemplateId        String?  @map("poi_template_id")
   
   // Link usage tracking
   linkUsages          LinkUsage[]
@@ -1211,4 +1314,231 @@ enum PoiSyncJobStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+// ============================================
+// RENTAL PRICING & BOOKING SYSTEM
+// ============================================
+
+model RentalPricingConfig {
+  id        String   @id @default(cuid())
+  
+  // Low season date ranges (stored as JSON array of {start, end} objects)
+  lowSeasonRanges Json?   @db.Json
+  
+  // Surcharge tiers for short stays
+  surchargeTiers  Json?   @db.Json
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("rental_pricing_config")
+}
+
+model RentalBooking {
+  id        String   @id @default(cuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  // User who made the booking (required - must be logged in)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Booking dates
+  checkIn   DateTime
+  checkOut  DateTime
+  nights    Int
+  
+  // Guest information
+  adults    Int      @default(1)
+  children  Int      @default(0)
+  babies    Int      @default(0)
+  pets      Int      @default(0)
+  
+  // Pricing
+  basePrice       Float
+  season          String
+  discountPercent Float
+  totalPrice      Float
+  
+  // Guest contact information
+  guestName       String
+  guestEmail      String
+  guestPhone      String
+  guestCountryCode String @default("+66")
+  guestMessage    String? @db.Text
+  
+  // Booking status
+  status          RentalBookingStatus @default(PENDING)
+  paymentStatus   String?
+  
+  // Cancellation
+  cancellationPolicy String?
+  cancelledAt       DateTime?
+  cancellationReason String? @db.Text
+  
+  // Internal notes
+  internalNotes    String? @db.Text
+  
+  // Property access details (filled in by agent after confirmation)
+  checkInTime          String?  @default("14:00") @map("check_in_time")
+  checkOutTime         String?  @default("11:00") @map("check_out_time")
+  propertyAddress      String?  @db.Text @map("property_address")
+  propertyInstructions String?  @db.Text @map("property_instructions")
+  wifiName             String?  @map("wifi_name")
+  wifiPassword         String?  @map("wifi_password")
+  accessCode           String?  @map("access_code")
+  emergencyContact     String?  @map("emergency_contact")
+  houseRules           String?  @db.Text @map("house_rules")
+  confirmedAt          DateTime? @map("confirmed_at")
+  
+  // Agent who confirmed the booking
+  agentId              String?  @map("agent_id")
+  agent                User?    @relation("BookingAgent", fields: [agentId], references: [id])
+  
+  // Messages
+  messages             BookingMessage[]
+  
+  // ============================================
+  // TM30 THAILAND IMMIGRATION
+  // ============================================
+  tm30Status           TM30BookingStatus @default(PENDING) @map("tm30_status")
+  tm30SubmittedAt      DateTime?         @map("tm30_submitted_at")
+  tm30Reference        String?           @map("tm30_reference")
+  tm30Error            String?           @map("tm30_error")
+  passportsRequired    Int               @default(0) @map("passports_required")
+  passportsReceived    Int               @default(0) @map("passports_received")
+  
+  // Guests (for passport/TM30 management)
+  guests               BookingGuest[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([propertyId])
+  @@index([userId])
+  @@index([checkIn, checkOut])
+  @@index([status])
+  @@index([tm30Status])
+  @@map("rental_booking")
+}
+
+model BookingMessage {
+  id        String   @id @default(cuid())
+  bookingId String   @map("booking_id")
+  booking   RentalBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  senderId  String   @map("sender_id")
+  senderRole String  @default("customer") @map("sender_role")
+  
+  message   String   @db.Text
+  isRead    Boolean  @default(false) @map("is_read")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([bookingId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@map("booking_message")
+}
+
+enum RentalBookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum TM30BookingStatus {
+  PENDING           // Wacht op paspoort
+  PASSPORT_RECEIVED // Paspoort ontvangen, wacht op check-in
+  PROCESSING        // TM30 wordt ingediend
+  SUBMITTED         // Succesvol ingediend
+  FAILED            // Fout bij indienen
+}
+
+enum TM30GuestStatus {
+  PENDING    // Wacht op paspoort
+  SCANNED    // OCR uitgevoerd
+  VERIFIED   // Door admin geverifieerd
+  SUBMITTED  // TM30 ingediend
+  FAILED     // Fout
+}
+
+// ============================================
+// BOOKING GUEST (for TM30 passport management)
+// ============================================
+model BookingGuest {
+  id        String   @id @default(cuid())
+  bookingId String   @map("booking_id")
+  booking   RentalBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  // Guest type
+  guestType   String  @default("adult") @map("guest_type") // adult, child, baby
+  guestNumber Int     @default(1) @map("guest_number")     // Guest 1, 2, 3, etc.
+  
+  // Personal details (extracted from passport via OCR)
+  firstName     String?  @map("first_name")
+  lastName      String?  @map("last_name")
+  fullName      String?  @map("full_name")  // Combined name for display
+  dateOfBirth   DateTime? @map("date_of_birth")
+  nationality   String?
+  gender        String?  // M/F
+  
+  // Passport details
+  passportNumber    String?   @map("passport_number")
+  passportExpiry    DateTime? @map("passport_expiry")
+  passportIssueDate DateTime? @map("passport_issue_date")
+  passportCountry   String?   @map("passport_country")
+  
+  // Passport scan
+  passportImageUrl  String?   @map("passport_image_url")
+  passportImagePath String?   @map("passport_image_path")
+  ocrConfidence     Float?    @map("ocr_confidence")
+  ocrRawData        Json?     @map("ocr_raw_data")
+  ocrProcessedAt    DateTime? @map("ocr_processed_at")
+  
+  // Verification
+  passportVerified  Boolean   @default(false) @map("passport_verified")
+  verifiedBy        String?   @map("verified_by")
+  verifiedAt        DateTime? @map("verified_at")
+  
+  // TM30 status per guest
+  tm30Status        TM30GuestStatus @default(PENDING) @map("tm30_status")
+  tm30SubmittedAt   DateTime?       @map("tm30_submitted_at")
+  tm30Error         String?         @map("tm30_error")
+  
+  // WhatsApp conversation tracking
+  whatsappMessageId  String?   @map("whatsapp_message_id")
+  whatsappReceivedAt DateTime? @map("whatsapp_received_at")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  @@index([bookingId])
+  @@index([passportNumber])
+  @@index([tm30Status])
+  @@map("booking_guest")
+}
+
+// Manually blocked dates for properties (admin can block dates)
+model PropertyBlockedDate {
+  id         String   @id @default(cuid())
+  propertyId String   @map("property_id")
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  startDate  DateTime @map("start_date")
+  endDate    DateTime @map("end_date")
+  reason     String?  // Optional reason for blocking (e.g., "Maintenance", "Owner use")
+  
+  // Who blocked it
+  blockedBy  String?  @map("blocked_by")
+  
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  
+  @@index([propertyId])
+  @@index([startDate, endDate])
+  @@map("property_blocked_date")
 }

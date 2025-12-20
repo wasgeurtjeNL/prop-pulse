@@ -18,6 +18,7 @@ export default function ListPropertyHero() {
           src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2000&auto=format&fit=crop"
           alt="Luxury villa in Phuket"
           fill
+          sizes="100vw"
           className="object-cover"
           priority
         />

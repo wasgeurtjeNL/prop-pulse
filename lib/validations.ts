@@ -30,14 +30,15 @@ export const propertySchema = z.object({
   beds: z.coerce.number().min(0),
   baths: z.coerce.number().min(0),
   sqft: z.coerce.number().min(0),
+  plotSize: z.coerce.number().min(0).optional().nullable(), // Land/plot size in m²
   content: z.string().min(20, "Description must be longer"),
-  shortDescription: z.string().optional(),
+  shortDescription: z.string().optional().nullable(),
   amenities: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "Select at least one amenity",
   }),
-  tag: z.string().optional(),
-  yearBuilt: z.coerce.number().optional(),
-  mapUrl: z.string().url().optional().or(z.literal("")),
+  tag: z.string().optional().nullable(),
+  yearBuilt: z.coerce.number().optional().nullable(),
+  mapUrl: z.string().url().optional().or(z.literal("")).nullable(),
   image: z.any().refine((val) => {
     if (typeof val === "string" && val.length > 0) return true;
     if (val instanceof FileList) return val.length > 0;
@@ -46,4 +47,27 @@ export const propertySchema = z.object({
   // Ownership details (only for FOR_SALE properties)
   ownershipType: z.enum(["FREEHOLD", "LEASEHOLD"]).optional().nullable(),
   isResale: z.boolean().optional().nullable(),
+  // Daily rental configuration (only for FOR_RENT properties)
+  enableDailyRental: z.boolean().optional().nullable(),
+  monthlyRentalPrice: z.coerce.number().min(0).optional().nullable(),
+  maxGuests: z.coerce.number().min(1).optional().nullable(),
+  allowPets: z.boolean().optional().nullable(),
+  // Owner/Agency contact details
+  ownerName: z.string().optional().nullable(),
+  ownerEmail: z.string().email().optional().or(z.literal("")).nullable(),
+  ownerPhone: z.string().optional().nullable(),
+  ownerCountryCode: z.string().optional().nullable(),
+  ownerCompany: z.string().optional().nullable(),
+  ownerNotes: z.string().optional().nullable(),
+  commissionRate: z.coerce.number().min(0).max(100).optional().nullable(),
+  // Property Access Details (default values for rental bookings)
+  defaultCheckInTime: z.string().optional().nullable(),
+  defaultCheckOutTime: z.string().optional().nullable(),
+  defaultPropertyAddress: z.string().optional().nullable(),
+  defaultWifiName: z.string().optional().nullable(),
+  defaultWifiPassword: z.string().optional().nullable(),
+  defaultAccessCode: z.string().optional().nullable(),
+  defaultEmergencyContact: z.string().optional().nullable(),
+  defaultPropertyInstructions: z.string().optional().nullable(),
+  defaultHouseRules: z.string().optional().nullable(),
 });

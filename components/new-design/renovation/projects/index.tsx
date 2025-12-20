@@ -168,6 +168,7 @@ export default function RenovationProjects() {
                   src={project.beforeImage}
                   alt={`${project.title} - Voor renovatie`}
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                   unoptimized
                 />
@@ -184,6 +185,7 @@ export default function RenovationProjects() {
                   src={project.afterImage}
                   alt={`${project.title} - Na renovatie`}
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                   unoptimized
                 />

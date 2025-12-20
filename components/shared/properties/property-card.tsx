@@ -42,6 +42,7 @@ const PropertyCard = ({
           src={image}
           alt={title}
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <Badge className="absolute left-4 top-4 bg-white/90 text-black hover:bg-white/100">
@@ -70,7 +71,7 @@ const PropertyCard = ({
           </div>
           <div className="flex items-center gap-1">
             <Square className="h-4 w-4" />
-            <span className="font-medium text-foreground">{sqft}</span> SqFt
+            <span className="font-medium text-foreground">{sqft}</span> m²
           </div>
         </div>
       </CardContent>

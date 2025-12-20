@@ -13,16 +13,14 @@ import {
 /**
  * API Route: Generate AI Blog Cover Image
  * 
- * Uses DALL-E 3 to generate professional blog cover images
+ * Uses GPT Image 1.5 to generate professional blog cover images
  * based on the blog topic, then optimizes to WebP and uploads to ImageKit.
  * 
  * Features:
- * - DALL-E 3 image generation with smart prompts
+ * - GPT Image 1.5 generation with hyperrealistic prompts
  * - WebP conversion with Sharp (80% quality, max 1920x1024)
  * - SEO-optimized ALT text generation
  * - ImageKit storage in /blogs/ai-generated folder
- * 
- * Cost: ~$0.04 per image (standard) or ~$0.08 (HD)
  */
 
 const openai = new OpenAI({
@@ -78,44 +76,52 @@ export async function POST(request: Request) {
     const imagePrompt = buildBlogImagePrompt(topic, style, { variationKey });
     if (isDev) console.log(`   Prompt: ${imagePrompt.substring(0, 100)}...`);
 
-    // Generate image with DALL-E 3
+    // Generate image with GPT Image 1.5
     const startTime = Date.now();
     const response = await openai.images.generate({
-      model: "dall-e-3",
+      model: "gpt-image-1.5",
       prompt: imagePrompt,
       n: 1,
-      size: "1792x1024", // Landscape format for blog headers
-      quality: quality,
-      style: "natural", // More photorealistic
+      size: "1536x1024", // Landscape format for blog headers (GPT Image 1.5 supported size)
     });
 
     const generationTime = ((Date.now() - startTime) / 1000).toFixed(1);
-    if (isDev) console.log(`   ✓ DALL-E generation completed in ${generationTime}s`);
+    if (isDev) console.log(`   ✓ GPT Image 1.5 generation completed in ${generationTime}s`);
 
-    const imageUrl = response.data[0]?.url;
-    const revisedPrompt = response.data[0]?.revised_prompt;
+    // GPT Image 1.5 returns base64 data by default
+    const imageData = response.data?.[0];
+    const b64Data = (imageData as { b64_json?: string })?.b64_json;
+    const imageUrl = imageData?.url;
+    const revisedPrompt = imageData?.revised_prompt;
 
-    if (!imageUrl) {
-      throw new Error("Geen afbeelding gegenereerd door DALL-E");
+    let inputBuffer: Buffer;
+
+    if (b64Data) {
+      // Decode base64 data
+      if (isDev) console.log(`   📦 Decoding base64 image data...`);
+      inputBuffer = Buffer.from(b64Data, "base64");
+      if (isDev) console.log(`   ✓ Decoded: ${(inputBuffer.length / 1024).toFixed(0)}KB`);
+    } else if (imageUrl) {
+      // Fallback to URL download
+      if (isDev) console.log(`   📥 Downloading generated image...`);
+      const imageResponse = await fetch(imageUrl);
+      
+      if (!imageResponse.ok) {
+        throw new Error("Kon de gegenereerde afbeelding niet downloaden");
+      }
+
+      const imageArrayBuffer = await imageResponse.arrayBuffer();
+      inputBuffer = Buffer.from(imageArrayBuffer);
+      if (isDev) console.log(`   ✓ Downloaded: ${(inputBuffer.length / 1024).toFixed(0)}KB`);
+    } else {
+      throw new Error("Geen afbeelding gegenereerd door GPT Image 1.5");
     }
-
-    // Download the generated image
-    if (isDev) console.log(`   📥 Downloading generated image...`);
-    const imageResponse = await fetch(imageUrl);
-    
-    if (!imageResponse.ok) {
-      throw new Error("Kon de gegenereerde afbeelding niet downloaden");
-    }
-
-    const imageArrayBuffer = await imageResponse.arrayBuffer();
-    const inputBuffer = Buffer.from(imageArrayBuffer);
-    if (isDev) console.log(`   ✓ Downloaded: ${(inputBuffer.length / 1024).toFixed(0)}KB`);
 
     // Convert to WebP with optimization
     if (isDev) console.log(`   🔄 Converting to WebP...`);
     const webpResult = await convertToWebP(inputBuffer, {
       quality: 85, // Slightly higher for AI-generated images
-      maxWidth: 1792,
+      maxWidth: 1536,
       maxHeight: 1024,
       effort: 4,
     });
@@ -157,7 +163,7 @@ export async function POST(request: Request) {
         compressedSize: `${(webpResult.compressedSize / 1024).toFixed(0)}KB`,
         savings: `${webpResult.savingsPercent}%`,
       },
-      revisedPrompt: revisedPrompt, // DALL-E's enhanced prompt (useful for debugging)
+      revisedPrompt: revisedPrompt, // AI's enhanced prompt (useful for debugging)
     });
   } catch (error) {
     console.error("❌ Image generation error:", error);
