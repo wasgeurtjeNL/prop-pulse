@@ -1474,7 +1474,7 @@ async function showPropertySelectionForPhotoUpdate(): Promise<BotResponse> {
       listingNumber: true,
       title: true,
       _count: {
-        select: { propertyImages: true }
+        select: { images: true }
       }
     },
   });
@@ -1485,10 +1485,10 @@ async function showPropertySelectionForPhotoUpdate(): Promise<BotResponse> {
   
   return {
     text: BOT_MESSAGES.UPDATE_PHOTOS_SELECT(
-      properties.map((p: { listingNumber: string | null; title: string; _count: { propertyImages: number } }) => ({
+      properties.map((p: { listingNumber: string | null; title: string; _count: { images: number } }) => ({
         listingNumber: p.listingNumber || 'N/A',
         title: p.title,
-        imageCount: p._count.propertyImages,
+        imageCount: p._count.images,
       }))
     ),
   };
@@ -1525,7 +1525,7 @@ async function handlePhotoUpdatePropertySelection(
         title: true,
         location: true,
         _count: {
-          select: { propertyImages: true }
+          select: { images: true }
         }
       },
     });
@@ -1549,7 +1549,7 @@ async function handlePhotoUpdatePropertySelection(
         title: true,
         location: true,
         _count: {
-          select: { propertyImages: true }
+          select: { images: true }
         }
       },
     });
@@ -1572,7 +1572,7 @@ async function handlePhotoUpdatePropertySelection(
     text: BOT_MESSAGES.UPDATE_PHOTOS_CONFIRM_PROPERTY({
       listingNumber: property.listingNumber || 'N/A',
       title: property.title,
-      imageCount: property._count.propertyImages,
+      imageCount: property._count.images,
       location: property.location,
     }),
   };
@@ -1613,7 +1613,7 @@ async function handlePhotoUpdateViewCurrent(
         id: true,
         listingNumber: true,
         title: true,
-        propertyImages: {
+        images: {
           orderBy: { position: 'asc' },
           select: {
             id: true,
@@ -1635,7 +1635,7 @@ async function handlePhotoUpdateViewCurrent(
     return {
       text: BOT_MESSAGES.UPDATE_PHOTOS_CURRENT_OVERVIEW(
         { listingNumber: property.listingNumber || 'N/A', title: property.title },
-        property.propertyImages.map((img: { position: number; alt: string | null }) => ({ position: img.position, alt: img.alt }))
+        property.images.map((img: { position: number; alt: string | null }) => ({ position: img.position, alt: img.alt }))
       ),
     };
   }
@@ -1697,14 +1697,14 @@ async function handlePhotoUpdateSelectAction(
     const property = await prisma.property.findUnique({
       where: { id: propertyId },
       select: {
-        propertyImages: {
+        images: {
           orderBy: { position: 'asc' },
           select: { position: true, alt: true }
         }
       },
     });
     
-    if (!property || property.propertyImages.length === 0) {
+    if (!property || property.images.length === 0) {
       return { text: BOT_MESSAGES.UPDATE_PHOTOS_NO_PHOTOS };
     }
     
@@ -1717,7 +1717,7 @@ async function handlePhotoUpdateSelectAction(
     `;
     
     return {
-      text: BOT_MESSAGES.UPDATE_PHOTOS_SELECT_TO_REPLACE(property.propertyImages),
+      text: BOT_MESSAGES.UPDATE_PHOTOS_SELECT_TO_REPLACE(property.images),
     };
   }
   
@@ -1726,14 +1726,14 @@ async function handlePhotoUpdateSelectAction(
     const property = await prisma.property.findUnique({
       where: { id: propertyId },
       select: {
-        propertyImages: {
+        images: {
           orderBy: { position: 'asc' },
           select: { position: true, alt: true }
         }
       },
     });
     
-    if (!property || property.propertyImages.length === 0) {
+    if (!property || property.images.length === 0) {
       return { text: BOT_MESSAGES.UPDATE_PHOTOS_NO_PHOTOS };
     }
     
@@ -1746,7 +1746,7 @@ async function handlePhotoUpdateSelectAction(
     `;
     
     return {
-      text: BOT_MESSAGES.UPDATE_PHOTOS_SELECT_TO_DELETE(property.propertyImages),
+      text: BOT_MESSAGES.UPDATE_PHOTOS_SELECT_TO_DELETE(property.images),
     };
   }
   
@@ -1816,14 +1816,14 @@ async function handlePhotoUpdateCollecting(
           baths: true,
           type: true,
           amenities: true,
-          propertyImages: {
+          images: {
             where: { position: replacePosition },
             select: { id: true }
           }
         }
       });
       
-      if (property && property.propertyImages[0]) {
+      if (property && property.images[0]) {
         // Generate new alt text
         const altText = generatePhotoUpdateAltText(replacePosition, {
           title: property.title,
@@ -1836,7 +1836,7 @@ async function handlePhotoUpdateCollecting(
         });
         
         await prisma.propertyImage.update({
-          where: { id: property.propertyImages[0].id },
+          where: { id: property.images[0].id },
           data: {
             url: imageUrl,
             alt: altText,
@@ -1867,12 +1867,12 @@ async function handlePhotoUpdateCollecting(
           baths: true,
           type: true,
           amenities: true,
-          _count: { select: { propertyImages: true } }
+          _count: { select: { images: true } }
         }
       });
       
       if (property) {
-        const newPosition = property._count.propertyImages + newPhotosCount + 1;
+        const newPosition = property._count.images + newPhotosCount + 1;
         
         // Generate alt text for new position
         const altText = generatePhotoUpdateAltText(newPosition, {
@@ -1902,7 +1902,7 @@ async function handlePhotoUpdateCollecting(
           WHERE id = ${session.id}
         `;
         
-        const totalPhotos = property._count.propertyImages + newPhotosCount + 1;
+        const totalPhotos = property._count.images + newPhotosCount + 1;
         return { text: BOT_MESSAGES.UPDATE_PHOTOS_PHOTO_ADDED(newPhotosCount + 1, totalPhotos) };
       }
     }
@@ -1916,7 +1916,7 @@ async function handlePhotoUpdateCollecting(
       where: { id: propertyId },
       select: {
         listingNumber: true,
-        _count: { select: { propertyImages: true } }
+        _count: { select: { images: true } }
       }
     });
     
@@ -1925,7 +1925,7 @@ async function handlePhotoUpdateCollecting(
     return {
       text: BOT_MESSAGES.UPDATE_PHOTOS_SUCCESS(
         property?.listingNumber || 'N/A',
-        property?._count.propertyImages || 0
+        property?._count.images || 0
       ),
     };
   }
@@ -1973,7 +1973,7 @@ async function handlePhotoUpdateReplaceSelect(
     where: { id: propertyId },
     select: {
       listingNumber: true,
-      propertyImages: {
+      images: {
         orderBy: { position: 'asc' },
         select: { id: true, position: true }
       }
@@ -1984,7 +1984,7 @@ async function handlePhotoUpdateReplaceSelect(
     return { text: BOT_MESSAGES.UPDATE_PHOTOS_NOT_FOUND(propertyId) };
   }
   
-  const targetImage = property.propertyImages.find((img: { id: string; position: number }) => img.position === position);
+  const targetImage = property.images.find((img: { id: string; position: number }) => img.position === position);
   
   if (!targetImage) {
     return { text: `❌ Photo at position ${position} not found. Please select a valid position.` };
@@ -1992,8 +1992,8 @@ async function handlePhotoUpdateReplaceSelect(
   
   if (action === 'delete') {
     // Check if we're deleting the last photo
-    if (property.propertyImages.length <= 1) {
-      return { text: BOT_MESSAGES.UPDATE_PHOTOS_MIN_PHOTOS_WARNING(property.propertyImages.length) };
+    if (property.images.length <= 1) {
+      return { text: BOT_MESSAGES.UPDATE_PHOTOS_MIN_PHOTOS_WARNING(property.images.length) };
     }
     
     // Delete the photo
@@ -2002,7 +2002,7 @@ async function handlePhotoUpdateReplaceSelect(
     });
     
     // Re-order remaining photos
-    const remainingImages = property.propertyImages.filter((img: { id: string; position: number }) => img.id !== targetImage.id);
+    const remainingImages = property.images.filter((img: { id: string; position: number }) => img.id !== targetImage.id);
     for (let i = 0; i < remainingImages.length; i++) {
       await prisma.propertyImage.update({
         where: { id: remainingImages[i].id },
@@ -2083,7 +2083,7 @@ async function handlePhotoUpdateConfirm(
       select: {
         listingNumber: true,
         title: true,
-        propertyImages: {
+        images: {
           orderBy: { position: 'asc' },
           select: { position: true, alt: true }
         }
@@ -2094,7 +2094,7 @@ async function handlePhotoUpdateConfirm(
       return {
         text: BOT_MESSAGES.UPDATE_PHOTOS_CURRENT_OVERVIEW(
           { listingNumber: property.listingNumber || 'N/A', title: property.title },
-          property.propertyImages
+          property.images
         ),
       };
     }
