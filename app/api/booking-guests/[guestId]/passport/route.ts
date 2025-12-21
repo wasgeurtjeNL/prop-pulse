@@ -8,13 +8,24 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { scanPassport, validatePassportData } from "@/lib/services/passport-ocr";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-// Initialize Supabase client for storage
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy initialize Supabase client to avoid build-time env var issues
+let supabaseClient: SupabaseClient | null = null;
+
+function getSupabase(): SupabaseClient {
+  if (!supabaseClient) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!url || !key) {
+      throw new Error("Supabase credentials not configured");
+    }
+    
+    supabaseClient = createClient(url, key);
+  }
+  return supabaseClient;
+}
 
 interface RouteParams {
   params: Promise<{ guestId: string }>;
@@ -90,6 +101,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       const buffer = Buffer.from(imageBase64, "base64");
       const fileName = `passports/${guest.booking.id}/${guestId}-${Date.now()}.jpg`;
 
+      const supabase = getSupabase();
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("documents")
         .upload(fileName, buffer, {
