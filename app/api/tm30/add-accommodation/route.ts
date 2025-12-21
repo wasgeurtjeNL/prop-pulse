@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/db';
+import prisma from '@/lib/prisma';
 import { Tm30AccomRequestStatus } from '@/lib/generated/prisma';
 
 // Default owner data (RUEDEEKORN - from TM30 profile)
