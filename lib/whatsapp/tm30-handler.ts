@@ -2,6 +2,10 @@
  * TM30 WhatsApp Flow Handler
  * 
  * Handles the step-by-step flow for adding TM30 accommodations via WhatsApp
+ * 
+ * NEW: Owner recognition via phone number
+ * - If owner exists: reuse ID card, skip to bluebook
+ * - If new owner: full flow
  */
 
 import { imagekit } from '../imagekit';
@@ -9,6 +13,7 @@ import prisma from '../prisma';
 import { extractIdCardData, extractBluebookData } from '../tm30/ocr';
 import { triggerTM30Workflow, createTM30Payload } from '../tm30/trigger-workflow';
 import { updateSessionStatus, updateTM30SessionData, getTM30SessionData } from './session-manager';
+import { generateDocumentPath, normalizePhone } from '../tm30/storage';
 import type { 
   WhatsAppListingSession, 
   BotResponse, 
@@ -19,14 +24,151 @@ import type {
 import { BOT_MESSAGES } from './types';
 
 // ============================================
+// OWNER RECOGNITION
+// ============================================
+
+interface ExistingOwner {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  thaiIdNumber?: string | null;
+  idCardUrl?: string | null;
+  idCardPath?: string | null;
+  properties: { id: string; title: string }[];
+}
+
+/**
+ * Check if owner exists by phone number
+ */
+export async function findOwnerByPhone(phone: string): Promise<ExistingOwner | null> {
+  try {
+    const normalized = normalizePhone(phone);
+    
+    const owner = await prisma.propertyOwner.findUnique({
+      where: { phone: normalized },
+      include: {
+        properties: {
+          select: { id: true, title: true },
+        },
+      },
+    });
+    
+    return owner;
+  } catch (error) {
+    console.error('[TM30 Handler] Error finding owner:', error);
+    return null;
+  }
+}
+
+/**
+ * Create new owner from session data
+ */
+export async function createOwnerFromSession(
+  session: WhatsAppListingSession,
+  phone: string
+): Promise<string | null> {
+  try {
+    const normalized = normalizePhone(phone);
+    
+    // Check if already exists
+    const existing = await prisma.propertyOwner.findUnique({
+      where: { phone: normalized },
+    });
+    
+    if (existing) {
+      return existing.id;
+    }
+    
+    // Create new owner
+    const owner = await prisma.propertyOwner.create({
+      data: {
+        firstName: session.tm30OwnerFirstName || 'Unknown',
+        lastName: session.tm30OwnerLastName || 'Unknown',
+        phone: normalized,
+        gender: session.tm30OwnerGender,
+        idCardUrl: session.tm30IdCardUrl,
+        idCardPath: session.tm30IdCardUrl ? `owners/pending/id-card-${session.id}.jpg` : undefined,
+        idCardUploadedAt: session.tm30IdCardUrl ? new Date() : undefined,
+      },
+    });
+    
+    console.log(`[TM30 Handler] Created new owner: ${owner.id}`);
+    return owner.id;
+  } catch (error) {
+    console.error('[TM30 Handler] Error creating owner:', error);
+    return null;
+  }
+}
+
+/**
+ * Start TM30 flow - check for existing owner first
+ */
+export async function startTm30Flow(
+  session: WhatsAppListingSession,
+  phone: string
+): Promise<BotResponse> {
+  const existingOwner = await findOwnerByPhone(phone);
+  
+  if (existingOwner && existingOwner.idCardUrl) {
+    // Existing owner with ID card - skip ID card step
+    await updateTM30SessionData(session.id, {
+      ownerFirstName: existingOwner.firstName,
+      ownerLastName: existingOwner.lastName,
+      idCardUrl: existingOwner.idCardUrl,
+      ownerGender: undefined, // Will be fetched from owner
+    });
+    
+    // Store owner ID in session for later
+    await prisma.whatsappListingSession.update({
+      where: { id: session.id },
+      data: { 
+        owner_id: existingOwner.id,
+        status: 'TM30_AWAITING_BLUEBOOK',
+      },
+    });
+    
+    return {
+      text: `✅ *Welcome back, ${existingOwner.firstName}!*
+
+📄 Your ID card is already on file.
+🏠 You have ${existingOwner.properties.length} property(ies) registered.
+
+To add a new property, please send:
+📘 *House Book (Tabienbaan)* photo
+
+The page with the House ID number.`,
+    };
+  }
+  
+  // New owner or no ID card - start from beginning
+  await updateSessionStatus(session.id, 'TM30_AWAITING_ID_CARD');
+  
+  return {
+    text: `🇹🇭 *TM30 Accommodation Registration*
+
+To register a new accommodation, I need:
+
+📸 *Step 1: ID Card*
+Send a photo of the owner's Thai ID card (บัตรประชาชน)`,
+  };
+}
+
+// ============================================
 // IMAGE UPLOAD TO IMAGEKIT
 // ============================================
 
-async function uploadTm30Document(
-  imageUrl: string,
-  documentType: 'id_card' | 'house_book',
-  sessionId: string
-): Promise<string | null> {
+interface UploadOptions {
+  imageUrl: string;
+  documentType: 'id_card' | 'house_book';
+  sessionId: string;
+  ownerId?: string;
+  propertyId?: string;
+}
+
+async function uploadTm30Document(options: UploadOptions): Promise<string | null> {
+  const { imageUrl, documentType, sessionId, ownerId, propertyId } = options;
+  
   try {
     // Get Twilio credentials for media download
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -59,15 +201,29 @@ async function uploadTm30Document(
       return null;
     }
     
-    // Upload to ImageKit in TM30 folder
-    const timestamp = Date.now();
-    const fileName = `${documentType}_${sessionId}_${timestamp}.jpg`;
+    // Generate path based on owner or session
+    let folder: string;
+    let fileName: string;
+    
+    if (ownerId) {
+      // Use proper owner-based path
+      folder = `/owners/${ownerId}`;
+      if (documentType === 'id_card') {
+        fileName = 'id-card.jpg';
+      } else {
+        fileName = propertyId ? `bluebook-${propertyId}.jpg` : `bluebook-${Date.now()}.jpg`;
+      }
+    } else {
+      // Fallback to session-based path (will be moved later)
+      folder = `/tm30/pending/${sessionId}`;
+      fileName = `${documentType}_${sessionId}_${Date.now()}.jpg`;
+    }
     
     const uploaded = await imagekit.upload({
       file: imageBuffer,
       fileName,
-      folder: `/tm30/pending/${sessionId}`,
-      tags: ['tm30', documentType, sessionId],
+      folder,
+      tags: ['tm30', documentType, ownerId || sessionId],
     });
     
     console.log(`[TM30 Handler] Uploaded to ImageKit: ${uploaded.url}`);
@@ -112,7 +268,12 @@ Or send *"cancel"* to stop.`
   }
   
   // Upload to ImageKit
-  const uploadedUrl = await uploadTm30Document(imageUrl, 'id_card', session.id);
+  const uploadedUrl = await uploadTm30Document({
+    imageUrl,
+    documentType: 'id_card',
+    sessionId: session.id,
+    ownerId: session.owner_id || undefined,
+  });
   if (!uploadedUrl) {
     return { text: BOT_MESSAGES.TM30_ID_CARD_RETRY };
   }
@@ -221,7 +382,12 @@ Or send *"cancel"* to stop.`
   }
   
   // Upload to ImageKit
-  const uploadedUrl = await uploadTm30Document(imageUrl, 'house_book', session.id);
+  const uploadedUrl = await uploadTm30Document({
+    imageUrl,
+    documentType: 'house_book',
+    sessionId: session.id,
+    ownerId: session.owner_id || undefined,
+  });
   if (!uploadedUrl) {
     return { text: BOT_MESSAGES.TM30_BLUEBOOK_RETRY };
   }

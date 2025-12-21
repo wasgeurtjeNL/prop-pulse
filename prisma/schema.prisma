@@ -167,13 +167,21 @@ model Property {
   provinceSlug       String?  // e.g., "phuket"
   areaSlug           String?  // e.g., "rawai"
   
-  // Owner contact information
+  // Owner contact information (legacy - prefer PropertyOwner relation)
   ownerName          String?
   ownerEmail         String?
   ownerPhone         String?
   ownerCountryCode   String?  @default("+66")
   ownerCompany       String?
   ownerNotes         String?  @db.Text
+  
+  // Property Owner relation (new centralized system)
+  propertyOwnerId    String?  @map("property_owner_id")
+  propertyOwner      PropertyOwner? @relation("PropertyOwner", fields: [propertyOwnerId], references: [id])
+  
+  // Bluebook for this property (linked via OwnerDocument)
+  bluebookUrl        String?  @map("bluebook_url")
+  bluebookHouseId    String?  @map("bluebook_house_id")  // "123/45" from OCR
   
   // Commission rate for the property
   commissionRate     Float?   @default(3.0)
@@ -1663,6 +1671,18 @@ model Tm30AccommodationRequest {
   propertyId       String?  @unique @map("property_id")
   
   // ============================================
+  // LINK TO PROPERTY OWNER (central owner system)
+  // ============================================
+  propertyOwnerId  String?  @map("property_owner_id")
+  propertyOwner    PropertyOwner? @relation("RequestOwner", fields: [propertyOwnerId], references: [id])
+  
+  // ============================================
+  // WHATSAPP TRACKING
+  // ============================================
+  whatsappPhone    String?  @map("whatsapp_phone")
+  whatsappSessionId String? @map("whatsapp_session_id")
+  
+  // ============================================
   // AUDIT
   // ============================================
   createdBy        String?  @map("created_by")
@@ -1672,7 +1692,9 @@ model Tm30AccommodationRequest {
 
   @@index([status])
   @@index([propertyId])
+  @@index([propertyOwnerId])
   @@index([houseIdNumber])
+  @@index([whatsappPhone])
   @@map("tm30_accommodation_request")
 }
 
@@ -1684,4 +1706,150 @@ enum Tm30AccomRequestStatus {
   APPROVED         // Goedgekeurd door TM30
   REJECTED         // Afgewezen door TM30
   FAILED           // Technische fout
+}
+
+// ============================================
+// PROPERTY OWNER SYSTEM
+// Central owner entity for document management
+// ============================================
+
+model PropertyOwner {
+  id              String   @id @default(cuid())
+  
+  // Personal Information (from ID Card OCR)
+  firstName       String   @map("first_name")
+  lastName        String   @map("last_name")
+  thaiIdNumber    String?  @unique @map("thai_id_number")  // From ID card OCR
+  phone           String   @unique                          // WhatsApp number - primary lookup
+  email           String?
+  gender          String?                                   // Male/Female
+  
+  // ID Card (1 per owner - reusable across properties)
+  idCardUrl       String?  @map("id_card_url")
+  idCardPath      String?  @map("id_card_path")           // "owners/{id}/id-card.jpg"
+  idCardOcrData   Json?    @map("id_card_ocr_data")
+  idCardVerified  Boolean  @default(false) @map("id_card_verified")
+  idCardUploadedAt DateTime? @map("id_card_uploaded_at")
+  
+  // Status
+  isActive        Boolean  @default(true) @map("is_active")
+  isVerified      Boolean  @default(false) @map("is_verified")  // Admin verified
+  
+  // Relations
+  documents       OwnerDocument[]
+  properties      Property[]       @relation("PropertyOwner")
+  tm30Requests    Tm30AccommodationRequest[] @relation("RequestOwner")
+  
+  // Audit
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  @@index([phone])
+  @@index([thaiIdNumber])
+  @@index([lastName])
+  @@map("property_owner")
+}
+
+model OwnerDocument {
+  id              String   @id @default(cuid())
+  
+  // Owner relation
+  ownerId         String   @map("owner_id")
+  owner           PropertyOwner @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  // Document type
+  documentType    OwnerDocumentType @map("document_type")
+  
+  // File storage
+  imageUrl        String   @map("image_url")
+  imagePath       String   @map("image_path")  // "owners/{ownerId}/bluebook-{propertyId}.jpg"
+  fileName        String?  @map("file_name")
+  
+  // OCR Data
+  ocrData         Json?    @map("ocr_data")
+  ocrProcessedAt  DateTime? @map("ocr_processed_at")
+  ocrConfidence   Float?   @map("ocr_confidence")
+  
+  // For Bluebook: link to specific property
+  propertyId      String?  @unique @map("property_id")
+  
+  // Extracted data (for quick access)
+  houseId         String?  @map("house_id")      // From bluebook: "123/45"
+  extractedAddress String? @map("extracted_address") @db.Text
+  
+  // Status
+  isVerified      Boolean  @default(false) @map("is_verified")
+  verifiedBy      String?  @map("verified_by")
+  verifiedAt      DateTime? @map("verified_at")
+  
+  // Audit
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  @@index([ownerId])
+  @@index([documentType])
+  @@index([propertyId])
+  @@map("owner_document")
+}
+
+enum OwnerDocumentType {
+  ID_CARD       // Thai ID Card (บัตรประชาชน)
+  BLUEBOOK      // House Registration (ทะเบียนบ้าน)
+  PASSPORT      // Owner passport (for foreigners)
+  BUSINESS_REG  // Business registration
+  OTHER
+}
+
+// ============================================
+// WHATSAPP SESSION FOR OWNER FLOW
+// ============================================
+
+model WhatsappListingSession {
+  id              String   @id @default(cuid())
+  
+  // Contact info
+  phone           String   @unique
+  
+  // Current status in flow
+  status          String   @default("IDLE")
+  
+  // Current action being performed
+  currentAction   String?  @map("current_action")
+  
+  // Owner relation (once identified)
+  ownerId         String?  @map("owner_id")
+  
+  // Property being registered
+  currentPropertyId String? @map("current_property_id")
+  
+  // TM30 Registration Flow Data
+  tm30RequestId        String? @map("tm30_request_id")
+  tm30OwnerFirstName   String? @map("tm30_owner_first_name")
+  tm30OwnerLastName    String? @map("tm30_owner_last_name")
+  tm30OwnerGender      String? @map("tm30_owner_gender")
+  tm30OwnerPhone       String? @map("tm30_owner_phone")
+  tm30ThaiIdNumber     String? @map("tm30_thai_id_number")
+  tm30IdCardUrl        String? @map("tm30_id_card_url")
+  tm30BluebookUrl      String? @map("tm30_bluebook_url")
+  tm30HouseId          String? @map("tm30_house_id")
+  tm30Province         String? @map("tm30_province")
+  tm30District         String? @map("tm30_district")
+  tm30SubDistrict      String? @map("tm30_sub_district")
+  tm30AddressNumber    String? @map("tm30_address_number")
+  tm30PostalCode       String? @map("tm30_postal_code")
+  tm30AccommodationName String? @map("tm30_accommodation_name")
+  
+  // Temporary storage for pending data
+  pendingData     Json?    @map("pending_data")
+  
+  // Last activity
+  lastMessageAt   DateTime @default(now()) @map("last_message_at")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  @@index([phone])
+  @@index([status])
+  @@index([ownerId])
+  @@map("whatsapp_listing_session")
 }

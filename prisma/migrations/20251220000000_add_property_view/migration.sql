@@ -25,3 +25,4 @@ CREATE INDEX "property_view_country_idx" ON "property_view"("country");
 -- AddForeignKey
 ALTER TABLE "property_view" ADD CONSTRAINT "property_view_propertyId_fkey" FOREIGN KEY ("propertyId") REFERENCES "property"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+
