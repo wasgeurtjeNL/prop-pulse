@@ -48,6 +48,16 @@ import {
 } from './content-generator';
 import { generateListingNumber } from '@/lib/actions/property.actions';
 import { parseLocationToSlugs } from '@/lib/property-url';
+import {
+  handleTm30IdCardUpload,
+  handleTm30IdCardConfirmation,
+  handleTm30BluebookUpload,
+  handleTm30BluebookConfirmation,
+  handleTm30PhoneInput,
+  handleTm30AccomNameInput,
+  handleTm30FinalConfirmation,
+  handleTm30Processing,
+} from './tm30-handler';
 import { calculatePropertyPoiDistances, calculatePropertyScores } from '@/lib/services/poi/sync';
 import { processPassportPhoto, sendWhatsAppMessage } from '@/lib/services/tm30-whatsapp';
 
@@ -274,6 +284,17 @@ export async function handleIncomingMessage(
       return await showPropertySelectionForPhotoUpdate();
     }
     
+    // Handle TM30 accommodation command (works with or without session)
+    if (parsed.rawText === '6' || parsed.command === 'TM30_ACCOM') {
+      // Cancel any existing session and start TM30 flow
+      if (session) {
+        await cancelSession(session.id);
+      }
+      session = await createSession(phoneNumber, whatsappId);
+      await updateSessionStatus(session.id, 'TM30_AWAITING_ID_CARD');
+      return { text: BOT_MESSAGES.TM30_START };
+    }
+    
     // Handle menu command (go back to main menu)
     if (parsed.command === 'MENU') {
       if (session) {
@@ -295,6 +316,7 @@ Send *"Start"* to create a new listing
 Send *"3"* to update owner/agent details
 Send *"4"* to search owner/agency
 Send *"5"* to update property photos
+Send *"6"* for TM30 accommodation 🇹🇭
 
 Or send *"Help"* for more options.`,
       };
@@ -396,6 +418,34 @@ Or send *"Help"* for more options.`,
         
       case 'UPDATE_PHOTOS_CONFIRM':
         return await handlePhotoUpdateConfirm(session, parsed);
+      
+      // TM30 Accommodation Flow
+      case 'TM30_AWAITING_ID_CARD':
+        return await handleTm30IdCardUpload(session, parsed, message);
+        
+      case 'TM30_CONFIRM_ID_CARD_DATA':
+        return await handleTm30IdCardConfirmation(session, parsed);
+        
+      case 'TM30_AWAITING_BLUEBOOK':
+        return await handleTm30BluebookUpload(session, parsed, message);
+        
+      case 'TM30_CONFIRM_BLUEBOOK_DATA':
+        return await handleTm30BluebookConfirmation(session, parsed);
+        
+      case 'TM30_AWAITING_PHONE':
+        return await handleTm30PhoneInput(session, parsed);
+        
+      case 'TM30_AWAITING_ACCOM_NAME':
+        return await handleTm30AccomNameInput(session, parsed);
+        
+      case 'TM30_CONFIRM_ALL':
+        return await handleTm30FinalConfirmation(session, parsed);
+        
+      case 'TM30_PROCESSING':
+        return await handleTm30Processing(session, parsed);
+        
+      case 'TM30_COMPLETED':
+        return { text: BOT_MESSAGES.MAIN_MENU };
         
       default:
         return { text: BOT_MESSAGES.HELP };
