@@ -8,7 +8,12 @@ import { scanPassport, validatePassportData } from "./passport-ocr";
 
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN!;
-const TWILIO_WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER || "whatsapp:+14155238886";
+
+// Ensure WhatsApp number has correct prefix
+const rawWhatsAppNumber = process.env.TWILIO_WHATSAPP_NUMBER || "+14155238886";
+const TWILIO_WHATSAPP_NUMBER = rawWhatsAppNumber.startsWith("whatsapp:") 
+  ? rawWhatsAppNumber 
+  : `whatsapp:${rawWhatsAppNumber}`;
 
 // ============================================
 // MESSAGE TEMPLATES
@@ -376,11 +381,17 @@ export async function processPassportPhoto(
       };
     }
 
+    // Extract ImageKit path from URL for reference
+    const imagekitPath = imageUrl.includes('ik.imagekit.io') 
+      ? imageUrl.replace(/https?:\/\/ik\.imagekit\.io\/[^\/]+/, '')
+      : `/tm30-passports/${Date.now()}.jpg`;
+
     // Update guest with passport data
     const updatedGuest = await prisma.bookingGuest.update({
       where: { id: nextGuest.id },
       data: {
         passportImageUrl: imageUrl,
+        passportImagePath: imagekitPath,
         ocrConfidence: ocrResult.confidence,
         ocrRawData: { raw: ocrResult.rawResponse },
         ocrProcessedAt: new Date(),

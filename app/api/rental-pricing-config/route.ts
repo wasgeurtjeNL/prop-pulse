@@ -8,9 +8,9 @@ import type { PricingConfig } from "@/lib/services/rental-pricing";
 // Public endpoint - pricing config is needed for frontend booking widget
 export async function GET() {
   try {
-    let config = await prisma.rentalPricingConfig.findFirst({
-      where: { isActive: true },
-      orderBy: { createdAt: "desc" },
+    // Get the singleton config (id = "default")
+    let config = await prisma.rentalPricingConfig.findUnique({
+      where: { id: "default" },
     });
 
     if (!config) {
@@ -35,18 +35,19 @@ export async function GET() {
 
       config = await prisma.rentalPricingConfig.create({
         data: {
-          peakSeasonMonths: defaultConfig.peakSeasonMonths as any,
-          peakSeasonDiscounts: defaultConfig.peakSeasonSurcharges as any, // Using old field name for DB compatibility
-          lowSeasonDiscounts: defaultConfig.lowSeasonSurcharges as any,
+          id: "default",
+          peakSeasonMonths: defaultConfig.peakSeasonMonths,
+          peakSeasonSurcharges: defaultConfig.peakSeasonSurcharges as any,
+          lowSeasonSurcharges: defaultConfig.lowSeasonSurcharges as any,
           minimumStayDays: defaultConfig.minimumStayDays,
           maximumStayDays: defaultConfig.maximumStayDays,
         },
       });
     }
 
-    // Convert DB format (using old field names) to new API format
-    const peakSurcharges = config.peakSeasonDiscounts as any[];
-    const lowSurcharges = config.lowSeasonDiscounts as any[];
+    // Parse JSON fields
+    const peakSurcharges = config.peakSeasonSurcharges as any[];
+    const lowSurcharges = config.lowSeasonSurcharges as any[];
 
     return NextResponse.json({
       config: {
@@ -86,31 +87,33 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const config: PricingConfig = body;
 
-    // Deactivate old configs
-    await prisma.rentalPricingConfig.updateMany({
-      where: { isActive: true },
-      data: { isActive: false },
-    });
-
-    // Create new active config (storing surcharges in the old field names for DB compatibility)
-    const newConfig = await prisma.rentalPricingConfig.create({
-      data: {
-        peakSeasonMonths: config.peakSeasonMonths as any,
-        peakSeasonDiscounts: config.peakSeasonSurcharges as any,
-        lowSeasonDiscounts: config.lowSeasonSurcharges as any,
+    // Upsert the singleton config
+    const updatedConfig = await prisma.rentalPricingConfig.upsert({
+      where: { id: "default" },
+      update: {
+        peakSeasonMonths: config.peakSeasonMonths,
+        peakSeasonSurcharges: config.peakSeasonSurcharges as any,
+        lowSeasonSurcharges: config.lowSeasonSurcharges as any,
         minimumStayDays: config.minimumStayDays,
         maximumStayDays: config.maximumStayDays,
-        isActive: true,
+      },
+      create: {
+        id: "default",
+        peakSeasonMonths: config.peakSeasonMonths,
+        peakSeasonSurcharges: config.peakSeasonSurcharges as any,
+        lowSeasonSurcharges: config.lowSeasonSurcharges as any,
+        minimumStayDays: config.minimumStayDays,
+        maximumStayDays: config.maximumStayDays,
       },
     });
 
     return NextResponse.json({
       config: {
-        peakSeasonMonths: newConfig.peakSeasonMonths as number[],
-        peakSeasonSurcharges: newConfig.peakSeasonDiscounts as any,
-        lowSeasonSurcharges: newConfig.lowSeasonDiscounts as any,
-        minimumStayDays: newConfig.minimumStayDays,
-        maximumStayDays: newConfig.maximumStayDays,
+        peakSeasonMonths: updatedConfig.peakSeasonMonths as number[],
+        peakSeasonSurcharges: updatedConfig.peakSeasonSurcharges as any,
+        lowSeasonSurcharges: updatedConfig.lowSeasonSurcharges as any,
+        minimumStayDays: updatedConfig.minimumStayDays,
+        maximumStayDays: updatedConfig.maximumStayDays,
       },
     });
   } catch (error) {

@@ -103,3 +103,6 @@ export function isThaiPhone(phone: string): boolean {
   return normalized.startsWith("+66");
 }
 
+
+
+

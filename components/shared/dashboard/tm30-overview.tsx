@@ -113,6 +113,35 @@ export default function TM30Overview() {
     }
   };
 
+  const submitTM30 = async (bookingId: string) => {
+    if (!confirm("Submit TM30 to Immigration now? This will register the guest(s) with Thai Immigration.")) {
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/tm30/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          bookingId,
+          dryRun: false, // Live mode
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(`✅ TM30 submission triggered!\n\n${data.message}\n\nGuests: ${data.guestsTriggered}`);
+        fetchTM30Bookings();
+      } else {
+        alert(`❌ Failed: ${data.error}\n\n${data.details || ''}`);
+      }
+    } catch (error) {
+      console.error("Error submitting TM30:", error);
+      alert("Failed to submit TM30");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -283,10 +312,35 @@ export default function TM30Overview() {
                               size="sm"
                               variant="outline"
                               onClick={() => sendPassportRequest(booking.id)}
+                              title="Send passport request"
                             >
                               <Icon icon="ph:paper-plane-tilt" className="w-4 h-4" />
                             </Button>
                           )}
+                        {(booking.tm30Status === "PASSPORT_RECEIVED" || 
+                          booking.tm30Status === "FAILED") && (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => submitTM30(booking.id)}
+                              className="gap-1 bg-green-600 hover:bg-green-700"
+                              title="Submit TM30 to Immigration"
+                            >
+                              <Icon icon="ph:upload" className="w-4 h-4" />
+                              Submit
+                            </Button>
+                          )}
+                        {booking.tm30Status === "PROCESSING" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled
+                            className="gap-1"
+                          >
+                            <Icon icon="ph:spinner" className="w-4 h-4 animate-spin" />
+                            Processing...
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -329,11 +383,20 @@ export default function TM30Overview() {
                       className="p-4 border rounded-lg flex items-center gap-4"
                     >
                       {guest.passportImageUrl ? (
-                        <img
-                          src={guest.passportImageUrl}
-                          alt="Passport"
-                          className="w-16 h-16 object-cover rounded"
-                        />
+                        <a 
+                          href={guest.passportImageUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <img
+                            src={guest.passportImageUrl.includes('ik.imagekit.io') 
+                              ? `${guest.passportImageUrl}?tr=w-128,h-128,fo-auto,q-80` 
+                              : guest.passportImageUrl}
+                            alt="Passport"
+                            className="w-16 h-16 object-cover rounded hover:opacity-80 transition cursor-pointer"
+                          />
+                        </a>
                       ) : (
                         <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
                           <Icon

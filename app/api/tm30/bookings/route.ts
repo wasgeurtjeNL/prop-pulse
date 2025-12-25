@@ -15,27 +15,23 @@ export async function GET() {
       headers: await headers(),
     });
 
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || !["admin", "ADMIN", "AGENT", "agent"].includes(session.user.role || "")) {
       return NextResponse.json(
         { error: "Admin access required" },
         { status: 401 }
       );
     }
 
-    // Get bookings with TM30 enabled properties (confirmed bookings with future check-in)
+    // Get ALL bookings (confirmed/pending with recent or future check-in)
     const bookings = await prisma.rentalBooking.findMany({
       where: {
         status: {
           in: ["CONFIRMED", "PENDING"],
         },
         checkIn: {
-          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Include last 7 days
+          gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // Include last 90 days
         },
-        property: {
-          tm30AccommodationId: {
-            not: null,
-          },
-        },
+        // No property filter - show all bookings
       },
       include: {
         property: {
@@ -93,5 +89,8 @@ export async function GET() {
     );
   }
 }
+
+
+
 
 

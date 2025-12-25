@@ -176,6 +176,7 @@ async function handleSubmissionCallback(body: any) {
   const results = data?.results;
   const totalGuests = data?.totalGuests;
   const successCount = data?.successCount;
+  const referenceNumber = data?.referenceNumber;
 
   if (!bookingId) {
     console.error("[TM30 Callback] No bookingId provided in data");
@@ -196,12 +197,26 @@ async function handleSubmissionCallback(body: any) {
     newStatus = "FAILED";
   }
   
+  // Get booking details for WhatsApp notification
+  let booking: any = null;
   try {
+    booking = await prisma.rentalBooking.findUnique({
+      where: { id: bookingId },
+      include: {
+        property: {
+          select: {
+            title: true,
+          },
+        },
+      },
+    });
+
     await prisma.rentalBooking.update({
       where: { id: bookingId },
       data: {
         tm30Status: newStatus,
         tm30SubmittedAt: success ? new Date() : undefined,
+        tm30Reference: referenceNumber || undefined,
         tm30Error: error || (results?.find((r: any) => r.error)?.error) || undefined,
       },
     });
@@ -231,6 +246,30 @@ async function handleSubmissionCallback(body: any) {
     }
   }
 
+  // Send WhatsApp notification to guest
+  if (booking && booking.guestPhone) {
+    const guestPhone = `${booking.guestCountryCode || '+66'}${booking.guestPhone.replace(/^0/, '')}`;
+    const propertyName = booking.property?.title || 'your accommodation';
+    
+    const message = success
+      ? `🇹🇭 *TM30 Registration Complete!*\n\n` +
+        `Your immigration registration for *${propertyName}* has been submitted successfully.\n\n` +
+        (referenceNumber ? `📋 Reference: ${referenceNumber}\n\n` : '') +
+        `✅ You are now legally registered with Thai Immigration.\n\n` +
+        `Have a wonderful stay! 🌴`
+      : `⚠️ *TM30 Registration Issue*\n\n` +
+        `There was a problem with your immigration registration for *${propertyName}*.\n\n` +
+        `Our team has been notified and will resolve this shortly.\n\n` +
+        `If you have questions, please contact us.`;
+    
+    try {
+      await sendTextMessage(guestPhone, message);
+      console.log(`[TM30 Callback] WhatsApp notification sent to guest ${guestPhone}`);
+    } catch (e: any) {
+      console.error(`[TM30 Callback] Failed to send WhatsApp to guest:`, e.message);
+    }
+  }
+
   return NextResponse.json({
     success: true,
     message: "Submission callback processed",
@@ -238,6 +277,7 @@ async function handleSubmissionCallback(body: any) {
     newStatus,
     totalGuests,
     successCount,
+    referenceNumber,
   });
 }
 

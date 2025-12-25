@@ -182,3 +182,6 @@ export function validatePassportData(data: PassportOCRResult["data"]): {
 }
 
 
+
+
+

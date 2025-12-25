@@ -66,11 +66,11 @@ export async function POST(request: Request) {
             id: true,
             guestType: true,
             guestNumber: true,
-            passportName: true,
-            passportSurname: true,
+            firstName: true,
+            lastName: true,
             passportNumber: true,
-            passportDob: true,
-            passportNationality: true,
+            dateOfBirth: true,
+            nationality: true,
             gender: true,
             tm30Status: true,
           },
@@ -111,13 +111,13 @@ export async function POST(request: Request) {
       guestId: guest.id,
       foreigner: {
         passportNumber: guest.passportNumber,
-        nationality: guest.passportNationality || "Unknown",
-        firstName: guest.passportName || "Unknown",
-        lastName: guest.passportSurname || "",
-        dateOfBirth: guest.passportDob
-          ? formatDate(new Date(guest.passportDob))
+        nationality: guest.nationality || "Unknown",
+        firstName: guest.firstName || "Unknown",
+        lastName: guest.lastName || "",
+        dateOfBirth: guest.dateOfBirth
+          ? formatDate(new Date(guest.dateOfBirth))
           : "",
-        gender: guest.gender === "M" ? "M" : "F",
+        gender: guest.gender === "F" || guest.gender === "Female" ? "F" : "M",
         arrivalDate: formatDate(new Date(booking.checkIn)),
         stayUntil: formatDate(new Date(booking.checkOut)),
       },
@@ -241,11 +241,13 @@ export async function POST(request: Request) {
   }
 }
 
-// Helper: Format date as DD/MM/YYYY
+// Helper: Format date as DD/MM/YYYY in Thailand timezone (Asia/Bangkok, UTC+7)
 function formatDate(date: Date): string {
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const year = date.getFullYear();
+  // Convert to Thailand timezone
+  const thailandDate = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
+  const day = thailandDate.getDate().toString().padStart(2, "0");
+  const month = (thailandDate.getMonth() + 1).toString().padStart(2, "0");
+  const year = thailandDate.getFullYear();
   return `${day}/${month}/${year}`;
 }
 
@@ -299,10 +301,10 @@ export async function GET(request: Request) {
           },
           select: {
             id: true,
-            passportName: true,
-            passportSurname: true,
+            firstName: true,
+            lastName: true,
             passportNumber: true,
-            passportNationality: true,
+            nationality: true,
             tm30Status: true,
           },
         },
@@ -332,6 +334,9 @@ export async function GET(request: Request) {
     );
   }
 }
+
+
+
 
 
 

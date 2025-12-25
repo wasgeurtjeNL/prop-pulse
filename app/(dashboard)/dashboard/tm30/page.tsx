@@ -27,6 +27,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   Loader2,
   Building2,
   Link2,
@@ -41,8 +47,11 @@ import {
   Filter,
   Info,
   CloudDownload,
+  Users,
+  Passport,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import TM30Overview from "@/components/shared/dashboard/tm30-overview";
 
 // Types
 interface TM30Accommodation {
@@ -257,6 +266,9 @@ export default function TM30LinkagePage() {
     setLinkDialogOpen(true);
   };
 
+  // State for active tab
+  const [activeTab, setActiveTab] = useState("bookings");
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -272,10 +284,10 @@ export default function TM30LinkagePage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Building2 className="w-7 h-7 text-primary" />
-            TM30 Immigration Linkage
+            TM30 Immigration Management
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
-            Link rental properties to TM30 registered addresses for immigration compliance
+            Manage TM30 registrations, passports, and property linkage
           </p>
         </div>
         <div className="flex gap-2">
@@ -311,8 +323,28 @@ export default function TM30LinkagePage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      {stats && (
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="bookings" className="gap-2">
+            <Users className="w-4 h-4" />
+            Bookings & Passports
+          </TabsTrigger>
+          <TabsTrigger value="properties" className="gap-2">
+            <Building2 className="w-4 h-4" />
+            Property Linkage
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Bookings Tab - Passport Management */}
+        <TabsContent value="bookings" className="mt-6">
+          <TM30Overview />
+        </TabsContent>
+
+        {/* Properties Tab - Property Linkage */}
+        <TabsContent value="properties" className="mt-6 space-y-6">
+          {/* Stats Cards */}
+          {stats && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="border-l-4 border-l-blue-500">
             <CardContent className="pt-6">
@@ -553,6 +585,8 @@ export default function TM30LinkagePage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Link Dialog */}
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>

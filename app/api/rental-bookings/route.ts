@@ -80,14 +80,13 @@ export async function POST(request: Request) {
     // Get pricing config directly from database (not via API call to avoid localhost issues on Vercel)
     let pricingConfig = getDefaultPricingConfig();
     try {
-      const dbConfig = await prisma.rentalPricingConfig.findFirst({
-        where: { isActive: true },
-        orderBy: { createdAt: "desc" },
+      const dbConfig = await prisma.rentalPricingConfig.findUnique({
+        where: { id: "default" },
       });
 
       if (dbConfig) {
-        const peakSurcharges = dbConfig.peakSeasonDiscounts as any[];
-        const lowSurcharges = dbConfig.lowSeasonDiscounts as any[];
+        const peakSurcharges = dbConfig.peakSeasonSurcharges as any[];
+        const lowSurcharges = dbConfig.lowSeasonSurcharges as any[];
         
         pricingConfig = {
           peakSeasonMonths: dbConfig.peakSeasonMonths as number[],

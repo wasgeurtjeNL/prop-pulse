@@ -48,9 +48,11 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
     
-    // Format phone numbers
-    const from = `whatsapp:${config.whatsappNumber.startsWith('+') ? config.whatsappNumber : '+' + config.whatsappNumber}`;
-    const to = `whatsapp:${phone.startsWith('+') ? phone : '+' + phone}`;
+    // Format phone numbers (handle whatsapp: prefix correctly)
+    const cleanFrom = config.whatsappNumber.replace('whatsapp:', '');
+    const from = `whatsapp:${cleanFrom.startsWith('+') ? cleanFrom : '+' + cleanFrom}`;
+    const cleanTo = phone.replace('whatsapp:', '');
+    const to = `whatsapp:${cleanTo.startsWith('+') ? cleanTo : '+' + cleanTo}`;
     
     const body = new URLSearchParams({
       From: from,
