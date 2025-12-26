@@ -183,6 +183,19 @@ export class AIDecisionEngine {
   ): Promise<AIDecisionPayload[]> {
     const decisions: AIDecisionPayload[] = [];
 
+    // Check for existing pending/approved decisions to avoid duplicates
+    const existingDecisions = await prisma.aIDecision.findMany({
+      where: {
+        status: { in: ['PENDING', 'APPROVED'] },
+        createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // Last 24 hours
+      },
+      select: { type: true, subType: true },
+    });
+
+    const existingTypes = new Set(
+      existingDecisions.map((d: { type: string; subType: string | null }) => `${d.type}:${d.subType || 'general'}`)
+    );
+
     // Take top opportunities that we can act on
     const actionableOpportunities = opportunities.filter(o => 
       o.priority >= 5 && 
@@ -190,10 +203,19 @@ export class AIDecisionEngine {
     ).slice(0, 5);
 
     for (const opportunity of actionableOpportunities) {
+      // Skip if we already have a pending/approved decision for this type
+      const opportunityKey = `${this.mapOpportunityToDecisionType(opportunity.type)}:${opportunity.type}`;
+      if (existingTypes.has(opportunityKey)) {
+        console.log(`Skipping duplicate decision for: ${opportunityKey}`);
+        continue;
+      }
+
       try {
         const decision = await this.generateDecisionForOpportunity(opportunity, snapshot, config);
         if (decision) {
           decisions.push(decision);
+          // Add to set to prevent duplicates within this run
+          existingTypes.add(`${decision.type}:${decision.subType || 'general'}`);
         }
       } catch (error) {
         console.error(`Failed to generate decision for opportunity: ${opportunity.title}`, error);
@@ -201,6 +223,19 @@ export class AIDecisionEngine {
     }
 
     return decisions;
+  }
+
+  /**
+   * Map opportunity type to decision type
+   */
+  private mapOpportunityToDecisionType(opportunityType: string): string {
+    const mapping: Record<string, string> = {
+      'content_gap': 'CONTENT_CREATION',
+      'bug': 'BUG_FIX',
+      'seo': 'SEO_OPTIMIZATION',
+      'conversion': 'CONVERSION_OPTIMIZATION',
+    };
+    return mapping[opportunityType] || 'OTHER';
   }
 
   /**
