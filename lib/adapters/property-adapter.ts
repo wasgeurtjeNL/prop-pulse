@@ -5,6 +5,7 @@
 
 import type { Property, PropertyImage } from "@/lib/generated/prisma/client";
 import { getOptimizedImageUrl, getBlurPlaceholderUrl } from "@/lib/imagekit";
+import { parseLocationToSlugs } from "@/lib/property-url";
 
 export interface PropertyTemplateFormat {
   id: string; // Property ID - required for viewing requests
@@ -148,9 +149,9 @@ export function transformPropertyToTemplate(
     seaDistance: (property as any).seaDistance ?? null,
     district: (property as any).district ?? null,
     
-    // Hierarchical URL slugs
-    provinceSlug: (property as any).provinceSlug ?? null,
-    areaSlug: (property as any).areaSlug ?? null,
+    // Hierarchical URL slugs - generate from location if not set in database
+    provinceSlug: (property as any).provinceSlug || parseLocationToSlugs(property.location).provinceSlug,
+    areaSlug: (property as any).areaSlug || parseLocationToSlugs(property.location).areaSlug,
     
     // Daily rental configuration
     enableDailyRental: (property as any).enableDailyRental ?? false,
