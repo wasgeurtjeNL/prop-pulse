@@ -46,11 +46,19 @@ export async function scanPassport(imageUrl: string): Promise<PassportOCRResult>
 IMPORTANT RULES:
 1. Extract data EXACTLY as shown on the passport
 2. For names, use the format shown in the MRZ (machine readable zone) at the bottom if visible
-3. Dates should be in YYYY-MM-DD format
-4. Nationality should be the full country name (e.g., "British", "American", "German")
-5. Gender should be M or F
-6. If you cannot read a field clearly, use null
-7. Return ONLY valid JSON, no additional text
+3. ALL DATES must be in YYYY-MM-DD format (e.g., 1985-05-20)
+4. Nationality should be the full country name (e.g., "Dutch", "British", "American", "German", "Italian")
+5. Gender/Sex MUST be extracted - look for "M", "F", "MALE", "FEMALE", "M/V", or "SEX" field. Return as "M" or "F"
+6. Date of Birth (DOB/Geboortedatum) is CRITICAL - look for the birth date field or extract from MRZ line 2 (format: YYMMDD after the nationality code)
+7. If you cannot read a field clearly, use null
+8. Return ONLY valid JSON, no additional text
+
+MRZ PARSING HELP:
+- Line 2 format: PassportNumber<CheckDigit>Nationality>YYMMDD<CheckDigit>Gender>ExpiryYYMMDD<CheckDigit>...
+- Example: NPDPDF914<8NLD8505202M3405237<<<...
+  - Birth date: 850520 = 1985-05-20
+  - Gender: M
+  - Expiry: 340523 = 2034-05-23
 
 Always respond with this exact JSON structure:
 {

@@ -175,6 +175,8 @@ export async function POST(request: Request, { params }: RouteParams) {
         nationality: updatedGuest.nationality,
         passportNumber: updatedGuest.passportNumber,
         passportExpiry: updatedGuest.passportExpiry,
+        dateOfBirth: updatedGuest.dateOfBirth, // Added
+        gender: updatedGuest.gender, // Added
         tm30Status: updatedGuest.tm30Status,
         ocrConfidence: updatedGuest.ocrConfidence,
       },
