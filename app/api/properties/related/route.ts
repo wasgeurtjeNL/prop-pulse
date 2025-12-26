@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma"; // Default export
 import { mapSlugToCategory } from "@/lib/adapters/property-adapter";
+import { parseLocationToSlugs } from "@/lib/property-url";
 
 export async function GET(request: NextRequest) {
   try {
@@ -75,21 +76,24 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    // Format the response
-    const formattedProperties = relatedProperties.map((p) => ({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      price: p.price,
-      location: p.location,
-      type: p.type,
-      image: p.images[0]?.url || p.image,
-      beds: p.beds,
-      baths: p.baths,
-      sqft: p.sqft,
-      provinceSlug: p.provinceSlug,
-      areaSlug: p.areaSlug,
-    }));
+    // Format the response - generate slugs from location if not set in database
+    const formattedProperties = relatedProperties.map((p) => {
+      const locationSlugs = parseLocationToSlugs(p.location);
+      return {
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        price: p.price,
+        location: p.location,
+        type: p.type,
+        image: p.images[0]?.url || p.image,
+        beds: p.beds,
+        baths: p.baths,
+        sqft: p.sqft,
+        provinceSlug: p.provinceSlug || locationSlugs.provinceSlug,
+        areaSlug: p.areaSlug || locationSlugs.areaSlug,
+      };
+    });
 
     return NextResponse.json({
       success: true,

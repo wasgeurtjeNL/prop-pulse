@@ -12,6 +12,7 @@ import {
 } from '@/lib/actions/poi-blog.actions';
 import { POI_BLOG_TEMPLATES } from '@/lib/services/poi-blog/templates';
 import { slugify } from '@/lib/utils';
+import { parseLocationToSlugs } from '@/lib/property-url';
 import { revalidatePath } from 'next/cache';
 import { imagekit } from '@/lib/imagekit';
 import { 
@@ -140,22 +141,30 @@ export async function GET(request: Request) {
       }
       
       // Transform to simplified format for frontend
-      const properties = result.data.properties.map(p => ({
-        id: p.id,
-        title: p.title,
-        slug: p.slug,
-        price: p.price,
-        location: p.location,
-        beds: p.beds,
-        baths: p.baths,
-        sqft: p.sqft,
-        image: p.image,
-        type: p.priceNumeric > 500000 ? 'FOR_SALE' : 'FOR_RENT', // Simple heuristic
-        nearestPoi: p.nearestPois[0] ? {
-          name: p.nearestPois[0].name,
-          distance: p.nearestPois[0].distanceFormatted,
-        } : undefined,
-      }));
+      const properties = result.data.properties.map(p => {
+        // Get slugs from database or generate from location
+        const locationSlugs = parseLocationToSlugs(p.location);
+        
+        return {
+          id: p.id,
+          title: p.title,
+          slug: p.slug,
+          price: p.price,
+          location: p.location,
+          beds: p.beds,
+          baths: p.baths,
+          sqft: p.sqft,
+          image: p.image,
+          type: p.priceNumeric > 500000 ? 'FOR_SALE' : 'FOR_RENT', // Simple heuristic
+          // Add URL slugs for proper routing
+          provinceSlug: (p as any).provinceSlug || locationSlugs.provinceSlug,
+          areaSlug: (p as any).areaSlug || locationSlugs.areaSlug,
+          nearestPoi: p.nearestPois[0] ? {
+            name: p.nearestPois[0].name,
+            distance: p.nearestPois[0].distanceFormatted,
+          } : undefined,
+        };
+      });
       
       return NextResponse.json({ success: true, properties });
     }
