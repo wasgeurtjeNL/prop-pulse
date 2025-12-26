@@ -23,43 +23,46 @@ interface PRResult {
 }
 
 export class GitHubService {
-  private octokit: Octokit | null = null;
-  private config: GitHubConfig | null = null;
-
-  constructor() {
-    this.initializeFromEnv();
-  }
-
-  private initializeFromEnv() {
-    const token = process.env.GITHUB_TOKEN;
-    const repoFullName = process.env.GITHUB_REPO; // format: "owner/repo"
+  /**
+   * Get fresh config from environment variables
+   * This is called on each request to avoid caching issues in serverless
+   */
+  private getConfig(): GitHubConfig | null {
+    const token = process.env.GITHUB_TOKEN?.trim();
+    const repoFullName = process.env.GITHUB_REPO?.trim(); // format: "owner/repo"
 
     if (!token || !repoFullName) {
       console.log('GitHub integration not configured. Set GITHUB_TOKEN and GITHUB_REPO.');
-      return;
+      return null;
     }
 
     const [owner, repo] = repoFullName.split('/');
     if (!owner || !repo) {
       console.error('Invalid GITHUB_REPO format. Expected "owner/repo".');
-      return;
+      return null;
     }
 
-    this.config = {
+    return {
       token,
-      owner,
-      repo,
-      baseBranch: process.env.GITHUB_BASE_BRANCH || 'main',
+      owner: owner.trim(),
+      repo: repo.trim(),
+      baseBranch: process.env.GITHUB_BASE_BRANCH?.trim() || 'main',
     };
+  }
 
-    this.octokit = new Octokit({ auth: token });
+  /**
+   * Get a fresh Octokit instance
+   */
+  private getOctokit(token: string): Octokit {
+    return new Octokit({ auth: token });
   }
 
   /**
    * Check if GitHub integration is available
    */
   isConfigured(): boolean {
-    return this.octokit !== null && this.config !== null;
+    const config = this.getConfig();
+    return config !== null;
   }
 
   /**
@@ -74,17 +77,19 @@ export class GitHubService {
       autoMerge?: boolean;
     } = {}
   ): Promise<PRResult> {
-    if (!this.octokit || !this.config) {
+    const config = this.getConfig();
+    if (!config) {
       return { success: false, error: 'GitHub not configured' };
     }
 
-    const { owner, repo, baseBranch } = this.config;
+    const octokit = this.getOctokit(config.token);
+    const { owner, repo, baseBranch } = config;
     const branchName = `ai-agent/${decisionId.substring(0, 12)}`;
     const timestamp = new Date().toISOString().split('T')[0];
 
     try {
       // 1. Get the SHA of the base branch
-      const { data: baseBranchData } = await this.octokit.repos.getBranch({
+      const { data: baseBranchData } = await octokit.repos.getBranch({
         owner,
         repo,
         branch: baseBranch,
@@ -92,7 +97,7 @@ export class GitHubService {
       const baseSha = baseBranchData.commit.sha;
 
       // 2. Create a new branch from the base
-      await this.octokit.git.createRef({
+      await octokit.git.createRef({
         owner,
         repo,
         ref: `refs/heads/${branchName}`,
@@ -100,7 +105,7 @@ export class GitHubService {
       });
 
       // 3. Get the current tree
-      const { data: baseCommit } = await this.octokit.git.getCommit({
+      const { data: baseCommit } = await octokit.git.getCommit({
         owner,
         repo,
         commit_sha: baseSha,
@@ -125,7 +130,7 @@ export class GitHubService {
           });
         } else {
           // Create or update file
-          const { data: blob } = await this.octokit.git.createBlob({
+          const { data: blob } = await octokit.git.createBlob({
             owner,
             repo,
             content: Buffer.from(file.content).toString('base64'),
@@ -142,7 +147,7 @@ export class GitHubService {
       }
 
       // 5. Create a new tree with the changes
-      const { data: newTree } = await this.octokit.git.createTree({
+      const { data: newTree } = await octokit.git.createTree({
         owner,
         repo,
         base_tree: baseCommit.tree.sha,
@@ -151,7 +156,7 @@ export class GitHubService {
 
       // 6. Create a commit
       const commitMessage = options.title || `🤖 AI Agent: ${generatedCode.description || 'Code improvement'}`;
-      const { data: newCommit } = await this.octokit.git.createCommit({
+      const { data: newCommit } = await octokit.git.createCommit({
         owner,
         repo,
         message: commitMessage,
@@ -165,7 +170,7 @@ export class GitHubService {
       });
 
       // 7. Update the branch reference
-      await this.octokit.git.updateRef({
+      await octokit.git.updateRef({
         owner,
         repo,
         ref: `heads/${branchName}`,
@@ -176,7 +181,7 @@ export class GitHubService {
       const prTitle = options.title || `🤖 AI: ${generatedCode.description || 'Automated improvement'}`;
       const prBody = this.generatePRDescription(generatedCode, decisionId, options.description);
 
-      const { data: pr } = await this.octokit.pulls.create({
+      const { data: pr } = await octokit.pulls.create({
         owner,
         repo,
         title: prTitle,
@@ -186,7 +191,7 @@ export class GitHubService {
       });
 
       // 9. Add labels to the PR
-      await this.octokit.issues.addLabels({
+      await octokit.issues.addLabels({
         owner,
         repo,
         issue_number: pr.number,
@@ -214,7 +219,7 @@ export class GitHubService {
       // 11. Enable auto-merge if requested and available
       if (options.autoMerge) {
         try {
-          await this.octokit.pulls.merge({
+          await octokit.pulls.merge({
             owner,
             repo,
             pull_number: pr.number,
@@ -256,16 +261,14 @@ export class GitHubService {
       });
 
       // Try to clean up the branch if it was created
-      if (this.octokit && this.config) {
-        try {
-          await this.octokit.git.deleteRef({
-            owner: this.config.owner,
-            repo: this.config.repo,
-            ref: `heads/${branchName}`,
-          });
-        } catch {
-          // Ignore cleanup errors
-        }
+      try {
+        await octokit.git.deleteRef({
+          owner,
+          repo,
+          ref: `heads/${branchName}`,
+        });
+      } catch {
+        // Ignore cleanup errors
       }
 
       return { success: false, error: errorMessage };
@@ -322,14 +325,17 @@ export class GitHubService {
     mergeable: boolean | null;
     merged: boolean;
   } | null> {
-    if (!this.octokit || !this.config) {
+    const config = this.getConfig();
+    if (!config) {
       return null;
     }
 
+    const octokit = this.getOctokit(config.token);
+
     try {
-      const { data: pr } = await this.octokit.pulls.get({
-        owner: this.config.owner,
-        repo: this.config.repo,
+      const { data: pr } = await octokit.pulls.get({
+        owner: config.owner,
+        repo: config.repo,
         pull_number: prNumber,
       });
 
@@ -347,21 +353,24 @@ export class GitHubService {
    * Close a PR (e.g., on rollback)
    */
   async closePR(prNumber: number, reason: string): Promise<boolean> {
-    if (!this.octokit || !this.config) {
+    const config = this.getConfig();
+    if (!config) {
       return false;
     }
 
+    const octokit = this.getOctokit(config.token);
+
     try {
-      await this.octokit.pulls.update({
-        owner: this.config.owner,
-        repo: this.config.repo,
+      await octokit.pulls.update({
+        owner: config.owner,
+        repo: config.repo,
         pull_number: prNumber,
         state: 'closed',
       });
 
-      await this.octokit.issues.createComment({
-        owner: this.config.owner,
-        repo: this.config.repo,
+      await octokit.issues.createComment({
+        owner: config.owner,
+        repo: config.repo,
         issue_number: prNumber,
         body: `🤖 This PR was closed by the AI Agent.\n\n**Reason**: ${reason}`,
       });
