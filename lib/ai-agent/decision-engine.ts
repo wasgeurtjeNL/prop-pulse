@@ -204,9 +204,12 @@ export class AIDecisionEngine {
       select: { type: true, subType: true },
     });
 
+    // Create a set of existing decision TYPES (ignore subType since AI generates different ones)
     const existingTypes = new Set(
-      existingDecisions.map((d: { type: string; subType: string | null }) => `${d.type}:${d.subType || 'general'}`)
+      existingDecisions.map((d: { type: string; subType: string | null }) => d.type)
     );
+
+    console.log('Existing decision types to skip:', Array.from(existingTypes));
 
     // Take top opportunities that we can act on
     const actionableOpportunities = opportunities.filter(o => 
@@ -215,10 +218,10 @@ export class AIDecisionEngine {
     ).slice(0, 5);
 
     for (const opportunity of actionableOpportunities) {
-      // Skip if we already have a pending/approved decision for this type
-      const opportunityKey = `${this.mapOpportunityToDecisionType(opportunity.type)}:${opportunity.type}`;
-      if (existingTypes.has(opportunityKey)) {
-        console.log(`Skipping duplicate decision for: ${opportunityKey}`);
+      // Skip if we already have a pending/approved/executed decision for this type
+      const decisionType = this.mapOpportunityToDecisionType(opportunity.type);
+      if (existingTypes.has(decisionType)) {
+        console.log(`Skipping duplicate decision for type: ${decisionType} (opportunity: ${opportunity.title})`);
         continue;
       }
 
@@ -227,7 +230,7 @@ export class AIDecisionEngine {
         if (decision) {
           decisions.push(decision);
           // Add to set to prevent duplicates within this run
-          existingTypes.add(`${decision.type}:${decision.subType || 'general'}`);
+          existingTypes.add(decision.type);
         }
       } catch (error) {
         console.error(`Failed to generate decision for opportunity: ${opportunity.title}`, error);
