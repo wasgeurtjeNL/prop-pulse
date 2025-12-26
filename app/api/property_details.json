@@ -1,0 +1,29 @@
+{
+  "properties": [
+    {
+      "id": 1,
+      "title": "Luxury Villa",
+      "location": {
+        "city": "Phuket",
+        "country": "Thailand"
+      },
+      "price": 1000000,
+      "images": [
+        "/images/property1.jpg",
+        "/images/property1_2.jpg"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Modern Apartment",
+      "location": {
+        "city": "Bangkok",
+        "country": "Thailand"
+      },
+      "price": 750000,
+      "images": [
+        "/images/property2.jpg"
+      ]
+    }
+  ]
+}
