@@ -1,0 +1,2494 @@
+{
+  "redirects": [
+    {
+      "source": "/page/62",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/studio",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/contact",
+      "destination": "/contact",
+      "permanent": true
+    },
+    {
+      "source": "/property/brand-new-balinese-pool-villa",
+      "destination": "/properties/phuket/other/brand-new-balinese-pool-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property/sea-view-apartment-rawai-beach",
+      "destination": "/properties/phuket/other/sea-view-apartment-rawai-beach",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-rent",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/loch-palm-villas-kathu-luxury-garden-villa",
+      "destination": "/properties/phuket/other/loch-palm-villas-kathu-luxury-garden-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/agent/makar-chernov",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/page/46",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-rent/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/agent/12494",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/page/44",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/family-home-for-sale-comfort-convenience-in-chalong-phuket",
+      "destination": "/properties/phuket/other/family-home-for-sale-comfort-convenience-in-chalong-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/exceptional-3-bedroom-pool-villa-for-rent-in-rawai-phuket",
+      "destination": "/properties/phuket/other/exceptional-3-bedroom-pool-villa-for-rent-in-rawai-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/property/rawai-pool-villa",
+      "destination": "/properties/phuket/other/rawai-pool-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/sea-view",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/rawai-condo-for-rent-ready-to-move-in",
+      "destination": "/properties/phuket/other/rawai-condo-for-rent-ready-to-move-in",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/penthouse-residential",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/our-agents",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/properties-search",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/condominium",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/exceptional-waterfront-villa-in-chalong-bay",
+      "destination": "/properties/phuket/other/exceptional-waterfront-villa-in-chalong-bay",
+      "permanent": true
+    },
+    {
+      "source": "/property/stunning-3-bedroom-pool-villa-for-sale-in-phuket",
+      "destination": "/properties/phuket/other/stunning-3-bedroom-pool-villa-for-sale-in-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/agent/nuchjaree-jumson-gina",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/property/beach-front-codo-for-rent",
+      "destination": "/properties/phuket/other/beach-front-codo-for-rent",
+      "permanent": true
+    },
+    {
+      "source": "/property/stunning-renovated-pool-villa-for-rent-in-rawai-move-in-ready",
+      "destination": "/properties/phuket/other/stunning-renovated-pool-villa-for-rent-in-rawai-move-in-ready",
+      "permanent": true
+    },
+    {
+      "source": "/property/paradise-rawai-villa-luxury-tropical",
+      "destination": "/properties/phuket/other/paradise-rawai-villa-luxury-tropical",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/swimming-pool",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-apartment-at-calypso-garden-residence-rawai-nai-harn",
+      "destination": "/properties/phuket/other/luxury-apartment-at-calypso-garden-residence-rawai-nai-harn",
+      "permanent": true
+    },
+    {
+      "source": "/page/49",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/villa-margo-rawai-luxury-pool-villa",
+      "destination": "/properties/phuket/other/villa-margo-rawai-luxury-pool-villa",
+      "permanent": true
+    },
+    {
+      "source": "/properties-search/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/stunning-modern-tropical-villa-500-sq-m",
+      "destination": "/properties/phuket/other/stunning-modern-tropical-villa-500-sq-m",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/laundry-room",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/chalong-new-house",
+      "destination": "/properties/phuket/other/chalong-new-house",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/swimming-pool/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/single-family",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/swimming-pool/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/laundry-room/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/51",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/karon-luxury-condo-for-sale-2-br-dream-residence-with-full-resort-facilities-rooftop-pool",
+      "destination": "/properties/phuket/other/karon-luxury-condo-for-sale-2-br-dream-residence-with-full-resort-facilities-rooftop-pool",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-sea-view-pool-villa-3-bedrooms-4-bathrooms",
+      "destination": "/properties/phuket/other/luxury-sea-view-pool-villa-3-bedrooms-4-bathrooms",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/mountain-view",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-modern-pool-villas-near-nai-harn-beach-2",
+      "destination": "/properties/phuket/other/luxury-modern-pool-villas-near-nai-harn-beach-2",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/next-to-busy-way",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/ocean-view-pool-villa-in-rawai",
+      "destination": "/properties/phuket/other/ocean-view-pool-villa-in-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property/renovated-townhouse-in-prime-rawai-location",
+      "destination": "/properties/phuket/other/renovated-townhouse-in-prime-rawai-location",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/lawn",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/exclusive-luxury-pool-villas-limited-collection-only-2-premium-units-available-pre-sale-launch",
+      "destination": "/properties/phuket/other/exclusive-luxury-pool-villas-limited-collection-only-2-premium-units-available-pre-sale-launch",
+      "permanent": true
+    },
+    {
+      "source": "/property/rawai-luxury-pool-villa",
+      "destination": "/properties/phuket/other/rawai-luxury-pool-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/news",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/sea-view/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/stylish-pool-villa-for-rent-in-the-heart-of-rawai",
+      "destination": "/properties/phuket/other/stylish-pool-villa-for-rent-in-the-heart-of-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/passorn-kathu-villa-brand-new-luxury-villa",
+      "destination": "/properties/phuket/other/passorn-kathu-villa-brand-new-luxury-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/emergency-exit",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/charming-tropical-haven-steps-from-nai-harn-beach",
+      "destination": "/properties/phuket/other/charming-tropical-haven-steps-from-nai-harn-beach",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-4-bedroom-pool-villa-chalong-bay",
+      "destination": "/properties/phuket/other/luxury-4-bedroom-pool-villa-chalong-bay",
+      "permanent": true
+    },
+    {
+      "source": "/property/top-floor-luxury-apartment",
+      "destination": "/properties/phuket/other/top-floor-luxury-apartment",
+      "permanent": true
+    },
+    {
+      "source": "/page/47",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/sea-view/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/villa-rawai-4",
+      "destination": "/properties/phuket/other/villa-rawai-4",
+      "permanent": true
+    },
+    {
+      "source": "/property/condo-naiyang",
+      "destination": "/properties/phuket/other/condo-naiyang",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/condominium/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/agent/wathanyu-bungkomnat",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/laundry-room/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/calypso-garden-mountains-sunset-view",
+      "destination": "/properties/phuket/other/calypso-garden-mountains-sunset-view",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-rent/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/modern-1-bedroom-condo-near-nai-harn-beach",
+      "destination": "/properties/phuket/other/modern-1-bedroom-condo-near-nai-harn-beach",
+      "permanent": true
+    },
+    {
+      "source": "/compare-properties",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/bon-casa-villa-green",
+      "destination": "/properties/phuket/other/bon-casa-villa-green",
+      "permanent": true
+    },
+    {
+      "source": "/property/the-deck-patong-sansiri-top-floor-penthouse-with-spectacular-views",
+      "destination": "/properties/phuket/other/the-deck-patong-sansiri-top-floor-penthouse-with-spectacular-views",
+      "permanent": true
+    },
+    {
+      "source": "/property/mountains-view-land-plot",
+      "destination": "/properties/phuket/other/mountains-view-land-plot",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/condo-for-sale-in-nai-harn-phuket",
+      "destination": "/properties/phuket/other/condo-for-sale-in-nai-harn-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/gym",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/swimming-pool/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/your-phuket-dream-awaits-luxury-living-in-karon",
+      "destination": "/properties/phuket/other/your-phuket-dream-awaits-luxury-living-in-karon",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/house",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/private-pool-villa-for-sale-chalong-phuket",
+      "destination": "/properties/phuket/other/private-pool-villa-for-sale-chalong-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/property/seaview-penthouse-at-kata-beach",
+      "destination": "/properties/phuket/other/seaview-penthouse-at-kata-beach",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/bike-path",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/condominium/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/our-agents/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/emergency-exit/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/59",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/specious-modern-pool-villa-in-rawai",
+      "destination": "/properties/phuket/other/specious-modern-pool-villa-in-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/agent/ruedeekorn-chunkerd-jum",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/property/land-for-sale-in-chalong-1-5-km-from-the-beach",
+      "destination": "/properties/phuket/other/land-for-sale-in-chalong-1-5-km-from-the-beach",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/condominium/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxurious-pool-villa",
+      "destination": "/properties/phuket/other/luxurious-pool-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/stunning-3-story-villa-in-chalong-long-term-rental",
+      "destination": "/properties/phuket/other/stunning-3-story-villa-in-chalong-long-term-rental",
+      "permanent": true
+    },
+    {
+      "source": "/property/stunning-pool-villa-for-sale-in-thalang-phuket",
+      "destination": "/properties/phuket/other/stunning-pool-villa-for-sale-in-thalang-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/home-theater",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/charming-3-bed-villa-with-private-pool-ready-to-move-in",
+      "destination": "/properties/phuket/other/charming-3-bed-villa-with-private-pool-ready-to-move-in",
+      "permanent": true
+    },
+    {
+      "source": "/property/pool-villa-rawai",
+      "destination": "/properties/phuket/other/pool-villa-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property/penthouse-kata",
+      "destination": "/properties/phuket/other/penthouse-kata",
+      "permanent": true
+    },
+    {
+      "source": "/agency/phuket-property-service",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/land-for-sale-chalong",
+      "destination": "/properties/phuket/other/land-for-sale-chalong",
+      "permanent": true
+    },
+    {
+      "source": "/property/villa-palms-garden-rawai-brand-new-luxury-pool-villa",
+      "destination": "/properties/phuket/other/villa-palms-garden-rawai-brand-new-luxury-pool-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/next-to-busy-way/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/beautifully-renovated-house-in-phuket-city",
+      "destination": "/properties/phuket/other/beautifully-renovated-house-in-phuket-city",
+      "permanent": true
+    },
+    {
+      "source": "/property/kata-seaview-apartment",
+      "destination": "/properties/phuket/other/kata-seaview-apartment",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-rent/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/house/page/2",
+      "destination": "/properties/phuket/other/2",
+      "permanent": true
+    },
+    {
+      "source": "/property/chalong-inter-ville",
+      "destination": "/properties/phuket/other/chalong-inter-ville",
+      "permanent": true
+    },
+    {
+      "source": "/property/lavish-estates",
+      "destination": "/properties/phuket/other/lavish-estates",
+      "permanent": true
+    },
+    {
+      "source": "/property/calypso-garden",
+      "destination": "/properties/phuket/other/calypso-garden",
+      "permanent": true
+    },
+    {
+      "source": "/property/double-storey-detached-house-with-private-pool",
+      "destination": "/properties/phuket/other/double-storey-detached-house-with-private-pool",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/sunset-view",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-living-in-the-heart-of-rawai",
+      "destination": "/properties/phuket/other/luxury-living-in-the-heart-of-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/parking",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/mountain-view/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/stunning-pool-villa-for-sela-rawai-your-private-paradise-awaits",
+      "destination": "/properties/phuket/other/stunning-pool-villa-for-sela-rawai-your-private-paradise-awaits",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/26-ceilings",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/2-stories",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/calypso-2-bedrooms-2",
+      "destination": "/properties/phuket/other/calypso-2-bedrooms-2",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/condominium/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/54",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/56",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/26-ceilings/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/living-room",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/12179-2",
+      "destination": "/properties/phuket/other/12179-2",
+      "permanent": true
+    },
+    {
+      "source": "/page/50",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/16",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/11",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/sea-view-apartment-rawai",
+      "destination": "/properties/phuket/other/sea-view-apartment-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/agent/lionel-lopez",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/tropical-pool-villa-in-rawai-for-rent",
+      "destination": "/properties/phuket/other/tropical-pool-villa-in-rawai-for-rent",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/mountain-view/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/central-cooling",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/stylish-house-for-sale-phuket-town",
+      "destination": "/properties/phuket/other/stylish-house-for-sale-phuket-town",
+      "permanent": true
+    },
+    {
+      "source": "/property/tropical-pool-villa-in-rawai",
+      "destination": "/properties/phuket/other/tropical-pool-villa-in-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-pool-villa-for-sale-or-rent",
+      "destination": "/properties/phuket/other/luxury-pool-villa-for-sale-or-rent",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-pool-villa-special-pre-high-season-sale",
+      "destination": "/properties/phuket/other/luxury-pool-villa-special-pre-high-season-sale",
+      "permanent": true
+    },
+    {
+      "source": "/property/calypso-condominium-top-floor-sunset",
+      "destination": "/properties/phuket/other/calypso-condominium-top-floor-sunset",
+      "permanent": true
+    },
+    {
+      "source": "/page/41",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/newly-renovated-house-in-chalong",
+      "destination": "/properties/phuket/other/newly-renovated-house-in-chalong",
+      "permanent": true
+    },
+    {
+      "source": "/property/naiharn-villa-with-private-pool-in-rawai-phuket",
+      "destination": "/properties/phuket/other/naiharn-villa-with-private-pool-in-rawai-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/property/premium-4-bedroom-pool-villa-modern-tropical-living-in-rawai",
+      "destination": "/properties/phuket/other/premium-4-bedroom-pool-villa-modern-tropical-living-in-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/mountain-view/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-equipped-kitchen",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/rawai-villa",
+      "destination": "/properties/phuket/other/rawai-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property/stunning-tropical-pool-villa-in-premium-rawai-location",
+      "destination": "/properties/phuket/other/stunning-tropical-pool-villa-in-premium-rawai-location",
+      "permanent": true
+    },
+    {
+      "source": "/page/61",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/stunning-sea-view-apartment-for-rent-rawai-beach",
+      "destination": "/properties/phuket/other/stunning-sea-view-apartment-for-rent-rawai-beach",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-pool-villas",
+      "destination": "/properties/phuket/other/luxury-pool-villas",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/terace",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/villa-rawai-3",
+      "destination": "/properties/phuket/other/villa-rawai-3",
+      "permanent": true
+    },
+    {
+      "source": "/property/calypso-mountain-sunset",
+      "destination": "/properties/phuket/other/calypso-mountain-sunset",
+      "permanent": true
+    },
+    {
+      "source": "/property/calypso-condominium-freehold-beachside-livingprime-location-3-minutes-to-nai-harn-beach",
+      "destination": "/properties/phuket/other/calypso-condominium-freehold-beachside-livingprime-location-3-minutes-to-nai-harn-beach",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fire-place",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/17",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/sea-view-condo-classic-italian-style",
+      "destination": "/properties/phuket/other/sea-view-condo-classic-italian-style",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/emergency-exit/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/condominium/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/emergency-exit/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-rent/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/prime-corner-unit-in-rawai-seaview-condominium-just-300m-from-beach",
+      "destination": "/properties/phuket/other/prime-corner-unit-in-rawai-seaview-condominium-just-300m-from-beach",
+      "permanent": true
+    },
+    {
+      "source": "/property/cozy-sea-view-villa",
+      "destination": "/properties/phuket/other/cozy-sea-view-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property/charming-traditional-thai-house-with-development-potential-in-saiyuan",
+      "destination": "/properties/phuket/other/charming-traditional-thai-house-with-development-potential-in-saiyuan",
+      "permanent": true
+    },
+    {
+      "source": "/property/spacious-garden-home-in-kathu-perfect-family-residence",
+      "destination": "/properties/phuket/other/spacious-garden-home-in-kathu-perfect-family-residence",
+      "permanent": true
+    },
+    {
+      "source": "/page/48",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/tropical-pool-villa-in-exclusive-soi-samakkhi-2",
+      "destination": "/properties/phuket/other/tropical-pool-villa-in-exclusive-soi-samakkhi-2",
+      "permanent": true
+    },
+    {
+      "source": "/property/layalina-sea-view-villa",
+      "destination": "/properties/phuket/other/layalina-sea-view-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/9",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/laundry-room/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/central-cooling/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-rent/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/2-stories/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/harmony-club-apartments-where-thoughtfulness-meets-luxury",
+      "destination": "/properties/phuket/other/harmony-club-apartments-where-thoughtfulness-meets-luxury",
+      "permanent": true
+    },
+    {
+      "source": "/property/ozone-condo-bangtao-your-tropical-paradise-awaits-modern-living-in-phukets-premier-location",
+      "destination": "/properties/phuket/other/ozone-condo-bangtao-your-tropical-paradise-awaits-modern-living-in-phukets-premier-location",
+      "permanent": true
+    },
+    {
+      "source": "/property/cozy-balinese-villa",
+      "destination": "/properties/phuket/other/cozy-balinese-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property/palai-pool-villa",
+      "destination": "/properties/phuket/other/palai-pool-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property/land-and-house-chalong-large-garden",
+      "destination": "/properties/phuket/other/land-and-house-chalong-large-garden",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/next-to-busy-way/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/house-rawai",
+      "destination": "/properties/phuket/other/house-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/gym/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/central-cooling/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/52",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/newly-renovated-31-bedroom-house-chalong",
+      "destination": "/properties/phuket/other/newly-renovated-31-bedroom-house-chalong",
+      "permanent": true
+    },
+    {
+      "source": "/property/villa-rawai-2",
+      "destination": "/properties/phuket/other/villa-rawai-2",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/condominium/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/dual-sinks",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/electric-range",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/elegant-3-bedroom-pool-villa-with-garden-views",
+      "destination": "/properties/phuket/other/elegant-3-bedroom-pool-villa-with-garden-views",
+      "permanent": true
+    },
+    {
+      "source": "/property/calypso",
+      "destination": "/properties/phuket/other/calypso",
+      "permanent": true
+    },
+    {
+      "source": "/page/40",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/stunning-renovated-pool-villa-in-rawai-move-in-ready",
+      "destination": "/properties/phuket/other/stunning-renovated-pool-villa-in-rawai-move-in-ready",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-pool-villa-in-prime-rawai",
+      "destination": "/properties/phuket/other/luxury-pool-villa-in-prime-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/properties-search/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/9",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/emergency-exit/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/37",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden/page/9",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/laundry-room/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/11",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fire-place/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/charming-3-bed-villa-with-private-pool-ready-to-move-in-2",
+      "destination": "/properties/phuket/other/charming-3-bed-villa-with-private-pool-ready-to-move-in-2",
+      "permanent": true
+    },
+    {
+      "source": "/property/sea-view-condo-rawai-beach",
+      "destination": "/properties/phuket/other/sea-view-condo-rawai-beach",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/3-stories",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-equipped-kitchen/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/53",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/baan-chanakan-villa-chalong",
+      "destination": "/properties/phuket/other/baan-chanakan-villa-chalong",
+      "permanent": true
+    },
+    {
+      "source": "/property/pool-villa-in-rawai-4-bedrooms",
+      "destination": "/properties/phuket/other/pool-villa-in-rawai-4-bedrooms",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/electric-range/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/home-theater/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/mountain-view/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/living-room/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/two-pool-villa-in-rawai",
+      "destination": "/properties/phuket/other/two-pool-villa-in-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale/page/10",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/laundry-room/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/gym/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/exclusive-1-bedroom-condominium-in-rawai-phuket-property-overview",
+      "destination": "/properties/phuket/other/exclusive-1-bedroom-condominium-in-rawai-phuket-property-overview",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/gym/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/modern-loft-apartment",
+      "destination": "/properties/phuket/other/modern-loft-apartment",
+      "permanent": true
+    },
+    {
+      "source": "/property/calypso-naiharn-beachfront-condo-short-term-rental",
+      "destination": "/properties/phuket/other/calypso-naiharn-beachfront-condo-short-term-rental",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/living-room/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/gym/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/38",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/55",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/2-stories/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/10",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/the-bell-condominium-fully-renovated-studio-for-sale",
+      "destination": "/properties/phuket/other/the-bell-condominium-fully-renovated-studio-for-sale",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-modern-villa",
+      "destination": "/properties/phuket/other/luxury-modern-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property/prime-corner-unit-in-rawai-seaview-condominium-long-term-rental",
+      "destination": "/properties/phuket/other/prime-corner-unit-in-rawai-seaview-condominium-long-term-rental",
+      "permanent": true
+    },
+    {
+      "source": "/property/fully-renovated-condo-at-connext-incredible-value",
+      "destination": "/properties/phuket/other/fully-renovated-condo-at-connext-incredible-value",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/villa-rawai",
+      "destination": "/properties/phuket/other/villa-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/sunset-view/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxprime-villa",
+      "destination": "/properties/phuket/other/luxprime-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property/philia-villas-saiyuan-premium-pool-villa-in-prime-rawai-location",
+      "destination": "/properties/phuket/other/philia-villas-saiyuan-premium-pool-villa-in-prime-rawai-location",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxurious-3-bedroom-pool-villa-near-bis-international-school-phuket",
+      "destination": "/properties/phuket/other/luxurious-3-bedroom-pool-villa-near-bis-international-school-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/living-room/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/sea-view-apartment-2",
+      "destination": "/properties/phuket/other/sea-view-apartment-2",
+      "permanent": true
+    },
+    {
+      "source": "/property/karon-butterfly-residence-luxury-1-bedroom-apartment",
+      "destination": "/properties/phuket/other/karon-butterfly-residence-luxury-1-bedroom-apartment",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale/page/9",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/land-in-rawai-362-sq-m",
+      "destination": "/properties/phuket/other/land-in-rawai-362-sq-m",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-villa-in-rawai-phuket",
+      "destination": "/properties/phuket/other/luxury-villa-in-rawai-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/balcony",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/pool-villa-kathu",
+      "destination": "/properties/phuket/other/pool-villa-kathu",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fire-place/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/private-pool-villa-in-rawai-only-5-minutes-from-the-beach",
+      "destination": "/properties/phuket/other/private-pool-villa-in-rawai-only-5-minutes-from-the-beach",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/apartment",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/apartment-for-sale-in-title-v-rawai",
+      "destination": "/properties/phuket/other/apartment-for-sale-in-title-v-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property/pool-villa-for-rent-in-rawai",
+      "destination": "/properties/phuket/other/pool-villa-for-rent-in-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fire-alarm",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-2-bedroom-beachfront-apartment-in-rawai",
+      "destination": "/properties/phuket/other/luxury-2-bedroom-beachfront-apartment-in-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property/calypso-603-modern-1-bedroom-condominium",
+      "destination": "/properties/phuket/other/calypso-603-modern-1-bedroom-condominium",
+      "permanent": true
+    },
+    {
+      "source": "/property/tree-villa-rawai-luxury-modern-pool-villa",
+      "destination": "/properties/phuket/other/tree-villa-rawai-luxury-modern-pool-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property/exceptional-lakefront-villa-with-panoramic-mountain-and-forest-views-ban-manick",
+      "destination": "/properties/phuket/other/exceptional-lakefront-villa-with-panoramic-mountain-and-forest-views-ban-manick",
+      "permanent": true
+    },
+    {
+      "source": "/property/prestigious-botanica-modern-loft-villa-ultimate-luxury-living",
+      "destination": "/properties/phuket/other/prestigious-botanica-modern-loft-villa-ultimate-luxury-living",
+      "permanent": true
+    },
+    {
+      "source": "/property/studio-deluxe-with-pool-garden-view-new-rawai-project",
+      "destination": "/properties/phuket/other/studio-deluxe-with-pool-garden-view-new-rawai-project",
+      "permanent": true
+    },
+    {
+      "source": "/property/villa-chalong",
+      "destination": "/properties/phuket/other/villa-chalong",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/private-beach",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-pool-villa-in-thalang-sale-price",
+      "destination": "/properties/phuket/other/luxury-pool-villa-in-thalang-sale-price",
+      "permanent": true
+    },
+    {
+      "source": "/properties-search/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/kokyang-paradise-villa",
+      "destination": "/properties/phuket/other/kokyang-paradise-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property/paradise-rawai-villa-luxury-tropical-retreat-available-now",
+      "destination": "/properties/phuket/other/paradise-rawai-villa-luxury-tropical-retreat-available-now",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-4-bedroom-pool-villa-in-rawai-phuket",
+      "destination": "/properties/phuket/other/luxury-4-bedroom-pool-villa-in-rawai-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/gallery-2-columns",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/3-bedroom-pool-villa-in-prime-rawai-location",
+      "destination": "/properties/phuket/other/3-bedroom-pool-villa-in-prime-rawai-location",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/roof-top-poolbar",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/swimming-pool/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-equipped-kitchen/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/14",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-modern-pool-villas-near-nai-harn-beach",
+      "destination": "/properties/phuket/other/luxury-modern-pool-villas-near-nai-harn-beach",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/sea-view/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/tropical-pool-villa",
+      "destination": "/properties/phuket/other/tropical-pool-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/central-cooling/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/renovated-corner-pool-villa-in-prime-rawai-soi-saiyuan",
+      "destination": "/properties/phuket/other/renovated-corner-pool-villa-in-prime-rawai-soi-saiyuan",
+      "permanent": true
+    },
+    {
+      "source": "/property/modern-condo-in-nai-harn",
+      "destination": "/properties/phuket/other/modern-condo-in-nai-harn",
+      "permanent": true
+    },
+    {
+      "source": "/property/beach-front-apartment",
+      "destination": "/properties/phuket/other/beach-front-apartment",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-rent/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/12",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/agent/tanatchanan-sriwanid-jane",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/jacuzzi",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/single-storey-duplex-home-rawai-phuket",
+      "destination": "/properties/phuket/other/single-storey-duplex-home-rawai-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/property/sea-view-apartment",
+      "destination": "/properties/phuket/other/sea-view-apartment",
+      "permanent": true
+    },
+    {
+      "source": "/property/calypso-2-bedrooms",
+      "destination": "/properties/phuket/other/calypso-2-bedrooms",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/sea-view/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/sea-view/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/manon-pool-villa-luxury-tropical-living-in-rawai",
+      "destination": "/properties/phuket/other/manon-pool-villa-luxury-tropical-living-in-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/10",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/gym/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/tropical-paradise-apartment-calypso-naiharn",
+      "destination": "/properties/phuket/other/tropical-paradise-apartment-calypso-naiharn",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/villa",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxurious-studio-panoramic-vistas-in-paradise-for-sale",
+      "destination": "/properties/phuket/other/luxurious-studio-panoramic-vistas-in-paradise-for-sale",
+      "permanent": true
+    },
+    {
+      "source": "/properties-search/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/mountain-view/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/modern-tropical-luxury-meets-unbeatable-convenience",
+      "destination": "/properties/phuket/other/modern-tropical-luxury-meets-unbeatable-convenience",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/barbecue-area",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/phukets-private-pool-oasis-launching-at-just-17-9-million-baht",
+      "destination": "/properties/phuket/other/phukets-private-pool-oasis-launching-at-just-17-9-million-baht",
+      "permanent": true
+    },
+    {
+      "source": "/properties-search/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/calypso-garden-seaview",
+      "destination": "/properties/phuket/other/calypso-garden-seaview",
+      "permanent": true
+    },
+    {
+      "source": "/page/60",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/45",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/central-cooling/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-pool-villa-in-rawai-your-private-tropical-sanctuary",
+      "destination": "/properties/phuket/other/luxury-pool-villa-in-rawai-your-private-tropical-sanctuary",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/mountain-view/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/sunset-view/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/brand-new-modern-villa-with-private-pool-rawai-phuket",
+      "destination": "/properties/phuket/other/brand-new-modern-villa-with-private-pool-rawai-phuket",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/loft",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/modern-studio-condo-in-karon",
+      "destination": "/properties/phuket/other/modern-studio-condo-in-karon",
+      "permanent": true
+    },
+    {
+      "source": "/page/57",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/stunning-modern-pool-villa-in-prime-thalang",
+      "destination": "/properties/phuket/other/stunning-modern-pool-villa-in-prime-thalang",
+      "permanent": true
+    },
+    {
+      "source": "/page/34",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/bike-path/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/properties-search/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/the-base-uptown-condominium-newly-renovated-2-bed-gem",
+      "destination": "/properties/phuket/other/the-base-uptown-condominium-newly-renovated-2-bed-gem",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/apartment-building",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/villa-samai-architectural-masterpiece",
+      "destination": "/properties/phuket/other/villa-samai-architectural-masterpiece",
+      "permanent": true
+    },
+    {
+      "source": "/property/kata-ocean-view",
+      "destination": "/properties/phuket/other/kata-ocean-view",
+      "permanent": true
+    },
+    {
+      "source": "/property/urgent-sale-premium-studio-apartment-near-nai-harn-beach-rare-foreigner-freehold-opportunity-only-3-2-million-thb",
+      "destination": "/properties/phuket/other/urgent-sale-premium-studio-apartment-near-nai-harn-beach-rare-foreigner-freehold-opportunity-only-3-2-million-thb",
+      "permanent": true
+    },
+    {
+      "source": "/property/premium-pool-villa-excellent-investment-opportunity",
+      "destination": "/properties/phuket/other/premium-pool-villa-excellent-investment-opportunity",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/roof-top-poolbar/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/swimming-pool/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/new-deluxe-pet-friendly-condominium-near-the-rawai",
+      "destination": "/properties/phuket/other/new-deluxe-pet-friendly-condominium-near-the-rawai",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/jog-path",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/9",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/villa-curtis-rawai-luxury-5-bedroom-pool-villa-for-rent",
+      "destination": "/properties/phuket/other/villa-curtis-rawai-luxury-5-bedroom-pool-villa-for-rent",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/central-heating",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/amber-kata-villas-your-sanctuary-by-the-sea-experience-luxury-living-in-phukets-most-desirable-location",
+      "destination": "/properties/phuket/other/amber-kata-villas-your-sanctuary-by-the-sea-experience-luxury-living-in-phukets-most-desirable-location",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/roof-top-poolbar/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/luxury-pool-villa-in-manikram-chalong-for-sale",
+      "destination": "/properties/phuket/other/luxury-pool-villa-in-manikram-chalong-for-sale",
+      "permanent": true
+    },
+    {
+      "source": "/property/specious-smart-home-4-bedrooms",
+      "destination": "/properties/phuket/other/specious-smart-home-4-bedrooms",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/living-room/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/stunning-3-bedroom-villa-with-private-pool-long-term-rental",
+      "destination": "/properties/phuket/other/stunning-3-bedroom-villa-with-private-pool-long-term-rental",
+      "permanent": true
+    },
+    {
+      "source": "/property/modern-condo-in-nai-harn-2",
+      "destination": "/properties/phuket/other/modern-condo-in-nai-harn-2",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/elevator",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/11",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/brand-new-luxury-modern-pool-villa-mountains-view",
+      "destination": "/properties/phuket/other/brand-new-luxury-modern-pool-villa-mountains-view",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/lawn/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/58",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/10",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/spectacular-sea-view-pool-villa-yanu-hillside-paradise",
+      "destination": "/properties/phuket/other/spectacular-sea-view-pool-villa-yanu-hillside-paradise",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-equipped-kitchen/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/living-room/page/9",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/elevator/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/10",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/terace/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/pool-villa-nai-harn",
+      "destination": "/properties/phuket/other/pool-villa-nai-harn",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-furnished",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/phuket-hills-villas",
+      "destination": "/properties/phuket/other/phuket-hills-villas",
+      "permanent": true
+    },
+    {
+      "source": "/page/18",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/2-stories/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/42",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/brand-new-luxury-apartment-calypso-garden-residence-rawai-nai-harn",
+      "destination": "/properties/phuket/other/brand-new-luxury-apartment-calypso-garden-residence-rawai-nai-harn",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/house/page/3",
+      "destination": "/properties/phuket/other/3",
+      "permanent": true
+    },
+    {
+      "source": "/property/villa-curtis-rawai-brand-new-luxury-5-bedroom-pool-villa",
+      "destination": "/properties/phuket/other/villa-curtis-rawai-brand-new-luxury-5-bedroom-pool-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/12",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/39",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/charin-pattaya-villa-luxury-modern-living-new-project-launch",
+      "destination": "/properties/phuket/other/charin-pattaya-villa-luxury-modern-living-new-project-launch",
+      "permanent": true
+    },
+    {
+      "source": "/property/the-light-suan-luang-condo-stunning-views-fully-renovated",
+      "destination": "/properties/phuket/other/the-light-suan-luang-condo-stunning-views-fully-renovated",
+      "permanent": true
+    },
+    {
+      "source": "/property/freehold-beachside-apartment-rawai-paradise",
+      "destination": "/properties/phuket/other/freehold-beachside-apartment-rawai-paradise",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/2-stories/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/the-empire-ratsada-luxury-pool-villa-topland-village",
+      "destination": "/properties/phuket/other/the-empire-ratsada-luxury-pool-villa-topland-village",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/12",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/sunset-view/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/pool-villa-in-prime-chalong-location",
+      "destination": "/properties/phuket/other/pool-villa-in-prime-chalong-location",
+      "permanent": true
+    },
+    {
+      "source": "/property/cozy-house-in-nai-harn-baan-bua",
+      "destination": "/properties/phuket/other/cozy-house-in-nai-harn-baan-bua",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/laundry-room/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/sea-view-condominium-for-sale",
+      "destination": "/properties/phuket/other/sea-view-condominium-for-sale",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fire-alarm/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden/page/11",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/roof-top-poolbar/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fire-alarm/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/swimming-pool/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/9",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/terace/page/6",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/balcony/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/agent/novelyn-libunao-lyn",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/laundry-room/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/cozy-beachside-retreat-in-nai-harn-perfect-starter-home",
+      "destination": "/properties/phuket/other/cozy-beachside-retreat-in-nai-harn-perfect-starter-home",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-equipped-kitchen/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/15",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/bike-path/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/chalong-interville-condo",
+      "destination": "/properties/phuket/other/chalong-interville-condo",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/apartment/page/2",
+      "destination": "/properties/phuket/other/2",
+      "permanent": true
+    },
+    {
+      "source": "/property/tree-villa-rawai-modern-smart-home-pool-villa",
+      "destination": "/properties/phuket/other/tree-villa-rawai-modern-smart-home-pool-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/2-stories/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/elevator/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-furnished/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/central-cooling/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/elevator/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/modern-townhouse-villa",
+      "destination": "/properties/phuket/other/modern-townhouse-villa",
+      "permanent": true
+    },
+    {
+      "source": "/property/villa-thalang",
+      "destination": "/properties/phuket/other/villa-thalang",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/emergency-exit/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/roof-top-poolbar/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/modern-thai-house-in-chalong",
+      "destination": "/properties/phuket/other/modern-thai-house-in-chalong",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/12",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/balcony/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/19",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-equipped-kitchen/page/9",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/parking/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/modern-condo",
+      "destination": "/properties/phuket/other/modern-condo",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-furnished/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/jacuzzi/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden/page/12",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/15",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/32",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property/the-regent-bang-tao-premium-studio-apartments",
+      "destination": "/properties/phuket/other/the-regent-bang-tao-premium-studio-apartments",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/covered-car-park/page/13",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/parking/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-equipped-kitchen/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/parking/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/13",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/central-cooling/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/36",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/living-room/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/barbecue-area/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/26-ceilings/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/22",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/balcony/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/balcony/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fire-alarm/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/bike-path/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/gallery-2-columns/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/terace/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/14",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-equipped-kitchen/page/12",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/43",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/elevator/page/7",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/25",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/14",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/parking/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/terace/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/living-room/page/11",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/home-theater/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/garden/page/10",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/swimming-pool/page/9",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/35",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/sunset-view/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/23",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-equipped-kitchen/page/3",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/swimming-pool/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/residential/page/13",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fully-furnished/page/4",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale/page/13",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/fire-alarm/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/jacuzzi/page/2",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/30",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-sale/page/16",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/11",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/properties-search/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/26",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/kitchen/page/16",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-type/villa/page/2",
+      "destination": "/properties/phuket/other/2",
+      "permanent": true
+    },
+    {
+      "source": "/property-status/for-rent/page/8",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/page/20",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/properties-search/page/9",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/hurricane-shutters",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/terace/page/5",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-feature/electric-range/page/4",
+      "destination": "/properties",
+      "permanent": true
+    }
+  ]
+}

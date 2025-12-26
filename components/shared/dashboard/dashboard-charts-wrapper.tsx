@@ -1,8 +1,12 @@
-import { getDashboardAnalytics } from "@/lib/actions/analytics.actions";
+import { getDashboardAnalytics, DateRangeFilter } from "@/lib/actions/analytics.actions";
 import { DashboardCharts } from "./dashboard-charts";
 
-export async function DashboardChartsWrapper() {
-  const analytics = await getDashboardAnalytics();
+interface DashboardChartsWrapperProps {
+  dateRange?: DateRangeFilter;
+}
+
+export async function DashboardChartsWrapper({ dateRange }: DashboardChartsWrapperProps) {
+  const analytics = await getDashboardAnalytics(dateRange);
 
   return (
     <DashboardCharts

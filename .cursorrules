@@ -68,6 +68,15 @@ lib/
   validations/   → Zod schemas
 ```
 
+### URL Structure
+```
+/properties                           → Property listing
+/properties/[province]/[area]/[slug]  → Property detail (SEO-optimized)
+/listings/[slug]                      → Property detail (slug-only fallback)
+```
+- Use `/listings/:slug` for redirects (no province/area needed)
+- Use `/properties/[province]/[area]/[slug]` for internal links (SEO)
+
 ---
 
 ## 🔄 Reusing Existing Code

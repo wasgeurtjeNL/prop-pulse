@@ -5,6 +5,12 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { Status, PropertyType } from "@/lib/generated/prisma/client";
 
+// Date range filter interface
+export interface DateRangeFilter {
+  from?: Date;
+  to?: Date;
+}
+
 // Get properties added per month (last 6 months)
 export async function getPropertiesOverTime() {
   const session = await auth.api.getSession({
@@ -255,8 +261,8 @@ export async function getMostViewedProperties(limit = 5) {
     }));
 }
 
-// Get views over time (last 30 days)
-export async function getViewsOverTime() {
+// Get views over time (with date range filter)
+export async function getViewsOverTime(dateRange?: DateRangeFilter) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -266,27 +272,39 @@ export async function getViewsOverTime() {
   }
 
   const userId = session.user.id;
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  // Use date range or default to last 30 days
+  const to = dateRange?.to || new Date();
+  const from = dateRange?.from || (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d;
+  })();
 
   const views = await prisma.propertyView.findMany({
     where: {
       property: {
         userId,
       },
-      viewedAt: { gte: thirtyDaysAgo },
+      viewedAt: { 
+        gte: from,
+        lte: to,
+      },
     },
     select: {
       viewedAt: true,
     },
   });
 
+  // Calculate number of days in range
+  const daysDiff = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+  
   // Group by day
   const dailyData: Record<string, number> = {};
   
-  // Initialize last 30 days with 0
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date();
+  // Initialize days in range with 0
+  for (let i = daysDiff; i >= 0; i--) {
+    const date = new Date(to);
     date.setDate(date.getDate() - i);
     const key = date.toISOString().split("T")[0];
     dailyData[key] = 0;
@@ -305,14 +323,15 @@ export async function getViewsOverTime() {
   return Object.entries(dailyData).map(([date, count]) => {
     const d = new Date(date);
     return {
-      date: `${d.getMonth() + 1}/${d.getDate()}`,
+      date: `${d.getDate()}/${d.getMonth() + 1}`,
+      fullDate: date,
       views: count,
     };
   });
 }
 
-// Get total views stats
-export async function getViewsStats() {
+// Get total views stats (with date range filter)
+export async function getViewsStats(dateRange?: DateRangeFilter) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -323,6 +342,30 @@ export async function getViewsStats() {
 
   const userId = session.user.id;
   
+  // If date range specified, show stats for that range
+  if (dateRange?.from && dateRange?.to) {
+    const rangeViews = await prisma.propertyView.count({
+      where: {
+        property: { userId },
+        viewedAt: { 
+          gte: dateRange.from,
+          lte: dateRange.to,
+        },
+      },
+    });
+
+    const daysDiff = Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const avgPerDay = daysDiff > 0 ? Math.round(rangeViews / daysDiff) : 0;
+
+    return {
+      total: rangeViews,
+      label: "Selected period",
+      avgPerDay,
+      days: daysDiff,
+    };
+  }
+  
+  // Default: show today, week, month stats
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const thisWeekStart = new Date(today);
@@ -405,8 +448,8 @@ const countryNames: Record<string, string> = {
   ZA: "South Africa",
 };
 
-// Get views by country
-export async function getViewsByCountry() {
+// Get views by country (with date range filter)
+export async function getViewsByCountry(dateRange?: DateRangeFilter) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -417,12 +460,24 @@ export async function getViewsByCountry() {
 
   const userId = session.user.id;
 
+  const whereClause: {
+    property: { userId: string };
+    country: { not: null };
+    viewedAt?: { gte?: Date; lte?: Date };
+  } = {
+    property: { userId },
+    country: { not: null },
+  };
+
+  if (dateRange?.from || dateRange?.to) {
+    whereClause.viewedAt = {};
+    if (dateRange.from) whereClause.viewedAt.gte = dateRange.from;
+    if (dateRange.to) whereClause.viewedAt.lte = dateRange.to;
+  }
+
   const views = await prisma.propertyView.groupBy({
     by: ["country"],
-    where: {
-      property: { userId },
-      country: { not: null },
-    },
+    where: whereClause,
     _count: {
       id: true,
     },
@@ -441,8 +496,8 @@ export async function getViewsByCountry() {
   }));
 }
 
-// Get comprehensive dashboard analytics
-export async function getDashboardAnalytics() {
+// Get comprehensive dashboard analytics (with optional date range filter)
+export async function getDashboardAnalytics(dateRange?: DateRangeFilter) {
   const [
     propertiesOverTime,
     statusDistribution,
@@ -460,9 +515,9 @@ export async function getDashboardAnalytics() {
     getLeadsOverTime(),
     getTopPerformingProperties(),
     getMostViewedProperties(),
-    getViewsOverTime(),
-    getViewsStats(),
-    getViewsByCountry(),
+    getViewsOverTime(dateRange),
+    getViewsStats(dateRange),
+    getViewsByCountry(dateRange),
   ]);
 
   return {

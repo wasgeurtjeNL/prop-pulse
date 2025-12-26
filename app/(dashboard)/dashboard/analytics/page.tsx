@@ -6,6 +6,7 @@ import { DashboardChartsWrapper } from "@/components/shared/dashboard/dashboard-
 import { DashboardChartsLoading } from "@/components/shared/dashboard/dashboard-charts";
 import { LiveVisitors } from "@/components/shared/dashboard/live-visitors";
 import { AnalyticsTabs } from "@/components/shared/dashboard/analytics-tabs";
+import { AnalyticsDateFilter } from "@/components/shared/dashboard/analytics-with-date-filter";
 
 export const metadata = {
   title: "Analytics | Dashboard",
@@ -15,12 +16,20 @@ export const metadata = {
 interface AnalyticsPageProps {
   searchParams: Promise<{
     tab?: string;
+    from?: string;
+    to?: string;
   }>;
 }
 
 export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps) {
   const params = await searchParams;
   const currentTab = params.tab || "analytics";
+  
+  // Parse date range from URL params
+  const dateRange = params.from && params.to ? {
+    from: new Date(params.from),
+    to: new Date(params.to),
+  } : undefined;
 
   return (
     <div className="space-y-6">
@@ -35,16 +44,23 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <BarChart3 className="h-5 w-5 text-primary" />
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <BarChart3 className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Analytics</h2>
+            <p className="text-muted-foreground">
+              Property performance, views, and lead insights
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Analytics</h2>
-          <p className="text-muted-foreground">
-            Property performance, views, and lead insights
-          </p>
-        </div>
+        
+        {/* Date Range Picker */}
+        {currentTab === "analytics" && (
+          <AnalyticsDateFilter />
+        )}
       </div>
 
       {/* Tabs */}
@@ -53,7 +69,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       {/* Tab Content */}
       {currentTab === "analytics" && (
         <Suspense fallback={<DashboardChartsLoading />}>
-          <DashboardChartsWrapper />
+          <DashboardChartsWrapper dateRange={dateRange} />
         </Suspense>
       )}
 
