@@ -82,11 +82,12 @@ interface Decision {
     [key: string]: unknown;
   };
   actionPayload?: {
-    files?: string[];
+    files?: Array<string | { name: string; issue?: string; occurrences?: number }>;
     modifications?: Array<{
       target: string;
       fix: string;
     }>;
+    fixMethod?: string;
     [key: string]: unknown;
   };
   estimatedImpact?: string;
@@ -758,12 +759,31 @@ function DecisionCard({
                     <div className="flex-1">
                       <p className="text-sm font-medium">Bestanden</p>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {decision.actionPayload.files.map((file, index) => (
-                          <code key={index} className="text-xs px-1.5 py-0.5 rounded bg-muted">
-                            {file}
-                          </code>
-                        ))}
+                        {decision.actionPayload.files.map((file, index) => {
+                          // Handle both string and object formats
+                          const fileName = typeof file === 'string' 
+                            ? file 
+                            : (file as { name?: string; issue?: string; occurrences?: number })?.name || 'Unknown';
+                          const issue = typeof file === 'object' 
+                            ? (file as { issue?: string })?.issue 
+                            : null;
+                          const occurrences = typeof file === 'object'
+                            ? (file as { occurrences?: number })?.occurrences
+                            : null;
+                          return (
+                            <div key={index} className="text-xs px-2 py-1 rounded bg-muted flex items-center gap-1">
+                              <span className="font-mono">{fileName}</span>
+                              {issue && <span className="text-orange-600">({issue})</span>}
+                              {occurrences && <span className="text-red-600 font-semibold">x{occurrences}</span>}
+                            </div>
+                          );
+                        })}
                       </div>
+                      {decision.actionPayload.fixMethod && (
+                        <p className="text-xs text-muted-foreground mt-2 italic">
+                          {decision.actionPayload.fixMethod}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
