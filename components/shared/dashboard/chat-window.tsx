@@ -180,7 +180,7 @@ export default function ChatWindow({
     >
       {/* Header - Draggable */}
       <div
-        className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-3 py-2 flex items-center justify-between cursor-grab active:cursor-grabbing flex-shrink-0"
+        className="bg-gradient-to-r from-blue-700 to-blue-600 text-white px-3 py-2 flex items-center justify-between cursor-grab active:cursor-grabbing flex-shrink-0"
         onMouseDown={handleMouseDown}
       >
         <div className="flex-1 min-w-0 mr-2">
@@ -235,13 +235,13 @@ export default function ChatWindow({
                     className={cn(
                       "max-w-[85%] rounded-xl px-3 py-1.5 text-sm",
                       msg.senderRole === "agent"
-                        ? "bg-emerald-600 text-white rounded-br-sm"
+                        ? "bg-blue-700 text-white rounded-br-sm"
                         : "bg-white dark:bg-slate-700 shadow-sm rounded-bl-sm"
                     )}
                   >
                     {/* Show customer name for customer messages */}
                     {msg.senderRole === "customer" && (
-                      <p className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 mb-0.5">
+                      <p className="text-[10px] font-medium text-blue-700 dark:text-blue-400 mb-0.5">
                         {guestName}
                       </p>
                     )}
@@ -279,7 +279,7 @@ export default function ChatWindow({
             onClick={sendMessage}
             disabled={isSending || !newMessage.trim()}
             size="icon"
-            className="h-10 w-10 flex-shrink-0 bg-emerald-600 hover:bg-emerald-700"
+            className="h-10 w-10 flex-shrink-0 bg-blue-700 hover:bg-blue-800"
           >
             {isSending ? (
               <Icon icon="ph:spinner" className="w-4 h-4 animate-spin" />

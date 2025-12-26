@@ -69,7 +69,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: string;
   },
   PUBLISHED: {
     label: "Live on Website",
-    color: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    color: "bg-blue-100 text-blue-800 border-blue-200",
     icon: "ph:globe",
     description: "Congratulations! Your property is now live and visible to buyers.",
   },

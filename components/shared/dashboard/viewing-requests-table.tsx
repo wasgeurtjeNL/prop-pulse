@@ -277,7 +277,7 @@ export default function ViewingRequestsTable() {
                     {request.property?.ownerName ? (
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1">
-                          <User className="w-3 h-3 text-emerald-600" />
+                          <User className="w-3 h-3 text-blue-600" />
                           <span className="font-medium text-sm">{request.property.ownerName}</span>
                         </div>
                         {request.property.ownerCompany && (
@@ -288,10 +288,10 @@ export default function ViewingRequestsTable() {
                         )}
                         {request.property.ownerPhone && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Phone className="w-3 h-3 text-emerald-600" />
+                            <Phone className="w-3 h-3 text-blue-600" />
                             <a 
                               href={`tel:${request.property.ownerCountryCode || '+66'}${request.property.ownerPhone}`}
-                              className="hover:text-emerald-600 font-medium"
+                              className="hover:text-blue-600 font-medium"
                             >
                               {request.property.ownerCountryCode || '+66'} {request.property.ownerPhone}
                             </a>
@@ -299,10 +299,10 @@ export default function ViewingRequestsTable() {
                         )}
                         {request.property.ownerEmail && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Mail className="w-3 h-3 text-emerald-600" />
+                            <Mail className="w-3 h-3 text-blue-600" />
                             <a 
                               href={`mailto:${request.property.ownerEmail}`}
-                              className="hover:text-emerald-600"
+                              className="hover:text-blue-600"
                             >
                               {request.property.ownerEmail}
                             </a>
@@ -395,7 +395,7 @@ export default function ViewingRequestsTable() {
                           size="sm"
                           variant="ghost"
                           onClick={() => setSendLeadModal({ open: true, request })}
-                          className="h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                          className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                           title="Send lead to owner/agency"
                         >
                           <Send className="w-4 h-4" />

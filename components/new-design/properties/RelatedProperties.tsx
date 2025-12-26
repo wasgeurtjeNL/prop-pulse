@@ -190,7 +190,7 @@ export default function RelatedProperties({
                     px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider
                     ${isRental 
                       ? "bg-blue-500/90 text-white" 
-                      : "bg-emerald-500/90 text-white"
+                      : "bg-blue-500/90 text-white"
                     }
                   `}>
                     {isRental ? "For Rent" : "For Sale"}
@@ -283,7 +283,7 @@ export default function RelatedProperties({
                   px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider
                   ${isRental 
                     ? "bg-blue-500/90 text-white" 
-                    : "bg-emerald-500/90 text-white"
+                    : "bg-blue-500/90 text-white"
                   }
                 `}>
                   {isRental ? "For Rent" : "For Sale"}

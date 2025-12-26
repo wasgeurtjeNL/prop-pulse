@@ -40,9 +40,9 @@ const CATEGORY_GROUPS = {
     title: 'Daily Life',
     titleTh: 'ชีวิตประจำวัน',
     icon: 'ph:shopping-bag-fill',
-    color: 'from-emerald-500 to-teal-500',
-    bgColor: 'bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40',
-    textColor: 'text-emerald-700 dark:text-emerald-300',
+    color: 'from-blue-500 to-sky-500',
+    bgColor: 'bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/40 dark:to-sky-950/40',
+    textColor: 'text-blue-700 dark:text-blue-300',
     accentColor: 'emerald',
     categories: ['SHOPPING_MALL', 'SUPERMARKET', 'CONVENIENCE_STORE', 'MARKET', 'GYM', 'COWORKING', 'BANK', 'RESTAURANT', 'CAFE'],
   },
@@ -602,11 +602,11 @@ function ScoreCard({
       ringBg: 'stroke-blue-200 dark:stroke-blue-800',
     },
     emerald: {
-      gradient: 'from-emerald-500 to-teal-500',
-      bg: 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/50 dark:to-emerald-900/30',
-      text: 'text-emerald-600 dark:text-emerald-400',
-      ring: 'stroke-emerald-500',
-      ringBg: 'stroke-emerald-200 dark:stroke-emerald-800',
+      gradient: 'from-blue-500 to-sky-500',
+      bg: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/30',
+      text: 'text-blue-600 dark:text-blue-400',
+      ring: 'stroke-blue-500',
+      ringBg: 'stroke-blue-200 dark:stroke-blue-800',
     },
     violet: {
       gradient: 'from-violet-500 to-purple-500',
@@ -716,7 +716,7 @@ function QuickFact({
     cyan: 'bg-gradient-to-r from-cyan-100 to-blue-100 dark:from-cyan-900/40 dark:to-blue-900/40 text-cyan-700 dark:text-cyan-300 border-cyan-200/50 dark:border-cyan-700/50',
     blue: 'bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/40 text-blue-700 dark:text-blue-300 border-blue-200/50 dark:border-blue-700/50',
     violet: 'bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-900/40 dark:to-purple-900/40 text-violet-700 dark:text-violet-300 border-violet-200/50 dark:border-violet-700/50',
-    emerald: 'bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/40 dark:to-teal-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/50 dark:border-emerald-700/50',
+    emerald: 'bg-gradient-to-r from-blue-100 to-sky-100 dark:from-blue-900/40 dark:to-sky-900/40 text-blue-700 dark:text-blue-300 border-blue-200/50 dark:border-blue-700/50',
   };
 
   return (
@@ -749,7 +749,7 @@ function PoiRow({
   const accentColors: Record<string, string> = {
     cyan: 'text-cyan-500',
     blue: 'text-blue-500',
-    emerald: 'text-emerald-500',
+    emerald: 'text-blue-500',
     violet: 'text-violet-500',
   };
 
@@ -812,7 +812,7 @@ function PoiRow({
 
         {poi.walkingMinutes && poi.walkingMinutes <= 15 && (
           <motion.div 
-            className="flex items-center gap-1 px-2 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-medium"
+            className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-medium"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.05 }}

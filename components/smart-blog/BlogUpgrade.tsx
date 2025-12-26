@@ -177,13 +177,13 @@ export function BlogUpgrade() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/50 dark:to-emerald-900/30 border-emerald-200 dark:border-emerald-800">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/50 dark:to-blue-900/30 border-blue-200 dark:border-blue-800">
             <CardContent className="pt-4">
               <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+                <CheckCircle2 className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 <div>
-                  <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{stats.upgraded}</p>
-                  <p className="text-sm text-emerald-600/80 dark:text-emerald-400/80">Geüpgraded</p>
+                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.upgraded}</p>
+                  <p className="text-sm text-blue-600/80 dark:text-blue-400/80">Geüpgraded</p>
                 </div>
               </div>
             </CardContent>
@@ -286,7 +286,7 @@ export function BlogUpgrade() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              <CheckCircle2 className="h-5 w-5 text-blue-500" />
               Geüpgrade Blogs ({upgradedBlogs.length})
             </CardTitle>
             <CardDescription>
@@ -299,7 +299,7 @@ export function BlogUpgrade() {
                 {upgradedBlogs.map((blog) => (
                   <div
                     key={blog.id}
-                    className="flex items-center justify-between p-4 border rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800"
+                    className="flex items-center justify-between p-4 border rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
                   >
                     <div className="flex items-center gap-4 flex-1 min-w-0">
                       {/* Thumbnail */}
@@ -323,7 +323,7 @@ export function BlogUpgrade() {
                       <div className="min-w-0 flex-1">
                         <h4 className="font-medium truncate">{blog.title}</h4>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs bg-emerald-100 text-emerald-700 border-emerald-300">
+                          <Badge variant="outline" className="text-xs bg-blue-100 text-blue-700 border-blue-300">
                             <CheckCircle2 className="h-3 w-3 mr-1" />
                             Geüpgraded
                           </Badge>

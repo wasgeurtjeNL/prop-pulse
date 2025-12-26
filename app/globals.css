@@ -366,14 +366,14 @@ body {
 }
 
 .blog-details :where(a) {
-  @apply text-emerald-700 dark:text-emerald-400 font-medium;
+  @apply text-blue-800 dark:text-blue-400 font-medium;
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
 }
 
 .blog-details :where(a:hover) {
-  @apply text-emerald-800 dark:text-emerald-300;
+  @apply text-blue-900 dark:text-blue-300;
 }
 
 .blog-details :where(strong) {
@@ -393,7 +393,7 @@ body {
 .blog-details > p:first-of-type {
   @apply text-lg md:text-xl leading-8;
   @apply text-slate-700 dark:text-slate-200;
-  @apply border-l-2 border-emerald-500/60 pl-5;
+  @apply border-l-2 border-blue-500/60 pl-5;
   @apply bg-transparent;
 }
 
@@ -441,14 +441,14 @@ body {
 
 /* Links (avoid over-animation; keep professional) */
 .blog-details a {
-  @apply text-emerald-700 dark:text-emerald-400 font-medium;
+  @apply text-blue-800 dark:text-blue-400 font-medium;
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
 }
 
 .blog-details a:hover {
-  @apply text-emerald-800 dark:text-emerald-300;
+  @apply text-blue-900 dark:text-blue-300;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -466,9 +466,9 @@ body {
 
 /* Highlight Box - Key Insights (Emerald/Green) */
 .blog-details .highlight-box {
-  @apply bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50;
-  @apply dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-cyan-950/20;
-  @apply border-emerald-200/60 dark:border-emerald-700/30;
+  @apply bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50;
+  @apply dark:from-blue-950/40 dark:via-sky-950/30 dark:to-cyan-950/20;
+  @apply border-blue-200/60 dark:border-blue-800/30;
 }
 
 .blog-details .highlight-box::before {
@@ -477,7 +477,7 @@ body {
 }
 
 .blog-details .highlight-box strong {
-  @apply text-emerald-700 dark:text-emerald-400 font-bold;
+  @apply text-blue-800 dark:text-blue-400 font-bold;
   @apply bg-transparent px-0;
 }
 
@@ -554,7 +554,7 @@ body {
 
 .blog-details .stat-number {
   @apply relative z-10 block text-5xl md:text-6xl font-extrabold mb-3;
-  @apply text-emerald-700 dark:text-emerald-400;
+  @apply text-blue-800 dark:text-blue-400;
 }
 
 .blog-details .stat-text {
@@ -597,7 +597,7 @@ body {
   @apply border border-slate-100 dark:border-slate-700/50;
   @apply transition-all duration-300;
   @apply hover:bg-white dark:hover:bg-slate-800;
-  @apply hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-700/50;
+  @apply hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800/50;
 }
 
 .blog-details .faq-item h3 {
@@ -609,7 +609,7 @@ body {
 
 .blog-details .faq-item h3::before {
   content: "→";
-  @apply text-emerald-500 font-bold transition-transform duration-300;
+  @apply text-blue-500 font-bold transition-transform duration-300;
 }
 
 .blog-details .faq-item:hover h3::before {
@@ -627,9 +627,9 @@ body {
 
 .blog-details .cta-box {
   @apply relative my-16 p-8 md:p-12 rounded-3xl text-center overflow-hidden;
-  @apply bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50;
-  @apply dark:from-emerald-950/50 dark:via-teal-950/40 dark:to-cyan-950/30;
-  @apply border-2 border-emerald-200/50 dark:border-emerald-700/30;
+  @apply bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50;
+  @apply dark:from-blue-950/50 dark:via-sky-950/40 dark:to-cyan-950/30;
+  @apply border-2 border-blue-200/50 dark:border-blue-800/30;
   box-shadow: 
     0 25px 50px -12px rgba(16, 185, 129, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -639,14 +639,14 @@ body {
 .blog-details .cta-box::before {
   content: "";
   @apply absolute top-0 right-0 w-64 h-64 rounded-full;
-  @apply bg-gradient-to-br from-emerald-200/30 to-transparent;
+  @apply bg-gradient-to-br from-blue-200/30 to-transparent;
   @apply -translate-y-1/2 translate-x-1/3;
 }
 
 .blog-details .cta-box::after {
   content: "";
   @apply absolute bottom-0 left-0 w-48 h-48 rounded-full;
-  @apply bg-gradient-to-tr from-teal-200/30 to-transparent;
+  @apply bg-gradient-to-tr from-sky-200/30 to-transparent;
   @apply translate-y-1/2 -translate-x-1/3;
 }
 
@@ -712,14 +712,14 @@ body {
 .blog-details blockquote::before {
   content: "\201C";
   @apply absolute -top-4 left-6 text-7xl md:text-8xl;
-  @apply text-emerald-200 dark:text-emerald-800 font-serif;
+  @apply text-blue-200 dark:text-blue-900 font-serif;
   @apply leading-none;
 }
 
 .blog-details blockquote::after {
   content: "\201D";
   @apply absolute -bottom-8 right-6 text-7xl md:text-8xl;
-  @apply text-emerald-200 dark:text-emerald-800 font-serif;
+  @apply text-blue-200 dark:text-blue-900 font-serif;
   @apply leading-none;
 }
 
@@ -785,7 +785,7 @@ body {
 }
 
 .blog-details tr:hover {
-  @apply bg-emerald-50/50 dark:bg-emerald-900/10;
+  @apply bg-blue-50/50 dark:bg-blue-950/10;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -853,7 +853,7 @@ body {
 
 /* Selection styling */
 .blog-details ::selection {
-  @apply bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100;
+  @apply bg-blue-200 dark:bg-blue-900 text-blue-950 dark:text-blue-100;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -862,13 +862,13 @@ body {
 
 .blog-details a.internal-link,
 .blog-details a[href^="/blogs/"] {
-  @apply text-emerald-600 dark:text-emerald-400;
+  @apply text-blue-700 dark:text-blue-400;
   @apply font-medium no-underline;
-  @apply border-b-2 border-emerald-200 dark:border-emerald-800;
+  @apply border-b-2 border-blue-200 dark:border-blue-900;
   @apply transition-all duration-200;
-  @apply hover:text-emerald-700 dark:hover:text-emerald-300;
-  @apply hover:border-emerald-500 dark:hover:border-emerald-500;
-  @apply hover:bg-emerald-50 dark:hover:bg-emerald-900/30;
+  @apply hover:text-blue-800 dark:hover:text-blue-300;
+  @apply hover:border-blue-500 dark:hover:border-blue-500;
+  @apply hover:bg-blue-50 dark:hover:bg-blue-950/30;
   @apply px-1 py-0.5 rounded-sm;
 }
 
@@ -942,9 +942,9 @@ body {
 
 .blog-details .related-posts {
   @apply mt-16 p-8 rounded-2xl;
-  @apply bg-gradient-to-br from-emerald-50 to-teal-50;
-  @apply dark:from-emerald-900/20 dark:to-teal-900/20;
-  @apply border border-emerald-200 dark:border-emerald-800;
+  @apply bg-gradient-to-br from-blue-50 to-sky-50;
+  @apply dark:from-blue-950/20 dark:to-sky-900/20;
+  @apply border border-blue-200 dark:border-blue-900;
 }
 
 .blog-details .related-posts h3 {
@@ -959,7 +959,7 @@ body {
 .blog-details .related-post-card {
   @apply p-4 rounded-xl bg-white dark:bg-slate-800;
   @apply border border-slate-200 dark:border-slate-700;
-  @apply hover:shadow-lg hover:border-emerald-300 dark:hover:border-emerald-700;
+  @apply hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-800;
   @apply transition-all duration-200;
 }
 
@@ -1002,7 +1002,7 @@ body {
 
 .blog-details .table-of-contents a {
   @apply text-slate-600 dark:text-slate-400;
-  @apply hover:text-emerald-600 dark:hover:text-emerald-400;
+  @apply hover:text-blue-700 dark:hover:text-blue-400;
   @apply transition-colors duration-200;
 }
 
@@ -1020,7 +1020,7 @@ body {
 
 .blog-details .author-avatar {
   @apply w-20 h-20 rounded-full overflow-hidden flex-shrink-0;
-  @apply border-4 border-emerald-200 dark:border-emerald-800;
+  @apply border-4 border-blue-200 dark:border-blue-900;
 }
 
 .blog-details .author-info h4 {
@@ -1029,7 +1029,7 @@ body {
 }
 
 .blog-details .author-info .author-title {
-  @apply text-sm text-emerald-600 dark:text-emerald-400 font-medium;
+  @apply text-sm text-blue-700 dark:text-blue-400 font-medium;
   @apply mb-3;
 }
 
@@ -1052,9 +1052,9 @@ body {
 .blog-details .blog-intro,
 .rich-blog-content .blog-intro {
   @apply relative my-8 p-6 md:p-8 rounded-2xl;
-  @apply bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50;
-  @apply dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-cyan-950/10;
-  @apply border border-emerald-200/50 dark:border-emerald-700/30;
+  @apply bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50;
+  @apply dark:from-blue-950/30 dark:via-sky-950/20 dark:to-cyan-950/10;
+  @apply border border-blue-200/50 dark:border-blue-800/30;
 }
 
 .blog-details .blog-intro .lead,
@@ -1068,8 +1068,8 @@ body {
 .blog-details .stats-highlight,
 .rich-blog-content .stats-highlight {
   @apply my-10 py-10 px-8 md:px-12 rounded-3xl;
-  @apply bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900;
-  @apply dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950;
+  @apply bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950;
+  @apply dark:from-slate-950 dark:via-slate-900 dark:to-blue-950;
   @apply flex flex-wrap justify-center items-stretch;
   @apply gap-8 md:gap-12 lg:gap-16;
   @apply text-white;
@@ -1107,7 +1107,7 @@ body {
 .blog-details .stats-highlight .stat-value,
 .rich-blog-content .stats-highlight .stat-value {
   @apply block text-4xl md:text-5xl lg:text-6xl font-extrabold;
-  @apply text-emerald-400;
+  @apply text-blue-400;
   @apply mb-3;
   @apply whitespace-nowrap;
 }
@@ -1123,9 +1123,9 @@ body {
 .blog-details .insight-quote,
 .rich-blog-content .insight-quote {
   @apply relative my-12 py-8 px-8 md:px-12;
-  @apply bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50;
-  @apply dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-emerald-950/40;
-  @apply border-l-4 border-emerald-500 rounded-r-2xl;
+  @apply bg-gradient-to-r from-blue-50 via-sky-50 to-blue-50;
+  @apply dark:from-blue-950/40 dark:via-sky-950/30 dark:to-blue-950/40;
+  @apply border-l-4 border-blue-500 rounded-r-2xl;
   @apply text-xl md:text-2xl italic;
   @apply text-slate-700 dark:text-slate-200;
   @apply font-medium leading-relaxed;
@@ -1135,7 +1135,7 @@ body {
 .rich-blog-content .insight-quote::before {
   content: "\201C";
   @apply absolute -top-2 left-4 text-6xl;
-  @apply text-emerald-300 dark:text-emerald-700;
+  @apply text-blue-300 dark:text-blue-800;
   @apply font-serif leading-none;
 }
 
@@ -1158,7 +1158,7 @@ body {
   @apply bg-white dark:bg-slate-800/50;
   @apply rounded-xl border border-slate-200 dark:border-slate-700;
   @apply transition-all duration-200;
-  @apply hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700;
+  @apply hover:shadow-md hover:border-blue-300 dark:hover:border-blue-800;
 }
 
 .blog-details .feature-list li::before,
@@ -1215,7 +1215,7 @@ body {
   @apply bg-white dark:bg-slate-800;
   @apply border border-slate-100 dark:border-slate-700;
   @apply transition-all duration-300;
-  @apply hover:shadow-lg hover:border-emerald-200 dark:hover:border-emerald-700;
+  @apply hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-800;
 }
 
 .blog-details .faq-item .faq-question,

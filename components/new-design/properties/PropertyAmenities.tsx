@@ -16,7 +16,7 @@ const AMENITY_CONFIG: Record<string, { icon: string; category: string; color: st
   // Views
   'sea view': { icon: 'ph:waves-fill', category: 'views', color: 'text-cyan-500' },
   'ocean view': { icon: 'ph:waves-fill', category: 'views', color: 'text-cyan-500' },
-  'mountain view': { icon: 'ph:mountains-fill', category: 'views', color: 'text-emerald-500' },
+  'mountain view': { icon: 'ph:mountains-fill', category: 'views', color: 'text-blue-500' },
   'garden view': { icon: 'ph:tree-fill', category: 'views', color: 'text-green-500' },
   'pool view': { icon: 'ph:swimming-pool-fill', category: 'views', color: 'text-blue-500' },
   'city view': { icon: 'ph:buildings-fill', category: 'views', color: 'text-slate-500' },
@@ -74,7 +74,7 @@ const CATEGORY_INFO = {
   views: { title: 'Views', icon: 'ph:eye-fill', color: 'from-cyan-500 to-blue-500' },
   outdoor: { title: 'Outdoor', icon: 'ph:sun-fill', color: 'from-amber-500 to-orange-500' },
   indoor: { title: 'Indoor', icon: 'ph:house-fill', color: 'from-violet-500 to-purple-500' },
-  features: { title: 'Features', icon: 'ph:star-fill', color: 'from-emerald-500 to-teal-500' },
+  features: { title: 'Features', icon: 'ph:star-fill', color: 'from-blue-500 to-sky-500' },
   facilities: { title: 'Facilities', icon: 'ph:buildings-fill', color: 'from-rose-500 to-pink-500' },
   other: { title: 'Other', icon: 'ph:check-circle-fill', color: 'from-slate-500 to-slate-600' },
 };

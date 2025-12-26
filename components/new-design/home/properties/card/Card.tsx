@@ -117,7 +117,7 @@ const PropertyCard: React.FC<{ item: PropertyCardItem; priority?: boolean }> = (
                   
                   {/* Sea View - from amenities */}
                   {amenities?.some(a => a.toLowerCase().includes('sea view')) && (
-                    <span className='inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-teal-500/90 text-white backdrop-blur-sm shadow-sm'>
+                    <span className='inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-blue-600/90 text-white backdrop-blur-sm shadow-sm'>
                       <Icon icon="ph:waves" width={12} height={12} />
                       Sea View
                     </span>

@@ -568,7 +568,7 @@ export function offerAdminNotificationTemplate(data: OfferEmailData): { subject:
           <h2 style="${styles.title}">Offer Details</h2>
           
           <div style="${styles.highlight}">
-            <p style="margin: 0 0 8px 0;"><strong>Offer Amount:</strong> <span style="color: #059669; font-size: 24px; font-weight: bold;">฿${data.offerAmount}</span></p>
+            <p style="margin: 0 0 8px 0;"><strong>Offer Amount:</strong> <span style="color: #004aac; font-size: 24px; font-weight: bold;">฿${data.offerAmount}</span></p>
             <p style="margin: 0 0 8px 0;"><strong>Asking Price:</strong> ฿${data.propertyPrice}</p>
             <p style="margin: 0;"><strong>Property:</strong> <a href="${propertyUrl}">${data.propertyTitle}</a></p>
           </div>

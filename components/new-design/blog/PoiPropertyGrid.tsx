@@ -181,7 +181,7 @@ function PropertyCard({ property, index }: { property: Property; index: number }
             >
               <div className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider shadow-lg ${
                 property.type === 'FOR_SALE' 
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white' 
+                  ? 'bg-gradient-to-r from-blue-500 to-sky-500 text-white' 
                   : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white'
               }`}>
                 {property.type === 'FOR_SALE' ? 'For Sale' : 'For Rent'}
@@ -481,7 +481,7 @@ export function PoiPropertyGrid({
           {/* Stats row */}
           <div className="flex items-center justify-center gap-8 mt-8 text-sm text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-2">
-              <Icon icon="ph:check-circle-fill" className="w-4 h-4 text-emerald-500" />
+              <Icon icon="ph:check-circle-fill" className="w-4 h-4 text-blue-500" />
               <span>Verified Listings</span>
             </div>
             <div className="flex items-center gap-2">

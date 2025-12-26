@@ -56,7 +56,7 @@ export function ChatWidget() {
             whileTap={{ scale: 0.95 }}
             onClick={handleOpen}
             className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 
-                       bg-gradient-to-r from-primary to-emerald-500 
+                       bg-gradient-to-r from-primary to-blue-600 
                        text-white rounded-full shadow-lg 
                        hover:shadow-xl transition-shadow
                        group"

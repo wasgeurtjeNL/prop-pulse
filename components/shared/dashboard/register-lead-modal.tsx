@@ -152,7 +152,7 @@ export function RegisterLeadModal({
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-emerald-600" />
+            <UserPlus className="h-5 w-5 text-blue-700" />
             Register New Lead
           </DialogTitle>
           <DialogDescription>
@@ -420,7 +420,7 @@ export function RegisterLeadModal({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-blue-700 hover:bg-blue-800"
               >
                 {isSubmitting ? (
                   <>

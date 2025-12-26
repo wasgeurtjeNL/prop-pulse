@@ -252,7 +252,7 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
                     size="icon"
                     title="Register Lead"
                     onClick={() => setRegisterLeadModal({ open: true, property })}
-                    className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                   >
                     <UserPlus className="h-4 w-4" />
                   </Button>
@@ -278,7 +278,7 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuItem
                       onClick={() => setRegisterLeadModal({ open: true, property })}
-                      className="text-emerald-600"
+                      className="text-blue-600"
                     >
                       <UserPlus className="mr-2 h-4 w-4" /> Register Lead
                     </DropdownMenuItem>

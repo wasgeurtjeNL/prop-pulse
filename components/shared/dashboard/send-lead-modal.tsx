@@ -264,7 +264,7 @@ export function SendLeadModal({ open, onOpenChange, lead, property }: SendLeadMo
           <Separator />
 
           {/* Owner/Agency Information */}
-          <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-4 space-y-3">
+          <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 space-y-3">
             <h4 className="font-semibold flex items-center gap-2">
               <Building className="h-4 w-4" />
               Sending To

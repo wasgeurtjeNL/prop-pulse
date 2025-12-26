@@ -83,7 +83,7 @@ export default function ListPropertyTestimonials() {
 
               {/* Author */}
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center text-white font-semibold text-lg">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-blue-400 flex items-center justify-center text-white font-semibold text-lg">
                   {testimonial.name.charAt(0)}
                 </div>
                 <div>

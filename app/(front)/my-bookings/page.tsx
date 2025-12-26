@@ -41,7 +41,7 @@ const statusConfig: Record<string, { color: string; icon: string; label: string 
     label: "Pending Confirmation"
   },
   CONFIRMED: { 
-    color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800", 
+    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 border-blue-200 dark:border-blue-800", 
     icon: "ph:check-circle",
     label: "Confirmed"
   },
@@ -283,7 +283,7 @@ export default function MyBookingsPage() {
                     
                     {/* Days countdown badge for upcoming confirmed trips */}
                     {booking.status === "CONFIRMED" && daysUntilCheckIn > 0 && daysUntilCheckIn <= 14 && (
-                      <div className="absolute top-3 left-3 bg-emerald-600 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
+                      <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
                         {daysUntilCheckIn === 1 ? "Tomorrow!" : `${daysUntilCheckIn} days to go`}
                       </div>
                     )}
@@ -328,7 +328,7 @@ export default function MyBookingsPage() {
                         )}
                         
                         {booking.status === "CONFIRMED" && isUpcoming && (
-                          <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-2 rounded-lg mb-3">
+                          <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-3 py-2 rounded-lg mb-3">
                             <Icon icon="ph:check-circle" className="w-4 h-4 flex-shrink-0" />
                             <span>Your trip is confirmed! Check-in details available.</span>
                           </div>

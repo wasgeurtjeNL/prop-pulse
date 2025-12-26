@@ -547,11 +547,11 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
         {/* Owner / Agency Contact - Collapsible */}
         <CollapsibleCard
           title="Owner / Agency Contact"
-          icon={<User className="h-5 w-5 text-emerald-600" />}
-          badge={<span className="text-xs font-normal text-muted-foreground bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded">Internal Only</span>}
-          className="border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50/50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/20"
+          icon={<User className="h-5 w-5 text-blue-600" />}
+          badge={<span className="text-xs font-normal text-muted-foreground bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded">Internal Only</span>}
+          className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/50 to-sky-50/50 dark:from-blue-950/20 dark:to-sky-950/20"
         >
-          <FormDescription className="text-emerald-700 dark:text-emerald-300">
+          <FormDescription className="text-blue-700 dark:text-blue-300">
             Contact details of the property owner or agency. Only visible to you.
           </FormDescription>
           
@@ -955,10 +955,10 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
         {propertyType === "FOR_RENT" && form.watch("enableDailyRental") && (
           <CollapsibleCard
             title="Property Access Details"
-            badge={<span className="text-xs font-normal text-muted-foreground bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded">Guest Info</span>}
-            className="border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50/50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/20"
+            badge={<span className="text-xs font-normal text-muted-foreground bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded">Guest Info</span>}
+            className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50/50 to-sky-50/50 dark:from-blue-950/20 dark:to-sky-950/20"
           >
-            <FormDescription className="text-emerald-700 dark:text-emerald-300 mb-4">
+            <FormDescription className="text-blue-700 dark:text-blue-300 mb-4">
               Default property access information shared with guests after booking confirmation. This data will be pre-filled for each booking.
             </FormDescription>
 

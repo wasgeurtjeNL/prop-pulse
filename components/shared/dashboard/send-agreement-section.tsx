@@ -226,13 +226,13 @@ Best regards,
 
   return (
     <div className="space-y-6">
-      <Separator className="bg-emerald-200 dark:bg-emerald-800" />
+      <Separator className="bg-blue-200 dark:bg-blue-800" />
       
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="send-agreement" className="border-none">
           <AccordionTrigger className="hover:no-underline py-2">
             <div className="flex items-center gap-2 text-left">
-              <Send className="h-4 w-4 text-emerald-600" />
+              <Send className="h-4 w-4 text-blue-600" />
               <span className="font-medium">Send Commission Agreement</span>
               {agreementLogs.length > 0 && (
                 <Badge variant="secondary" className="ml-2">
@@ -244,12 +244,12 @@ Best regards,
           
           <AccordionContent className="pt-4 space-y-6">
             {/* Recipient Info */}
-            <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
-              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
                 Recipient: {property.ownerName || property.ownerCompany}
                 {property.ownerCompany && property.ownerName && ` (${property.ownerCompany})`}
               </p>
-              <div className="flex gap-4 mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+              <div className="flex gap-4 mt-1 text-xs text-blue-700 dark:text-blue-300">
                 {property.ownerPhone && (
                   <span>{property.ownerCountryCode}{property.ownerPhone}</span>
                 )}

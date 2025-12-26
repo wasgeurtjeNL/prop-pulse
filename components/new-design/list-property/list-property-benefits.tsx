@@ -20,7 +20,7 @@ const benefits = [
     icon: "ph:chart-line-up",
     title: "Maximum Exposure",
     description: "Featured on major property portals, social media, and exclusive buyer databases.",
-    color: "from-green-500 to-emerald-400",
+    color: "from-green-500 to-blue-400",
   },
   {
     icon: "ph:handshake",

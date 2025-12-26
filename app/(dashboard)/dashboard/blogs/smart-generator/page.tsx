@@ -653,7 +653,7 @@ export default function SmartBlogGeneratorPage() {
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case "high": return "text-emerald-600";
+      case "high": return "text-blue-600";
       case "medium": return "text-amber-600";
       case "low": return "text-gray-500";
       default: return "text-gray-500";
@@ -874,7 +874,7 @@ export default function SmartBlogGeneratorPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-emerald-500" />
+                    <TrendingUp className="h-5 w-5 text-blue-500" />
                     AI Topic Suggestions
                   </CardTitle>
                   <CardDescription>
@@ -1646,7 +1646,7 @@ export default function SmartBlogGeneratorPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Link2 className="h-5 w-5 text-emerald-500" />
+                    <Link2 className="h-5 w-5 text-blue-500" />
                     Internal Links
                   </CardTitle>
                   <CardDescription>

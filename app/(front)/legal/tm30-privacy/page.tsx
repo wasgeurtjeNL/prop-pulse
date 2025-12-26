@@ -88,7 +88,7 @@ To exercise any of these rights, please contact us using the details below.`
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-900 text-white overflow-hidden">
+      <section className="relative py-20 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
@@ -104,7 +104,7 @@ To exercise any of these rights, please contact us using the details below.`
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
               TM30 Passport Data Privacy Policy
             </h1>
-            <p className="text-xl text-emerald-100 max-w-2xl mx-auto">
+            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
               How we collect, use, and protect your passport information for Thai Immigration TM30 registration.
             </p>
           </motion.div>
@@ -124,9 +124,9 @@ To exercise any of these rights, please contact us using the details below.`
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-emerald-50 border border-emerald-200 rounded-2xl p-8 mb-12"
+          className="bg-blue-50 border border-blue-200 rounded-2xl p-8 mb-12"
         >
-          <h2 className="text-2xl font-bold text-emerald-900 mb-4">Overview</h2>
+          <h2 className="text-2xl font-bold text-blue-900 mb-4">Overview</h2>
           <p className="text-gray-700 leading-relaxed">
             PSM Phuket is committed to protecting your privacy while fulfilling our legal obligations under Thai immigration law. This policy explains how we handle your passport data when processing TM30 immigration notifications for foreign guests staying at our properties.
           </p>
@@ -146,8 +146,8 @@ To exercise any of these rights, please contact us using the details below.`
               className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex items-start gap-4">
-                <div className="bg-emerald-100 p-3 rounded-xl flex-shrink-0">
-                  <section.icon className="w-6 h-6 text-emerald-700" />
+                <div className="bg-blue-100 p-3 rounded-xl flex-shrink-0">
+                  <section.icon className="w-6 h-6 text-blue-700" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-4">{section.title}</h3>
@@ -180,7 +180,7 @@ To exercise any of these rights, please contact us using the details below.`
               </div>
               <div>
                 <p className="text-sm text-gray-400">Email</p>
-                <a href="mailto:info@psmphuket.com" className="text-white hover:text-emerald-400 transition-colors">
+                <a href="mailto:info@psmphuket.com" className="text-white hover:text-blue-400 transition-colors">
                   info@psmphuket.com
                 </a>
               </div>
@@ -191,7 +191,7 @@ To exercise any of these rights, please contact us using the details below.`
               </div>
               <div>
                 <p className="text-sm text-gray-400">WhatsApp</p>
-                <a href="https://wa.me/66986261646" className="text-white hover:text-emerald-400 transition-colors">
+                <a href="https://wa.me/66986261646" className="text-white hover:text-blue-400 transition-colors">
                   +66 98 626 1646
                 </a>
               </div>

@@ -31,7 +31,7 @@ interface Conversation {
 
 const statusColors: Record<string, string> = {
   PENDING: "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200",
-  CONFIRMED: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200",
+  CONFIRMED: "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200",
   CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200",
   COMPLETED: "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200",
 };
@@ -221,8 +221,8 @@ export default function MessagesPage() {
                 key={conv.bookingId}
                 className={cn(
                   "cursor-pointer transition-all hover:shadow-md relative overflow-hidden",
-                  hasUnread && "ring-2 ring-emerald-500/50 bg-emerald-50/30 dark:bg-emerald-900/10",
-                  isNewMessage && "ring-2 ring-emerald-400 animate-pulse bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30",
+                  hasUnread && "ring-2 ring-blue-500/50 bg-blue-50/30 dark:bg-blue-900/10",
+                  isNewMessage && "ring-2 ring-blue-400 animate-pulse bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-900/30 dark:to-sky-900/30",
                   isOpen && "ring-2 ring-blue-500"
                 )}
                 onClick={() =>
@@ -237,7 +237,7 @@ export default function MessagesPage() {
                 <CardContent className="p-4">
                   {/* NEW message indicator */}
                   {isNewMessage && (
-                    <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg animate-bounce">
+                    <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg animate-bounce">
                       NEW!
                     </div>
                   )}
@@ -247,16 +247,16 @@ export default function MessagesPage() {
                     <div className={cn(
                       "w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-lg font-bold relative",
                       hasUnread 
-                        ? "bg-emerald-600 text-white" 
+                        ? "bg-blue-600 text-white" 
                         : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300",
-                      isNewMessage && "ring-4 ring-emerald-300 ring-offset-2"
+                      isNewMessage && "ring-4 ring-blue-300 ring-offset-2"
                     )}>
                       {conv.guestName.charAt(0).toUpperCase()}
                       {/* Pulsing dot for new messages */}
                       {isNewMessage && (
                         <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500"></span>
                         </span>
                       )}
                     </div>
@@ -267,12 +267,12 @@ export default function MessagesPage() {
                         <div className="flex items-center gap-2">
                           <h3 className={cn(
                             "font-semibold truncate",
-                            hasUnread && "text-emerald-700 dark:text-emerald-300"
+                            hasUnread && "text-blue-700 dark:text-blue-300"
                           )}>
                             {conv.guestName}
                           </h3>
                           {hasUnread && (
-                            <Badge className="bg-emerald-600 text-white text-xs px-1.5 py-0">
+                            <Badge className="bg-blue-600 text-white text-xs px-1.5 py-0">
                               {conv.unreadCount}
                             </Badge>
                           )}
@@ -300,7 +300,7 @@ export default function MessagesPage() {
                           hasUnread ? "font-medium text-slate-700 dark:text-slate-200" : "text-muted-foreground"
                         )}>
                           {conv.lastMessage.senderRole === "agent" ? (
-                            <span className="text-emerald-600 mr-1">You:</span>
+                            <span className="text-blue-600 mr-1">You:</span>
                           ) : (
                             <span className="text-primary font-medium mr-1">{conv.guestName}:</span>
                           )}

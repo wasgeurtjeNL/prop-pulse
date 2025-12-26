@@ -30,7 +30,7 @@ const StatsProperties = async () => {
           <CardTitle className="text-sm font-medium">
             Active Properties
           </CardTitle>
-          <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+          <ArrowUpRight className="h-4 w-4 text-blue-500" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.activeListings}</div>

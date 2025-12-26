@@ -263,7 +263,7 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                             {item?.type === 'FOR_SALE' && item?.ownershipType && (
                                 <span className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium ${
                                     item.ownershipType === 'FREEHOLD'
-                                        ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
+                                        ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
                                         : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
                                 }`}>
                                     <Icon 

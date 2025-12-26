@@ -72,8 +72,8 @@ const statusConfig: Record<string, { color: string; bgColor: string; icon: strin
     label: "Pending Confirmation"
   },
   CONFIRMED: { 
-    color: "text-emerald-700 dark:text-emerald-300",
-    bgColor: "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800",
+    color: "text-blue-700 dark:text-blue-300",
+    bgColor: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800",
     icon: "ph:check-circle",
     label: "Confirmed"
   },
@@ -288,7 +288,7 @@ export default function BookingDetailPage() {
 
               {booking.status === "CONFIRMED" && (
                 <div className="mt-3 space-y-2 text-slate-700 dark:text-slate-300">
-                  <p className="font-medium text-emerald-700 dark:text-emerald-300">
+                  <p className="font-medium text-blue-700 dark:text-blue-300">
                     🎉 Great news! Your booking is confirmed.
                   </p>
                   <p className="text-sm">
@@ -376,7 +376,7 @@ export default function BookingDetailPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Icon icon="ph:key" className="w-5 h-5 text-emerald-600" />
+                    <Icon icon="ph:key" className="w-5 h-5 text-blue-600" />
                     Property Access Details
                   </CardTitle>
                 </CardHeader>
@@ -389,7 +389,7 @@ export default function BookingDetailPage() {
                         Check-in
                       </div>
                       <p className="font-semibold">{format(checkIn, "EEEE, MMMM d")}</p>
-                      <p className="text-lg font-bold text-emerald-600">{booking.checkInTime || "14:00"}</p>
+                      <p className="text-lg font-bold text-blue-600">{booking.checkInTime || "14:00"}</p>
                     </div>
                     <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">

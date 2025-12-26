@@ -296,7 +296,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 
-                      bg-gradient-to-r from-primary to-emerald-500 text-white">
+                      bg-gradient-to-r from-primary to-blue-600 text-white">
         <div className="flex items-center gap-3">
           {showViewingForm && (
             <button

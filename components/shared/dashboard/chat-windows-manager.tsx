@@ -260,7 +260,7 @@ export function ChatWindowsProvider({ children }: ChatWindowsManagerProps) {
             className={cn(
               "absolute -top-8 right-4 px-3 py-1 rounded-t-lg text-xs font-medium transition-all",
               totalUnread > 0 
-                ? "bg-emerald-500 text-white animate-pulse" 
+                ? "bg-blue-500 text-white animate-pulse" 
                 : "bg-slate-700 text-slate-300 hover:bg-slate-600"
             )}
           >
@@ -268,7 +268,7 @@ export function ChatWindowsProvider({ children }: ChatWindowsManagerProps) {
               <Icon icon="ph:chat-circle-text" className="w-4 h-4" />
               <span>Messages</span>
               {totalUnread > 0 && (
-                <Badge className="bg-white text-emerald-600 text-[10px] px-1.5 py-0 h-4 min-w-4 flex items-center justify-center">
+                <Badge className="bg-white text-blue-600 text-[10px] px-1.5 py-0 h-4 min-w-4 flex items-center justify-center">
                   {totalUnread}
                 </Badge>
               )}
@@ -294,7 +294,7 @@ export function ChatWindowsProvider({ children }: ChatWindowsManagerProps) {
                       className={cn(
                         "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all",
                         "bg-slate-700 hover:bg-slate-600 text-white",
-                        unread > 0 && "ring-2 ring-emerald-400 bg-emerald-900/50",
+                        unread > 0 && "ring-2 ring-blue-400 bg-blue-900/50",
                         window.hasNewMessage && "animate-bounce"
                       )}
                       onClick={() => restoreWindow(window.bookingId)}
@@ -302,14 +302,14 @@ export function ChatWindowsProvider({ children }: ChatWindowsManagerProps) {
                       <div className="relative">
                         <div className={cn(
                           "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                          unread > 0 ? "bg-emerald-500" : "bg-slate-600"
+                          unread > 0 ? "bg-blue-500" : "bg-slate-600"
                         )}>
                           {window.guestName.charAt(0).toUpperCase()}
                         </div>
                         {unread > 0 && (
                           <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 text-[10px] items-center justify-center text-white font-bold">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-500 text-[10px] items-center justify-center text-white font-bold">
                               {unread}
                             </span>
                           </span>
@@ -336,8 +336,8 @@ export function ChatWindowsProvider({ children }: ChatWindowsManagerProps) {
                       key={conv.bookingId}
                       className={cn(
                         "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all",
-                        "bg-emerald-600 hover:bg-emerald-500 text-white",
-                        "ring-2 ring-emerald-400 animate-pulse"
+                        "bg-blue-600 hover:bg-blue-500 text-white",
+                        "ring-2 ring-blue-400 animate-pulse"
                       )}
                       onClick={() => openChat({
                         bookingId: conv.bookingId,
@@ -352,14 +352,14 @@ export function ChatWindowsProvider({ children }: ChatWindowsManagerProps) {
                         </div>
                         <span className="absolute -top-1 -right-1 flex h-5 w-5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-5 w-5 bg-white text-emerald-600 text-[10px] items-center justify-center font-bold">
+                          <span className="relative inline-flex rounded-full h-5 w-5 bg-white text-blue-600 text-[10px] items-center justify-center font-bold">
                             {conv.unreadCount}
                           </span>
                         </span>
                       </div>
                       <div className="text-left max-w-[150px]">
                         <div className="font-medium truncate">{conv.guestName}</div>
-                        <div className="text-[10px] text-emerald-200 truncate">
+                        <div className="text-[10px] text-blue-200 truncate">
                           {conv.lastMessage?.message?.substring(0, 30)}...
                         </div>
                       </div>
