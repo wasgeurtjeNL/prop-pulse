@@ -12,6 +12,7 @@
 
 import prisma from '@/lib/prisma';
 import type { GeneratedCode, ExecutionResult, SandboxResult } from './types';
+import { githubService } from './github-service';
 
 interface DeploymentBackup {
   id: string;
@@ -150,7 +151,14 @@ export class AISafeDeployer {
       filesChanged.push(file.path);
     }
 
+    // Try to create GitHub PR if configured
+    const githubPrUrl = await this.tryCreateGitHubPR(generatedCode, decisionId);
+
     // Update decision status to indicate changes are pending application
+    const executionMessage = githubPrUrl 
+      ? `GitHub PR created: ${githubPrUrl}` 
+      : 'Code changes stored in database. Apply via dashboard or download.';
+
     await prisma.aIDecision.update({
       where: { id: decisionId },
       data: {
@@ -160,25 +168,28 @@ export class AISafeDeployer {
         executionResult: {
           mode: 'serverless',
           filesChanged,
-          message: 'Code changes stored in database. Apply via dashboard or GitHub PR.',
+          message: executionMessage,
           downloadUrl: `/api/ai-agent/download/${decisionId}`,
+          githubPrUrl,
         },
       },
     });
 
-    // Try to create GitHub PR if configured
-    const githubPrUrl = await this.tryCreateGitHubPR(generatedCode, decisionId);
-
     // Log success
+    const logMessage = githubPrUrl 
+      ? `Created GitHub PR for ${filesChanged.length} files` 
+      : `Code changes ready for ${filesChanged.length} files (download from dashboard)`;
+
     await prisma.aIAgentLog.create({
       data: {
         level: 'INFO',
         category: 'execution',
-        message: `Code changes ready for ${filesChanged.length} files (serverless mode)`,
+        message: logMessage,
         data: { 
           filesChanged, 
           mode: 'serverless',
           githubPrUrl,
+          hasGitHubPR: !!githubPrUrl,
         },
         decisionId,
         durationMs: Date.now() - startTime,
@@ -499,35 +510,33 @@ export class AISafeDeployer {
     generatedCode: GeneratedCode,
     decisionId: string
   ): Promise<string | null> {
-    const githubToken = process.env.GITHUB_TOKEN;
-    const githubRepo = process.env.GITHUB_REPO; // e.g., "owner/repo"
-
-    if (!githubToken || !githubRepo) {
-      return null;
-    }
-
-    try {
-      // For now, just log that we would create a PR
-      // Full GitHub PR creation can be implemented later
+    // Check if GitHub is configured
+    if (!githubService.isConfigured()) {
       await prisma.aIAgentLog.create({
         data: {
           level: 'INFO',
           category: 'github',
-          message: `Would create GitHub PR for ${generatedCode.files.length} files`,
+          message: 'GitHub integration not configured. Code changes stored in database only.',
           decisionId,
-          data: {
-            repo: githubRepo,
-            files: generatedCode.files.map(f => f.path),
-          },
         },
       });
+      return null;
+    }
 
-      // TODO: Implement actual GitHub PR creation via Octokit
-      // This would:
-      // 1. Create a new branch
-      // 2. Commit the changes
-      // 3. Open a PR
-      // 4. Return the PR URL
+    try {
+      // Create a PR with the generated code
+      const result = await githubService.createPullRequest(
+        generatedCode,
+        decisionId,
+        {
+          title: `🤖 AI Agent: ${generatedCode.description || 'Code improvement'}`,
+          description: generatedCode.reasoning,
+        }
+      );
+
+      if (result.success && result.prUrl) {
+        return result.prUrl;
+      }
 
       return null;
     } catch (error) {

@@ -46,6 +46,8 @@ interface Decision {
     mode?: string;
     filesChanged?: string[];
     downloadUrl?: string;
+    githubPrUrl?: string;
+    message?: string;
   };
 }
 
@@ -475,7 +477,20 @@ function DecisionCard({
           <p className="text-xs text-muted-foreground">
             {new Date(decision.createdAt).toLocaleString()}
           </p>
-          {decision.executionResult?.mode === 'serverless' && (
+          {decision.executionResult?.githubPrUrl && (
+            <a 
+              href={decision.executionResult.githubPrUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center"
+            >
+              <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 cursor-pointer">
+                <ExternalLink className="h-3 w-3 mr-1" />
+                View GitHub PR
+              </Badge>
+            </a>
+          )}
+          {decision.executionResult?.mode === 'serverless' && !decision.executionResult?.githubPrUrl && (
             <Badge variant="outline" className="text-xs">
               <ExternalLink className="h-3 w-3 mr-1" />
               Code Ready for Manual Apply

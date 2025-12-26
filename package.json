@@ -15,6 +15,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@iconify/react": "^5.2.0",
+    "@octokit/rest": "^22.0.1",
     "@prisma/adapter-pg": "^7.0.0",
     "@prisma/client": "^7.0.0",
     "@prisma/extension-accelerate": "^3.0.0",

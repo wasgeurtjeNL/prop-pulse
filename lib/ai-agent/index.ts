@@ -13,6 +13,7 @@ export { codeGenerator, AICodeGenerator } from './code-generator';
 export { sandbox, AICodeSandbox } from './sandbox';
 export { deployer, AISafeDeployer } from './deployer';
 export { selfImprovement, SelfImprovementEngine } from './self-improvement';
+export { githubService, GitHubService } from './github-service';
 
 // Types
 export type {
