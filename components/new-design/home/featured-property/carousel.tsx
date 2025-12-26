@@ -60,19 +60,30 @@ const FeaturedPropertyCarousel: React.FC<FeaturedPropertyCarouselProps> = ({ ima
         </CarouselContent>
       </Carousel>
       
-      {/* Carousel Dots */}
+      {/* Carousel Counter */}
       {count > 1 && (
-        <div className="absolute left-1/2 -translate-x-1/2 bg-dark/50 rounded-full py-2.5 bottom-4 sm:bottom-10 flex justify-center mt-4 gap-2.5 px-2.5">
-          {Array.from({ length: count }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => handleDotClick(index)}
-              className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                current === index + 1 ? "bg-white" : "bg-white/50"
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
+        <div className="absolute left-1/2 -translate-x-1/2 bg-dark/50 rounded-full py-2 px-4 bottom-4 sm:bottom-10 flex items-center gap-3">
+          <button
+            onClick={() => handleDotClick(current - 2 < 0 ? count - 1 : current - 2)}
+            className="text-white/70 hover:text-white transition-colors"
+            aria-label="Previous slide"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <span className="text-white text-sm font-medium min-w-[45px] text-center">
+            {current} / {count}
+          </span>
+          <button
+            onClick={() => handleDotClick(current >= count ? 0 : current)}
+            className="text-white/70 hover:text-white transition-colors"
+            aria-label="Next slide"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
       )}
     </div>

@@ -29,3 +29,4 @@ ALTER TABLE "property_view" ADD CONSTRAINT "property_view_propertyId_fkey" FOREI
 
 
 
+
