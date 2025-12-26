@@ -26,61 +26,76 @@ export class AICodeGenerator {
     // Get project context
     const projectContext = await this.getProjectContext();
     
-    const systemPrompt = `You are an expert Next.js/TypeScript developer working on a real estate platform.
-You are generating code for an autonomous AI system that can modify itself.
+    const systemPrompt = `You are an expert Next.js/TypeScript developer working on a real estate platform called PSM Phuket.
+You are generating code for an autonomous AI system that can modify and improve itself.
 
-PROJECT CONTEXT:
-- Framework: Next.js 16 (App Router)
-- Database: Prisma with PostgreSQL
+## TECH STACK
+- Framework: Next.js 16 (App Router with Server Components)
+- Database: Prisma with PostgreSQL (Supabase)
 - Styling: Tailwind CSS 4
 - Auth: Better Auth
 - Components: shadcn/ui
-- Language: TypeScript (strict mode)
+- Language: TypeScript (strict mode, no 'any' types)
+- Image CDN: ImageKit.io
+- Deployment: Vercel
 
-EXISTING PATTERNS:
+## DATABASE SCHEMA
+${projectContext.schema}
+
+## EXISTING UTILITIES & SERVICES
+${projectContext.utilities}
+
+## CODE PATTERNS FROM THIS PROJECT
 ${projectContext.patterns}
 
-RULES:
-1. Follow existing code patterns EXACTLY
-2. Use TypeScript with strict types - NO 'any' types
-3. Use existing utilities from lib/utils.ts
-4. Use existing components from components/ui/
-5. Include proper error handling
-6. For API routes, always validate input and check auth where needed
-7. For components, use Server Components by default, Client only when needed
-8. NEVER modify: auth files, .env, middleware.ts, prisma/schema.prisma (without migration)
+## STRICT RULES
+1. Follow existing code patterns EXACTLY - study the examples above
+2. Use TypeScript with strict types - NEVER use 'any' type
+3. Import prisma from '@/lib/prisma' or relative path '../prisma'
+4. Use existing utilities: getOptimizedImageUrl from '@/lib/imagekit'
+5. Use existing services: geocodePropertyLocation from '@/lib/services/poi/geocoding'
+6. For server actions: add 'use server' at top of file
+7. For cache invalidation: use revalidatePath() or revalidateTag()
+8. Include proper error handling with try/catch
+9. For API routes: validate input with Zod, check auth where needed
+10. NEVER modify: auth.ts, .env, middleware.ts, prisma/schema.prisma
 
-Return a JSON object with this structure:
+## OUTPUT FORMAT
+Return a JSON object:
 {
   "files": [
     {
-      "path": "relative/path/to/file.ts",
-      "content": "file content",
+      "path": "lib/actions/newFile.ts",
+      "content": "complete file content",
       "action": "CREATE" | "MODIFY" | "DELETE",
-      "language": "typescript" | "tsx" | etc
+      "language": "typescript"
     }
   ],
-  "testFiles": [
-    // Optional test files
-  ],
-  "explanation": "What this code does",
-  "estimatedImpact": "Expected improvement",
-  "rollbackPlan": "How to undo these changes"
+  "testFiles": [],
+  "explanation": "What this code does and why",
+  "estimatedImpact": "Expected improvement (e.g., 'Fixes 6 properties with missing images')",
+  "rollbackPlan": "How to undo: delete the created files"
 }`;
 
-    const userPrompt = `Generate code for this action:
+    const userPrompt = `Generate production-ready code for this improvement:
 
-ACTION TYPE: ${action.type}
-PAYLOAD: ${JSON.stringify(action.payload, null, 2)}
+## ACTION
+Type: ${action.type}
+Payload: ${JSON.stringify(action.payload, null, 2)}
 
-ADDITIONAL CONTEXT:
+## CONTEXT
 ${context}
 
-PROJECT STRUCTURE:
+## PROJECT STRUCTURE
 ${projectContext.structure}
 
-Generate the complete implementation with all necessary files.
-Make sure the code is production-ready and follows best practices.`;
+## REQUIREMENTS
+1. The code must work immediately without modifications
+2. Follow the exact patterns shown in the examples above
+3. Use existing utilities and services - don't recreate them
+4. Include proper TypeScript types
+5. Add helpful comments explaining complex logic
+6. Make functions reusable and testable`;
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -256,57 +271,202 @@ Return JSON with:
   }
 
   /**
-   * Get project context for AI
+   * Get comprehensive project context for AI
+   * Reads multiple files to give AI full understanding of codebase patterns
    */
-  private async getProjectContext(): Promise<{ structure: string; patterns: string }> {
-    // Read key files to understand patterns
+  private async getProjectContext(): Promise<{ structure: string; patterns: string; schema: string; utilities: string }> {
     const patterns: string[] = [];
+    const utilities: string[] = [];
+    let schema = '';
 
+    // ============================================
+    // 1. READ PRISMA SCHEMA (Database structure)
+    // ============================================
     try {
-      // Read a sample API route
-      const sampleApi = await fs.readFile(
-        path.join(this.projectRoot, 'app/api/properties/route.ts'),
+      const prismaSchema = await fs.readFile(
+        path.join(this.projectRoot, 'prisma/schema.prisma'),
         'utf-8'
       );
-      patterns.push('API Route Pattern:\n```typescript\n' + sampleApi.substring(0, 1000) + '\n```');
+      // Extract relevant models (Property, PropertyView, Blog, etc.)
+      const relevantModels = this.extractPrismaModels(prismaSchema, [
+        'Property', 'PropertyImage', 'PropertyView', 'Blog', 'ViewingRequest',
+        'InvestorLead', 'RentalLead', 'Owner', 'RentalBooking'
+      ]);
+      schema = `DATABASE SCHEMA (Prisma):\n${relevantModels}`;
+    } catch {
+      schema = 'Schema not available';
+    }
+
+    // ============================================
+    // 2. READ SERVER ACTIONS (Multiple examples)
+    // ============================================
+    const actionFiles = [
+      'lib/actions/property.actions.ts',
+      'lib/actions/analytics.actions.ts',
+      'lib/actions/blog.actions.ts',
+    ];
+
+    for (const actionFile of actionFiles) {
+      try {
+        const content = await fs.readFile(path.join(this.projectRoot, actionFile), 'utf-8');
+        const fileName = actionFile.split('/').pop();
+        // Get first 1500 chars to show patterns
+        patterns.push(`SERVER ACTION (${fileName}):\n\`\`\`typescript\n${content.substring(0, 1500)}\n\`\`\``);
+      } catch {
+        // File not found, skip
+      }
+    }
+
+    // ============================================
+    // 3. READ API ROUTES (Multiple examples)
+    // ============================================
+    const apiFiles = [
+      'app/api/properties/route.ts',
+      'app/api/blogs/route.ts',
+      'app/api/viewing-request/route.ts',
+    ];
+
+    for (const apiFile of apiFiles) {
+      try {
+        const content = await fs.readFile(path.join(this.projectRoot, apiFile), 'utf-8');
+        const fileName = apiFile.split('/').slice(-2).join('/');
+        patterns.push(`API ROUTE (${fileName}):\n\`\`\`typescript\n${content.substring(0, 1200)}\n\`\`\``);
+      } catch {
+        // File not found, skip
+      }
+    }
+
+    // ============================================
+    // 4. READ UTILITIES (Important helpers)
+    // ============================================
+    const utilFiles = [
+      { path: 'lib/utils.ts', name: 'General Utilities' },
+      { path: 'lib/imagekit.ts', name: 'ImageKit (Image handling)' },
+      { path: 'lib/prisma.ts', name: 'Prisma Client' },
+    ];
+
+    for (const util of utilFiles) {
+      try {
+        const content = await fs.readFile(path.join(this.projectRoot, util.path), 'utf-8');
+        utilities.push(`${util.name} (${util.path}):\n\`\`\`typescript\n${content.substring(0, 800)}\n\`\`\``);
+      } catch {
+        // File not found, skip
+      }
+    }
+
+    // ============================================
+    // 5. READ SERVICES (Business logic)
+    // ============================================
+    const serviceFiles = [
+      'lib/services/poi/geocoding.ts',
+      'lib/services/email/templates.ts',
+    ];
+
+    for (const serviceFile of serviceFiles) {
+      try {
+        const content = await fs.readFile(path.join(this.projectRoot, serviceFile), 'utf-8');
+        const fileName = serviceFile.split('/').slice(-2).join('/');
+        utilities.push(`SERVICE (${fileName}):\n\`\`\`typescript\n${content.substring(0, 1000)}\n\`\`\``);
+      } catch {
+        // File not found, skip
+      }
+    }
+
+    // ============================================
+    // 6. READ PROJECT RULES (.cursorrules)
+    // ============================================
+    try {
+      const cursorRules = await fs.readFile(path.join(this.projectRoot, '.cursorrules'), 'utf-8');
+      // Extract key sections
+      const rulesSection = cursorRules.substring(0, 2000);
+      patterns.push(`PROJECT CONVENTIONS (.cursorrules):\n${rulesSection}`);
     } catch {
       // File not found, skip
     }
 
-    try {
-      // Read a sample server action
-      const sampleAction = await fs.readFile(
-        path.join(this.projectRoot, 'lib/actions/property.actions.ts'),
-        'utf-8'
-      );
-      patterns.push('Server Action Pattern:\n```typescript\n' + sampleAction.substring(0, 1000) + '\n```');
-    } catch {
-      // File not found, skip
-    }
-
-    // Get folder structure (simplified)
+    // ============================================
+    // 7. PROJECT STRUCTURE
+    // ============================================
     const structure = `
+PROJECT STRUCTURE:
+==================
 app/
-  (front)/       → Public pages
-  (dashboard)/   → Admin dashboard
-  api/           → API routes
+  (front)/                 → Public-facing pages (SSR/ISR)
+    page.tsx               → Homepage
+    properties/[slug]/     → Property detail pages
+    blogs/[slug]/          → Blog pages
+  (dashboard)/             → Admin dashboard (auth required)
+    dashboard/             → Dashboard pages
+      ai-agent/            → AI Agent dashboard
+      analytics/           → Analytics
+      blogs/               → Blog management
+  api/                     → API routes
+    properties/            → Property CRUD
+    blogs/                 → Blog CRUD
+    ai-agent/              → AI Agent API
+    
 components/
-  ui/            → shadcn/ui components
-  new-design/    → Feature components
-  shared/        → Reusable components
+  ui/                      → shadcn/ui base components
+  new-design/              → Feature-specific components
+  shared/                  → Reusable shared components
+    dashboard/             → Dashboard components
+
 lib/
-  actions/       → Server Actions
-  services/      → Business logic
-  utils/         → Utilities
-  ai-agent/      → AI Agent system
+  actions/                 → Server Actions (use 'use server')
+    property.actions.ts    → Property operations
+    analytics.actions.ts   → Analytics data
+    blog.actions.ts        → Blog operations
+  services/                → Business logic
+    poi/                   → POI & geocoding
+    email/                 → Email services
+  ai-agent/                → AI Agent system
+  utils.ts                 → Utility functions (cn, formatPrice, etc.)
+  prisma.ts                → Prisma client singleton
+  imagekit.ts              → ImageKit helpers
+  auth.ts                  → Authentication (Better Auth)
+  validations.ts           → Zod schemas
+
 prisma/
-  schema.prisma  → Database schema
+  schema.prisma            → Database schema
+  migrations/              → Database migrations
+
+IMPORTANT CONVENTIONS:
+- Use 'use server' for server actions
+- Import prisma from '@/lib/prisma' or '../prisma'
+- Use revalidatePath/revalidateTag for cache invalidation
+- Use Zod for validation
+- Error handling with try/catch
+- Return typed responses from actions
 `;
 
     return {
       structure,
-      patterns: patterns.join('\n\n'),
+      patterns: patterns.join('\n\n---\n\n'),
+      schema,
+      utilities: utilities.join('\n\n---\n\n'),
     };
+  }
+
+  /**
+   * Extract specific models from Prisma schema
+   */
+  private extractPrismaModels(schema: string, modelNames: string[]): string {
+    const models: string[] = [];
+    
+    for (const modelName of modelNames) {
+      // Match model definition (using [^}]+ to match anything except closing brace)
+      const regex = new RegExp(`model\\s+${modelName}\\s*\\{[^}]+\\}`, 'g');
+      const match = schema.match(regex);
+      if (match) {
+        models.push(match[0]);
+      }
+    }
+    
+    // Also extract relevant enums
+    const enumRegex = /enum\s+\w+\s*\{[^}]+\}/g;
+    const enums = schema.match(enumRegex) || [];
+    
+    return [...models, ...enums.slice(0, 5)].join('\n\n');
   }
 
   /**
