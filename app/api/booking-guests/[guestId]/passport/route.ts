@@ -72,12 +72,22 @@ export async function POST(request: Request, { params }: RouteParams) {
       );
     }
 
-    // Check authorization
+    // Check authorization - allow ADMIN, AGENT, or booking owner
     if (!isWebhook && session?.user) {
-      const isAdmin = session.user.role === "admin";
-      if (guest.booking.userId !== session.user.id && !isAdmin) {
+      // Get role from database for reliability
+      const dbUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { role: true },
+      });
+      const userRole = dbUser?.role?.toUpperCase() || (session.user as any).role?.toUpperCase() || "CUSTOMER";
+      const isAdminOrAgent = userRole === "ADMIN" || userRole === "AGENT";
+      const isOwner = guest.booking.userId === session.user.id;
+      
+      console.log("[Passport POST] Auth check:", { userId: session.user.id, userRole, isAdminOrAgent, isOwner });
+      
+      if (!isOwner && !isAdminOrAgent) {
         return NextResponse.json(
-          { error: "Unauthorized" },
+          { error: `Unauthorized - role: ${userRole}` },
           { status: 401 }
         );
       }
