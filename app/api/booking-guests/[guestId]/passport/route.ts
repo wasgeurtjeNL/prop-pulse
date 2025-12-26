@@ -252,27 +252,32 @@ export async function PUT(request: Request, { params }: RouteParams) {
       select: { role: true },
     });
     
-    const userRole = dbUser?.role?.toUpperCase() || (session.user as any).role?.toUpperCase();
-    const isAdmin = userRole === "ADMIN" || userRole === "AGENT";
+    const userRole = dbUser?.role?.toUpperCase() || (session.user as any).role?.toUpperCase() || "CUSTOMER";
+    // Allow ADMIN and AGENT full access
+    const isAdminOrAgent = userRole === "ADMIN" || userRole === "AGENT";
     const isOwner = guest.booking.userId === session.user.id;
     
     console.log("[Passport PUT] Auth check:", { 
       userId: session.user.id, 
+      userEmail: session.user.email,
       userRole,
       dbRole: dbUser?.role,
       sessionRole: (session.user as any).role,
       bookingUserId: guest.booking.userId,
-      isAdmin,
+      isAdminOrAgent,
       isOwner 
     });
     
-    if (!isOwner && !isAdmin) {
-      console.log("[Passport PUT] Authorization failed");
+    // ADMIN and AGENT can always update, otherwise must be owner
+    if (!isOwner && !isAdminOrAgent) {
+      console.log("[Passport PUT] Authorization failed - not owner and not admin/agent");
       return NextResponse.json(
         { error: `Unauthorized - role: ${userRole}, isOwner: ${isOwner}` },
         { status: 401 }
       );
     }
+    
+    console.log("[Passport PUT] Authorization passed");
 
     const body = await request.json();
     const { 
