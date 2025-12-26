@@ -496,6 +496,515 @@ export async function getViewsByCountry(dateRange?: DateRangeFilter) {
   }));
 }
 
+// ============================================
+// CONVERSION FUNNEL
+// Views → Inquiries → Viewings Scheduled → Completed/Sold
+// ============================================
+export async function getConversionFunnel(dateRange?: DateRangeFilter) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const userId = session.user.id;
+  
+  const whereDate = dateRange?.from && dateRange?.to ? {
+    viewedAt: { gte: dateRange.from, lte: dateRange.to },
+  } : {};
+  
+  const whereRequestDate = dateRange?.from && dateRange?.to ? {
+    createdAt: { gte: dateRange.from, lte: dateRange.to },
+  } : {};
+
+  const [totalViews, totalInquiries, scheduledViewings, completedViewings, closedDeals] = await Promise.all([
+    // Total property views
+    prisma.propertyView.count({
+      where: { property: { userId }, ...whereDate },
+    }),
+    // Total inquiries (viewing requests)
+    prisma.viewingRequest.count({
+      where: { property: { userId }, ...whereRequestDate },
+    }),
+    // Scheduled viewings
+    prisma.viewingRequest.count({
+      where: { 
+        property: { userId }, 
+        status: "CONFIRMED",
+        ...whereRequestDate,
+      },
+    }),
+    // Completed viewings
+    prisma.viewingRequest.count({
+      where: { 
+        property: { userId }, 
+        status: "COMPLETED",
+        ...whereRequestDate,
+      },
+    }),
+    // Closed deals (sold + rented properties)
+    prisma.property.count({
+      where: { 
+        userId, 
+        status: { in: [Status.SOLD, Status.RENTED] },
+        updatedAt: dateRange?.from && dateRange?.to 
+          ? { gte: dateRange.from, lte: dateRange.to }
+          : undefined,
+      },
+    }),
+  ]);
+
+  // Calculate conversion rates
+  const viewToInquiryRate = totalViews > 0 ? (totalInquiries / totalViews * 100) : 0;
+  const inquiryToViewingRate = totalInquiries > 0 ? (scheduledViewings / totalInquiries * 100) : 0;
+  const viewingToCloseRate = completedViewings > 0 ? (closedDeals / completedViewings * 100) : 0;
+
+  return {
+    funnel: [
+      { stage: "Views", count: totalViews, rate: 100 },
+      { stage: "Inquiries", count: totalInquiries, rate: viewToInquiryRate },
+      { stage: "Viewings", count: scheduledViewings + completedViewings, rate: inquiryToViewingRate },
+      { stage: "Closed", count: closedDeals, rate: viewingToCloseRate },
+    ],
+    rates: {
+      viewToInquiry: Math.round(viewToInquiryRate * 10) / 10,
+      inquiryToViewing: Math.round(inquiryToViewingRate * 10) / 10,
+      viewingToClose: Math.round(viewingToCloseRate * 10) / 10,
+    },
+  };
+}
+
+// ============================================
+// REVENUE & PORTFOLIO VALUE
+// ============================================
+export async function getRevenueMetrics() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const userId = session.user.id;
+
+  const properties = await prisma.property.findMany({
+    where: { userId },
+    select: {
+      id: true,
+      price: true,
+      status: true,
+      commissionRate: true,
+      type: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  // Parse prices (handle formats like "฿15,500,000" or "15500000")
+  const parsePrice = (price: string): number => {
+    const cleaned = price.replace(/[฿$€,\s]/g, '');
+    return parseFloat(cleaned) || 0;
+  };
+
+  const activeProperties = properties.filter(p => p.status === Status.ACTIVE);
+  const soldProperties = properties.filter(p => p.status === Status.SOLD);
+  const rentedProperties = properties.filter(p => p.status === Status.RENTED);
+
+  const activePortfolioValue = activeProperties.reduce((sum, p) => sum + parsePrice(p.price), 0);
+  const soldValue = soldProperties.reduce((sum, p) => sum + parsePrice(p.price), 0);
+  const potentialCommission = activeProperties.reduce((sum, p) => {
+    const price = parsePrice(p.price);
+    const rate = p.commissionRate || 3;
+    return sum + (price * rate / 100);
+  }, 0);
+  const earnedCommission = soldProperties.reduce((sum, p) => {
+    const price = parsePrice(p.price);
+    const rate = p.commissionRate || 3;
+    return sum + (price * rate / 100);
+  }, 0);
+
+  return {
+    activeListings: activeProperties.length,
+    activePortfolioValue,
+    soldProperties: soldProperties.length,
+    soldValue,
+    rentedProperties: rentedProperties.length,
+    potentialCommission,
+    earnedCommission,
+  };
+}
+
+// ============================================
+// AVERAGE DAYS ON MARKET
+// ============================================
+export async function getDaysOnMarket() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const userId = session.user.id;
+
+  // Get sold/rented properties to calculate actual DOM
+  const closedProperties = await prisma.property.findMany({
+    where: { 
+      userId, 
+      status: { in: [Status.SOLD, Status.RENTED] },
+    },
+    select: {
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  // Get active properties for current DOM
+  const activeProperties = await prisma.property.findMany({
+    where: { 
+      userId, 
+      status: Status.ACTIVE,
+    },
+    select: {
+      createdAt: true,
+    },
+  });
+
+  const now = new Date();
+  
+  // Average DOM for closed deals
+  const closedDoms = closedProperties.map(p => 
+    Math.ceil((p.updatedAt.getTime() - p.createdAt.getTime()) / (1000 * 60 * 60 * 24))
+  );
+  const avgClosedDom = closedDoms.length > 0 
+    ? Math.round(closedDoms.reduce((a, b) => a + b, 0) / closedDoms.length)
+    : 0;
+
+  // Average DOM for active listings
+  const activeDoms = activeProperties.map(p => 
+    Math.ceil((now.getTime() - p.createdAt.getTime()) / (1000 * 60 * 60 * 24))
+  );
+  const avgActiveDom = activeDoms.length > 0 
+    ? Math.round(activeDoms.reduce((a, b) => a + b, 0) / activeDoms.length)
+    : 0;
+
+  // Listings by age bracket
+  const under30 = activeDoms.filter(d => d <= 30).length;
+  const under60 = activeDoms.filter(d => d > 30 && d <= 60).length;
+  const under90 = activeDoms.filter(d => d > 60 && d <= 90).length;
+  const over90 = activeDoms.filter(d => d > 90).length;
+
+  return {
+    avgClosedDom,
+    avgActiveDom,
+    distribution: [
+      { label: "0-30 days", count: under30 },
+      { label: "31-60 days", count: under60 },
+      { label: "61-90 days", count: under90 },
+      { label: "90+ days", count: over90 },
+    ],
+  };
+}
+
+// ============================================
+// PERIOD COMPARISON
+// ============================================
+export async function getPeriodComparison(dateRange?: DateRangeFilter) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const userId = session.user.id;
+  
+  // Current period
+  const now = new Date();
+  const currentEnd = dateRange?.to || now;
+  const currentStart = dateRange?.from || new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  
+  // Previous period (same duration, before current)
+  const duration = currentEnd.getTime() - currentStart.getTime();
+  const previousEnd = new Date(currentStart.getTime() - 1);
+  const previousStart = new Date(previousEnd.getTime() - duration);
+
+  const [currentViews, previousViews, currentInquiries, previousInquiries] = await Promise.all([
+    prisma.propertyView.count({
+      where: { 
+        property: { userId },
+        viewedAt: { gte: currentStart, lte: currentEnd },
+      },
+    }),
+    prisma.propertyView.count({
+      where: { 
+        property: { userId },
+        viewedAt: { gte: previousStart, lte: previousEnd },
+      },
+    }),
+    prisma.viewingRequest.count({
+      where: { 
+        property: { userId },
+        createdAt: { gte: currentStart, lte: currentEnd },
+      },
+    }),
+    prisma.viewingRequest.count({
+      where: { 
+        property: { userId },
+        createdAt: { gte: previousStart, lte: previousEnd },
+      },
+    }),
+  ]);
+
+  const viewsChange = previousViews > 0 
+    ? Math.round((currentViews - previousViews) / previousViews * 100) 
+    : currentViews > 0 ? 100 : 0;
+  
+  const inquiriesChange = previousInquiries > 0 
+    ? Math.round((currentInquiries - previousInquiries) / previousInquiries * 100) 
+    : currentInquiries > 0 ? 100 : 0;
+
+  return {
+    current: {
+      views: currentViews,
+      inquiries: currentInquiries,
+      period: `${currentStart.toLocaleDateString()} - ${currentEnd.toLocaleDateString()}`,
+    },
+    previous: {
+      views: previousViews,
+      inquiries: previousInquiries,
+      period: `${previousStart.toLocaleDateString()} - ${previousEnd.toLocaleDateString()}`,
+    },
+    changes: {
+      views: viewsChange,
+      inquiries: inquiriesChange,
+    },
+  };
+}
+
+// ============================================
+// DEVICE & REFERRER ANALYTICS
+// ============================================
+export async function getTrafficSources(dateRange?: DateRangeFilter) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const userId = session.user.id;
+
+  const whereClause: { property: { userId: string }; viewedAt?: { gte?: Date; lte?: Date } } = {
+    property: { userId },
+  };
+
+  if (dateRange?.from || dateRange?.to) {
+    whereClause.viewedAt = {};
+    if (dateRange.from) whereClause.viewedAt.gte = dateRange.from;
+    if (dateRange.to) whereClause.viewedAt.lte = dateRange.to;
+  }
+
+  const views = await prisma.propertyView.findMany({
+    where: whereClause,
+    select: {
+      userAgent: true,
+      referrer: true,
+    },
+  });
+
+  // Parse device from user agent
+  const deviceCounts: Record<string, number> = { Desktop: 0, Mobile: 0, Tablet: 0, Other: 0 };
+  const referrerCounts: Record<string, number> = {};
+
+  views.forEach(view => {
+    // Device detection
+    const ua = (view.userAgent || '').toLowerCase();
+    if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+      deviceCounts.Mobile++;
+    } else if (ua.includes('tablet') || ua.includes('ipad')) {
+      deviceCounts.Tablet++;
+    } else if (ua.includes('mozilla') || ua.includes('chrome') || ua.includes('safari')) {
+      deviceCounts.Desktop++;
+    } else {
+      deviceCounts.Other++;
+    }
+
+    // Referrer parsing
+    if (view.referrer) {
+      try {
+        const url = new URL(view.referrer);
+        const domain = url.hostname.replace('www.', '');
+        referrerCounts[domain] = (referrerCounts[domain] || 0) + 1;
+      } catch {
+        referrerCounts['Direct'] = (referrerCounts['Direct'] || 0) + 1;
+      }
+    } else {
+      referrerCounts['Direct'] = (referrerCounts['Direct'] || 0) + 1;
+    }
+  });
+
+  // Sort referrers by count and take top 5
+  const topReferrers = Object.entries(referrerCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([source, count]) => ({ source, count }));
+
+  return {
+    devices: [
+      { name: "Desktop", value: deviceCounts.Desktop, color: "#3b82f6" },
+      { name: "Mobile", value: deviceCounts.Mobile, color: "#22c55e" },
+      { name: "Tablet", value: deviceCounts.Tablet, color: "#f59e0b" },
+    ].filter(d => d.value > 0),
+    referrers: topReferrers,
+  };
+}
+
+// ============================================
+// PEAK TRAFFIC HOURS
+// ============================================
+export async function getPeakTrafficHours(dateRange?: DateRangeFilter) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const userId = session.user.id;
+
+  const whereClause: { property: { userId: string }; viewedAt?: { gte?: Date; lte?: Date } } = {
+    property: { userId },
+  };
+
+  if (dateRange?.from || dateRange?.to) {
+    whereClause.viewedAt = {};
+    if (dateRange.from) whereClause.viewedAt.gte = dateRange.from;
+    if (dateRange.to) whereClause.viewedAt.lte = dateRange.to;
+  }
+
+  const views = await prisma.propertyView.findMany({
+    where: whereClause,
+    select: {
+      viewedAt: true,
+    },
+  });
+
+  // Count views by hour
+  const hourCounts: Record<number, number> = {};
+  for (let i = 0; i < 24; i++) hourCounts[i] = 0;
+
+  // Count views by day of week
+  const dayCounts: Record<number, number> = {};
+  for (let i = 0; i < 7; i++) dayCounts[i] = 0;
+
+  views.forEach(view => {
+    const hour = view.viewedAt.getHours();
+    const day = view.viewedAt.getDay();
+    hourCounts[hour]++;
+    dayCounts[day]++;
+  });
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  return {
+    byHour: Object.entries(hourCounts).map(([hour, count]) => ({
+      hour: `${hour.padStart(2, '0')}:00`,
+      views: count,
+    })),
+    byDay: Object.entries(dayCounts).map(([day, count]) => ({
+      day: dayNames[parseInt(day)],
+      views: count,
+    })),
+    peakHour: Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '12',
+    peakDay: dayNames[parseInt(Object.entries(dayCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '0')],
+  };
+}
+
+// ============================================
+// AI-GENERATED INSIGHTS
+// ============================================
+export async function getAutoInsights(dateRange?: DateRangeFilter) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const userId = session.user.id;
+
+  const insights: { type: 'success' | 'warning' | 'info'; title: string; description: string }[] = [];
+
+  // Get data for insights
+  const [comparison, daysOnMarket, conversionFunnel] = await Promise.all([
+    getPeriodComparison(dateRange),
+    getDaysOnMarket(),
+    getConversionFunnel(dateRange),
+  ]);
+
+  // Insight: Views trending
+  if (comparison.changes.views > 20) {
+    insights.push({
+      type: 'success',
+      title: `Views up ${comparison.changes.views}%`,
+      description: 'Your listings are getting more attention than last period!',
+    });
+  } else if (comparison.changes.views < -20) {
+    insights.push({
+      type: 'warning',
+      title: `Views down ${Math.abs(comparison.changes.views)}%`,
+      description: 'Consider updating listing photos or descriptions to boost visibility.',
+    });
+  }
+
+  // Insight: Inquiries trending
+  if (comparison.changes.inquiries > 30) {
+    insights.push({
+      type: 'success',
+      title: `Inquiries surging`,
+      description: `${comparison.changes.inquiries}% more inquiries than last period. Great momentum!`,
+    });
+  }
+
+  // Insight: Stale listings
+  if (daysOnMarket.distribution[3].count > 0) {
+    insights.push({
+      type: 'warning',
+      title: `${daysOnMarket.distribution[3].count} listings over 90 days`,
+      description: 'Consider price adjustments or refreshing these listings.',
+    });
+  }
+
+  // Insight: Low conversion
+  if (conversionFunnel.rates.viewToInquiry < 1) {
+    insights.push({
+      type: 'info',
+      title: 'Low view-to-inquiry rate',
+      description: 'Improve listing quality, add more photos, or highlight key features.',
+    });
+  }
+
+  // Insight: High conversion
+  if (conversionFunnel.rates.viewToInquiry > 5) {
+    insights.push({
+      type: 'success',
+      title: 'Excellent conversion rate',
+      description: `${conversionFunnel.rates.viewToInquiry}% of viewers are inquiring - your listings are compelling!`,
+    });
+  }
+
+  return insights.slice(0, 4); // Max 4 insights
+}
+
 // Get comprehensive dashboard analytics (with optional date range filter)
 export async function getDashboardAnalytics(dateRange?: DateRangeFilter) {
   const [
@@ -508,6 +1017,13 @@ export async function getDashboardAnalytics(dateRange?: DateRangeFilter) {
     viewsOverTime,
     viewsStats,
     viewsByCountry,
+    conversionFunnel,
+    revenueMetrics,
+    daysOnMarket,
+    periodComparison,
+    trafficSources,
+    peakTraffic,
+    insights,
   ] = await Promise.all([
     getPropertiesOverTime(),
     getPropertyStatusDistribution(),
@@ -518,6 +1034,13 @@ export async function getDashboardAnalytics(dateRange?: DateRangeFilter) {
     getViewsOverTime(dateRange),
     getViewsStats(dateRange),
     getViewsByCountry(dateRange),
+    getConversionFunnel(dateRange),
+    getRevenueMetrics(),
+    getDaysOnMarket(),
+    getPeriodComparison(dateRange),
+    getTrafficSources(dateRange),
+    getPeakTrafficHours(dateRange),
+    getAutoInsights(dateRange),
   ]);
 
   return {
@@ -530,6 +1053,14 @@ export async function getDashboardAnalytics(dateRange?: DateRangeFilter) {
     viewsOverTime,
     viewsStats,
     viewsByCountry,
+    // New high-end features
+    conversionFunnel,
+    revenueMetrics,
+    daysOnMarket,
+    periodComparison,
+    trafficSources,
+    peakTraffic,
+    insights,
   };
 }
 

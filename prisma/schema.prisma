@@ -1853,3 +1853,342 @@ model WhatsappListingSession {
   @@index([ownerId])
   @@map("whatsapp_listing_session")
 }
+
+// ============================================
+// AUTONOMOUS AI AGENT SYSTEM
+// Self-improving AI that makes decisions to maximize revenue
+// ============================================
+
+// AI Agent Configuration - Controls agent behavior
+model AIAgentConfig {
+  id                      String   @id @default("default")
+  
+  // Agent Status
+  enabled                 Boolean  @default(true)
+  autonomousMode          Boolean  @default(false)  // Auto-execute decisions without approval
+  
+  // Thresholds
+  minConfidenceThreshold  Float    @default(80)     // Min confidence (0-100) for auto-execute
+  dailyDecisionLimit      Int      @default(20)     // Max decisions per day
+  dailyAutoExecuteLimit   Int      @default(5)      // Max auto-executes per day
+  
+  // Notifications
+  notifyOnDecision        Boolean  @default(true)
+  notifyOnAutoExecute     Boolean  @default(true)
+  notifyEmail             String?
+  
+  // Allowed autonomous actions (JSON array of action types)
+  allowedAutonomousTypes  String   @default("[]") @db.Text
+  
+  // Forbidden patterns (never touch these files/features)
+  forbiddenPatterns       String   @default("[]") @db.Text
+  
+  // Learning settings
+  learningEnabled         Boolean  @default(true)
+  feedbackLoopDays        Int      @default(7)     // Days to wait before measuring impact
+  
+  // Emergency controls
+  killSwitch              Boolean  @default(false)  // Emergency stop all AI actions
+  pausedUntil             DateTime?
+  pauseReason             String?
+  
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  @@map("ai_agent_config")
+}
+
+// AI Decisions - Every decision the AI makes
+model AIDecision {
+  id                String   @id @default(cuid())
+  
+  // Decision classification
+  type              String   // CONTENT_CREATION, BUG_FIX, SEO_OPTIMIZATION, etc.
+  subType           String?  // More specific: NEW_BLOG, FIX_MOBILE, etc.
+  priority          String   // critical, high, medium, low
+  
+  // AI Analysis
+  confidence        Float    // 0-100 confidence score
+  reasoning         String   @db.Text  // AI's reasoning for this decision
+  dataSnapshot      Json?    // Data that triggered this decision
+  
+  // Proposed Action
+  actionType        String   // What kind of action to take
+  actionPayload     Json     // Details of the action (files to create, etc.)
+  estimatedImpact   String?  @db.Text  // Expected outcome
+  rollbackPlan      String?  @db.Text  // How to undo this change
+  
+  // Approval workflow
+  requiresApproval  Boolean  @default(true)
+  autoApproved      Boolean  @default(false)
+  status            AIDecisionStatus @default(PENDING)
+  
+  // Approval tracking
+  approvedBy        String?
+  approvedByName    String?
+  approvedAt        DateTime?
+  rejectedBy        String?
+  rejectedByName    String?
+  rejectedAt        DateTime?
+  rejectionReason   String?  @db.Text
+  
+  // Execution tracking
+  executedAt        DateTime?
+  executionResult   Json?    // Result after execution
+  executionError    String?  @db.Text
+  executionDuration Int?     // Milliseconds
+  
+  // Rollback tracking
+  rolledBackAt      DateTime?
+  rolledBackBy      String?
+  rollbackReason    String?
+  
+  // Feedback loop - measure actual impact
+  feedbackDueAt     DateTime?  // When to check if this worked
+  actualImpact      Json?      // Measured results
+  wasSuccessful     Boolean?   // Did it achieve the goal?
+  successScore      Float?     // 0-100 how well it worked
+  feedbackNotes     String?    @db.Text
+  
+  // Relations
+  codeChanges       AICodeChange[]
+  logs              AIAgentLog[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([type])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+  @@index([feedbackDueAt])
+  @@map("ai_decision")
+}
+
+enum AIDecisionStatus {
+  PENDING           // Waiting for approval
+  APPROVED          // Approved, ready to execute
+  EXECUTING         // Currently being executed
+  EXECUTED          // Successfully executed
+  FAILED            // Execution failed
+  REJECTED          // Rejected by admin
+  ROLLED_BACK       // Was executed but rolled back
+  CANCELLED         // Cancelled before execution
+}
+
+// AI Code Changes - Track every file change made by AI
+model AICodeChange {
+  id              String   @id @default(cuid())
+  
+  decisionId      String   @map("decision_id")
+  decision        AIDecision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  
+  // File information
+  filePath        String   @map("file_path")
+  action          AICodeAction
+  
+  // Content
+  originalContent String?  @db.Text @map("original_content")  // For rollback
+  newContent      String?  @db.Text @map("new_content")
+  diff            String?  @db.Text  // Git-style diff
+  
+  // Validation
+  syntaxValid     Boolean  @default(true) @map("syntax_valid")
+  typesValid      Boolean  @default(true) @map("types_valid")
+  lintPassed      Boolean  @default(true) @map("lint_passed")
+  testsPassed     Boolean? @map("tests_passed")
+  
+  // Execution
+  appliedAt       DateTime? @map("applied_at")
+  rolledBackAt    DateTime? @map("rolled_back_at")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  @@index([decisionId])
+  @@index([filePath])
+  @@map("ai_code_change")
+}
+
+enum AICodeAction {
+  CREATE
+  MODIFY
+  DELETE
+}
+
+// AI Agent Logs - Detailed logging of all agent activities
+model AIAgentLog {
+  id          String   @id @default(cuid())
+  
+  // Log classification
+  level       AILogLevel @default(INFO)
+  category    String     // analysis, decision, execution, error, feedback
+  
+  // Content
+  message     String   @db.Text
+  data        Json?    // Additional structured data
+  
+  // Context
+  decisionId  String?  @map("decision_id")
+  decision    AIDecision? @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+  
+  // Error details
+  errorCode   String?  @map("error_code")
+  errorStack  String?  @db.Text @map("error_stack")
+  
+  // Performance
+  durationMs  Int?     @map("duration_ms")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  @@index([level])
+  @@index([category])
+  @@index([decisionId])
+  @@index([createdAt])
+  @@map("ai_agent_log")
+}
+
+enum AILogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  CRITICAL
+}
+
+// AI Data Snapshots - Periodic snapshots of key metrics for AI analysis
+model AIDataSnapshot {
+  id              String   @id @default(cuid())
+  
+  snapshotType    String   // daily, weekly, monthly, triggered
+  
+  // Traffic & Views
+  totalViews      Int      @default(0) @map("total_views")
+  uniqueVisitors  Int      @default(0) @map("unique_visitors")
+  bounceRate      Float?   @map("bounce_rate")
+  avgSessionDuration Float? @map("avg_session_duration")
+  
+  // Leads & Conversions
+  totalInquiries  Int      @default(0) @map("total_inquiries")
+  viewingRequests Int      @default(0) @map("viewing_requests")
+  investorLeads   Int      @default(0) @map("investor_leads")
+  rentalLeads     Int      @default(0) @map("rental_leads")
+  conversionRate  Float?   @map("conversion_rate")
+  
+  // Properties
+  totalProperties Int      @default(0) @map("total_properties")
+  activeListings  Int      @default(0) @map("active_listings")
+  newListings     Int      @default(0) @map("new_listings")
+  avgPropertyViews Float?  @map("avg_property_views")
+  
+  // Content
+  totalBlogs      Int      @default(0) @map("total_blogs")
+  publishedBlogs  Int      @default(0) @map("published_blogs")
+  avgBlogViews    Float?   @map("avg_blog_views")
+  
+  // SEO
+  organicTraffic  Int?     @map("organic_traffic")
+  topKeywords     Json?    @map("top_keywords")
+  avgPosition     Float?   @map("avg_position")
+  
+  // Revenue indicators
+  estimatedLeadValue Float? @map("estimated_lead_value")
+  
+  // Errors & Issues
+  errorCount      Int      @default(0) @map("error_count")
+  slowPages       Json?    @map("slow_pages")
+  brokenLinks     Int      @default(0) @map("broken_links")
+  
+  // Full data for AI analysis
+  rawData         Json?    @map("raw_data")
+  
+  // Period
+  periodStart     DateTime @map("period_start")
+  periodEnd       DateTime @map("period_end")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  @@index([snapshotType])
+  @@index([periodStart])
+  @@index([createdAt])
+  @@map("ai_data_snapshot")
+}
+
+// AI Improvement Opportunities - Identified opportunities for improvement
+model AIOpportunity {
+  id              String   @id @default(cuid())
+  
+  // Classification
+  type            String   // content_gap, bug, performance, seo, conversion, feature
+  subType         String?
+  
+  // Details
+  title           String
+  description     String   @db.Text
+  trigger         String   // What data triggered this opportunity
+  
+  // Priority calculation
+  priority        Int      @default(5) // 1-10, higher = more important
+  estimatedEffort String   // small, medium, large
+  estimatedImpact String   // low, medium, high
+  
+  // Revenue potential
+  potentialRevenue Float?  @map("potential_revenue")
+  potentialLeads   Int?    @map("potential_leads")
+  
+  // Status
+  status          AIOpportunityStatus @default(IDENTIFIED)
+  
+  // Decision link
+  decisionId      String?  @unique @map("decision_id")
+  
+  // Tracking
+  identifiedAt    DateTime @default(now()) @map("identified_at")
+  addressedAt     DateTime? @map("addressed_at")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  @@index([type])
+  @@index([status])
+  @@index([priority])
+  @@map("ai_opportunity")
+}
+
+enum AIOpportunityStatus {
+  IDENTIFIED      // Just discovered
+  ANALYZING       // AI is analyzing deeper
+  DECISION_MADE   // Decision created
+  IN_PROGRESS     // Being worked on
+  COMPLETED       // Successfully addressed
+  DISMISSED       // Not worth pursuing
+}
+
+// AI Learning History - Track what the AI learns from its decisions
+model AILearning {
+  id              String   @id @default(cuid())
+  
+  // What was learned
+  category        String   // decision_making, code_quality, user_behavior, etc.
+  insight         String   @db.Text
+  
+  // Source decision
+  sourceDecisionId String? @map("source_decision_id")
+  
+  // Confidence in this learning
+  confidence      Float    // 0-100
+  
+  // How this affects future decisions
+  impactArea      String   // What aspect of decision-making this affects
+  adjustment      String   @db.Text  // How to adjust future behavior
+  
+  // Validation
+  validatedBy     String?  @map("validated_by")
+  validatedAt     DateTime? @map("validated_at")
+  isValid         Boolean  @default(true) @map("is_valid")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  @@index([category])
+  @@index([sourceDecisionId])
+  @@map("ai_learning")
+}

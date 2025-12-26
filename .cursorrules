@@ -12,15 +12,12 @@ This is a Next.js 16 real estate platform focused on SEO and performance.
 
 ---
 
-## 🚀 Deployment & Workflow
+## 🚀 Deployment
 
-### ⚠️ NO GitHub
-This project does **NOT use GitHub**. All version control and deployment goes through other tools.
-
-### Deployment Flow
-1. **Make changes** → Wait for user approval
-2. **Test** → Use MCP Playwright (browser tools) to test the changes
-3. **Deploy** → After approval, deploy via `vercel --prod`
+### ⚠️ Vercel CLI Only - NO GitHub
+- Deploy **exclusively** via `vercel --prod`
+- Do **NOT** use git push, GitHub, or any git remotes
+- Local commits are fine for tracking, but deployment = Vercel CLI
 
 ### Database Migrations (Prisma)
 - **Local database**: `npx prisma db push` and `npx prisma generate`

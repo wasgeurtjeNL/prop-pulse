@@ -19,7 +19,13 @@ export async function DashboardChartsWrapper({ dateRange }: DashboardChartsWrapp
       viewsOverTime={analytics.viewsOverTime}
       viewsStats={analytics.viewsStats}
       viewsByCountry={analytics.viewsByCountry}
+      conversionFunnel={analytics.conversionFunnel}
+      revenueMetrics={analytics.revenueMetrics}
+      daysOnMarket={analytics.daysOnMarket}
+      periodComparison={analytics.periodComparison}
+      trafficSources={analytics.trafficSources}
+      peakTraffic={analytics.peakTraffic}
+      insights={analytics.insights}
     />
   );
 }
-

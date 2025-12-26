@@ -1,0 +1,539 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  Check, 
+  X, 
+  Play, 
+  Brain, 
+  FileCode, 
+  Search,
+  TrendingUp,
+  Bug,
+  Loader2,
+  RotateCcw,
+  Download,
+  Eye,
+  ExternalLink,
+  CheckCircle2
+} from 'lucide-react';
+
+interface Decision {
+  id: string;
+  type: string;
+  subType?: string;
+  priority: string;
+  confidence: number;
+  reasoning: string;
+  status: string;
+  wasSuccessful?: boolean;
+  createdAt: string;
+  executedAt?: string;
+  executionResult?: {
+    mode?: string;
+    filesChanged?: string[];
+    downloadUrl?: string;
+  };
+}
+
+interface CodeChange {
+  filePath: string;
+  action: string;
+  originalContent: string | null;
+  newContent: string | null;
+  syntaxValid: boolean;
+  typesValid: boolean;
+  lintPassed: boolean;
+  appliedAt: string | null;
+}
+
+const typeIcons: Record<string, React.ReactNode> = {
+  CONTENT_CREATION: <FileCode className="h-4 w-4" />,
+  SEO_OPTIMIZATION: <Search className="h-4 w-4" />,
+  CONVERSION_OPTIMIZATION: <TrendingUp className="h-4 w-4" />,
+  BUG_FIX: <Bug className="h-4 w-4" />,
+  default: <Brain className="h-4 w-4" />,
+};
+
+const priorityColors: Record<string, string> = {
+  critical: 'bg-red-500',
+  high: 'bg-orange-500',
+  medium: 'bg-yellow-500',
+  low: 'bg-blue-500',
+};
+
+export function AIAgentDecisions() {
+  const [decisions, setDecisions] = useState<Decision[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; decisionId: string | null }>({
+    open: false,
+    decisionId: null,
+  });
+  const [rejectReason, setRejectReason] = useState('');
+  const [codePreview, setCodePreview] = useState<{ 
+    open: boolean; 
+    decisionId: string | null;
+    codeChanges: CodeChange[];
+    loading: boolean;
+  }>({
+    open: false,
+    decisionId: null,
+    codeChanges: [],
+    loading: false,
+  });
+
+  useEffect(() => {
+    fetchDecisions();
+  }, []);
+
+  const fetchDecisions = async () => {
+    try {
+      const response = await fetch('/api/ai-agent?action=decisions');
+      if (response.ok) {
+        const data = await response.json();
+        setDecisions(data.decisions || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch decisions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = async (decisionId: string) => {
+    setActionLoading(decisionId);
+    try {
+      const response = await fetch('/api/ai-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve', decisionId }),
+      });
+      
+      if (response.ok) {
+        await fetchDecisions();
+      }
+    } catch (error) {
+      console.error('Failed to approve:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleExecute = async (decisionId: string) => {
+    setActionLoading(decisionId);
+    try {
+      const response = await fetch('/api/ai-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'execute', decisionId }),
+      });
+      
+      if (response.ok) {
+        await fetchDecisions();
+      }
+    } catch (error) {
+      console.error('Failed to execute:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectDialog.decisionId || !rejectReason) return;
+    
+    setActionLoading(rejectDialog.decisionId);
+    try {
+      const response = await fetch('/api/ai-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'reject', 
+          decisionId: rejectDialog.decisionId,
+          reason: rejectReason,
+        }),
+      });
+      
+      if (response.ok) {
+        await fetchDecisions();
+      }
+    } catch (error) {
+      console.error('Failed to reject:', error);
+    } finally {
+      setActionLoading(null);
+      setRejectDialog({ open: false, decisionId: null });
+      setRejectReason('');
+    }
+  };
+
+  const handleRollback = async (decisionId: string) => {
+    if (!confirm('Are you sure you want to rollback this decision?')) return;
+
+    setActionLoading(decisionId);
+    try {
+      const response = await fetch('/api/ai-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'rollback', 
+          decisionId,
+          reason: 'Manual rollback from dashboard',
+        }),
+      });
+      
+      if (response.ok) {
+        await fetchDecisions();
+      }
+    } catch (error) {
+      console.error('Failed to rollback:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleViewCode = async (decisionId: string) => {
+    setCodePreview({ open: true, decisionId, codeChanges: [], loading: true });
+    try {
+      const response = await fetch(`/api/ai-agent/download/${decisionId}?format=json`);
+      if (response.ok) {
+        const data = await response.json();
+        setCodePreview({ 
+          open: true, 
+          decisionId, 
+          codeChanges: data.codeChanges || [], 
+          loading: false 
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch code changes:', error);
+      setCodePreview(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleDownload = async (decisionId: string) => {
+    window.open(`/api/ai-agent/download/${decisionId}?format=json`, '_blank');
+  };
+
+  const handleMarkApplied = async (decisionId: string) => {
+    try {
+      const response = await fetch(`/api/ai-agent/download/${decisionId}`, {
+        method: 'POST',
+      });
+      if (response.ok) {
+        alert('Code changes marked as applied!');
+        setCodePreview({ open: false, decisionId: null, codeChanges: [], loading: false });
+        await fetchDecisions();
+      }
+    } catch (error) {
+      console.error('Failed to mark as applied:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (decisions.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <Brain className="h-12 w-12 mx-auto mb-3 opacity-20" />
+        <p>No decisions yet. Run an analysis to generate decisions.</p>
+      </div>
+    );
+  }
+
+  const pendingDecisions = decisions.filter(d => d.status === 'PENDING');
+  const approvedDecisions = decisions.filter(d => d.status === 'APPROVED');
+  const executedDecisions = decisions.filter(d => d.status === 'EXECUTED');
+
+  return (
+    <div className="space-y-6">
+      {/* Pending Decisions */}
+      {pendingDecisions.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="font-medium flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
+            Pending Approval ({pendingDecisions.length})
+          </h3>
+          {pendingDecisions.map(decision => (
+            <DecisionCard
+              key={decision.id}
+              decision={decision}
+              onApprove={() => handleApprove(decision.id)}
+              onReject={() => setRejectDialog({ open: true, decisionId: decision.id })}
+              loading={actionLoading === decision.id}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Approved (ready to execute) */}
+      {approvedDecisions.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="font-medium flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-green-500" />
+            Ready to Execute ({approvedDecisions.length})
+          </h3>
+          {approvedDecisions.map(decision => (
+            <DecisionCard
+              key={decision.id}
+              decision={decision}
+              onExecute={() => handleExecute(decision.id)}
+              loading={actionLoading === decision.id}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Executed (recent) */}
+      {executedDecisions.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="font-medium flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-blue-500" />
+            Recently Executed ({executedDecisions.length})
+          </h3>
+          {executedDecisions.slice(0, 5).map(decision => (
+            <DecisionCard
+              key={decision.id}
+              decision={decision}
+              onRollback={() => handleRollback(decision.id)}
+              onViewCode={() => handleViewCode(decision.id)}
+              onDownload={() => handleDownload(decision.id)}
+              loading={actionLoading === decision.id}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Reject Dialog */}
+      <AlertDialog open={rejectDialog.open} onOpenChange={(open) => {
+        if (!open) setRejectDialog({ open: false, decisionId: null });
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject Decision</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please provide a reason for rejecting this decision. This helps the AI learn.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            placeholder="Reason for rejection..."
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleReject} disabled={!rejectReason}>
+              Reject
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Code Preview Dialog */}
+      <AlertDialog open={codePreview.open} onOpenChange={(open) => {
+        if (!open) setCodePreview({ open: false, decisionId: null, codeChanges: [], loading: false });
+      }}>
+        <AlertDialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <FileCode className="h-5 w-5" />
+              Generated Code Changes
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Review the AI-generated code changes below. Apply them manually or download as a patch file.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {codePreview.loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : codePreview.codeChanges.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No code changes found for this decision.
+            </div>
+          ) : (
+            <div className="flex-1 overflow-auto space-y-4 pr-2">
+              {codePreview.codeChanges.map((change, index) => (
+                <div key={index} className="border rounded-lg overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2 bg-muted/50 border-b">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={
+                        change.action === 'CREATE' ? 'default' :
+                        change.action === 'DELETE' ? 'destructive' : 'secondary'
+                      }>
+                        {change.action}
+                      </Badge>
+                      <code className="text-sm font-mono">{change.filePath}</code>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      {change.syntaxValid && (
+                        <span className="text-green-600 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" /> Syntax OK
+                        </span>
+                      )}
+                      {change.appliedAt && (
+                        <Badge variant="outline" className="text-green-600">
+                          Applied
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  {change.newContent && (
+                    <pre className="p-4 text-sm overflow-auto max-h-64 bg-zinc-950 text-zinc-100">
+                      <code>{change.newContent}</code>
+                    </pre>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <AlertDialogFooter className="gap-2">
+            {codePreview.decisionId && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => window.open(`/api/ai-agent/download/${codePreview.decisionId}?format=patch`, '_blank')}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Patch
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleMarkApplied(codePreview.decisionId!)}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Mark as Applied
+                </Button>
+              </>
+            )}
+            <AlertDialogCancel>Close</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function DecisionCard({
+  decision,
+  onApprove,
+  onReject,
+  onExecute,
+  onRollback,
+  onViewCode,
+  onDownload,
+  loading,
+}: {
+  decision: Decision;
+  onApprove?: () => void;
+  onReject?: () => void;
+  onExecute?: () => void;
+  onRollback?: () => void;
+  onViewCode?: () => void;
+  onDownload?: () => void;
+  loading?: boolean;
+}) {
+  const icon = typeIcons[decision.type] || typeIcons.default;
+  const priorityColor = priorityColors[decision.priority] || priorityColors.medium;
+
+  return (
+    <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+      <div className={`p-2 rounded-full ${priorityColor} text-white`}>
+        {icon}
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline">{decision.type}</Badge>
+          <Badge variant="secondary">{decision.priority}</Badge>
+          <span className="text-xs text-muted-foreground">
+            {Math.round(decision.confidence)}% confidence
+          </span>
+        </div>
+        <p className="mt-1 text-sm line-clamp-2">{decision.reasoning}</p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-xs text-muted-foreground">
+            {new Date(decision.createdAt).toLocaleString()}
+          </p>
+          {decision.executionResult?.mode === 'serverless' && (
+            <Badge variant="outline" className="text-xs">
+              <ExternalLink className="h-3 w-3 mr-1" />
+              Code Ready for Manual Apply
+            </Badge>
+          )}
+          {decision.executionResult?.filesChanged && decision.executionResult.filesChanged.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {decision.executionResult.filesChanged.length} file(s)
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <>
+            {onApprove && (
+              <Button size="sm" variant="outline" onClick={onApprove}>
+                <Check className="h-4 w-4 mr-1" />
+                Approve
+              </Button>
+            )}
+            {onReject && (
+              <Button size="sm" variant="outline" onClick={onReject}>
+                <X className="h-4 w-4 mr-1" />
+                Reject
+              </Button>
+            )}
+            {onExecute && (
+              <Button size="sm" onClick={onExecute}>
+                <Play className="h-4 w-4 mr-1" />
+                Execute
+              </Button>
+            )}
+            {onViewCode && decision.status === 'EXECUTED' && (
+              <Button size="sm" variant="outline" onClick={onViewCode}>
+                <Eye className="h-4 w-4 mr-1" />
+                View Code
+              </Button>
+            )}
+            {onDownload && decision.status === 'EXECUTED' && (
+              <Button size="sm" variant="outline" onClick={onDownload}>
+                <Download className="h-4 w-4 mr-1" />
+                Download
+              </Button>
+            )}
+            {onRollback && decision.status === 'EXECUTED' && (
+              <Button size="sm" variant="outline" onClick={onRollback}>
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Rollback
+              </Button>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
