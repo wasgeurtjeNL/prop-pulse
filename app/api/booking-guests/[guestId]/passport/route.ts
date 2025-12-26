@@ -8,24 +8,7 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { scanPassport, validatePassportData } from "@/lib/services/passport-ocr";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
-
-// Lazy initialize Supabase client to avoid build-time env var issues
-let supabaseClient: SupabaseClient | null = null;
-
-function getSupabase(): SupabaseClient {
-  if (!supabaseClient) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    if (!url || !key) {
-      throw new Error("Supabase credentials not configured");
-    }
-    
-    supabaseClient = createClient(url, key);
-  }
-  return supabaseClient;
-}
+import { imagekit } from "@/lib/imagekit";
 
 interface RouteParams {
   params: Promise<{ guestId: string }>;
@@ -106,41 +89,38 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     let finalImageUrl = imageUrl;
 
-    // If base64 image is provided, upload to Supabase Storage
+    // If base64 image is provided, upload to ImageKit
     if (imageBase64) {
-      const buffer = Buffer.from(imageBase64, "base64");
-      const fileName = `passports/${guest.booking.id}/${guestId}-${Date.now()}.jpg`;
+      const fileName = `passport-${guestId}-${Date.now()}.jpg`;
+      const folderPath = `/passports/${guest.booking.id}`;
 
-      const supabase = getSupabase();
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("documents")
-        .upload(fileName, buffer, {
-          contentType: mimeType || "image/jpeg",
-          upsert: true,
+      try {
+        console.log("[Passport API] Uploading to ImageKit...");
+        const uploadResult = await imagekit.upload({
+          file: imageBase64, // base64 string
+          fileName: fileName,
+          folder: folderPath,
+          useUniqueFileName: false,
         });
 
-      if (uploadError) {
-        console.error("Storage upload error:", uploadError);
+        finalImageUrl = uploadResult.url;
+        console.log("[Passport API] Upload successful:", finalImageUrl);
+
+        // Update guest with image path
+        await prisma.bookingGuest.update({
+          where: { id: guestId },
+          data: {
+            passportImagePath: uploadResult.filePath,
+            passportImageUrl: uploadResult.url,
+          },
+        });
+      } catch (uploadError: any) {
+        console.error("ImageKit upload error:", uploadError);
         return NextResponse.json(
-          { error: "Failed to upload passport image" },
+          { error: "Failed to upload passport image: " + (uploadError.message || "Unknown error") },
           { status: 500 }
         );
       }
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from("documents")
-        .getPublicUrl(fileName);
-
-      finalImageUrl = urlData.publicUrl;
-
-      // Update guest with image path
-      await prisma.bookingGuest.update({
-        where: { id: guestId },
-        data: {
-          passportImagePath: fileName,
-        },
-      });
     }
 
     // Run OCR
