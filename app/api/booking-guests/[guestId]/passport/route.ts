@@ -209,13 +209,18 @@ export async function PUT(request: Request, { params }: RouteParams) {
   try {
     const { guestId } = await params;
     
+    console.log("[Passport PUT] Starting for guestId:", guestId);
+    
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
+    console.log("[Passport PUT] Session:", session ? "found" : "not found", session?.user?.email);
+
     if (!session?.user) {
+      console.log("[Passport PUT] No session user found");
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Unauthorized - no session" },
         { status: 401 }
       );
     }
@@ -234,28 +239,37 @@ export async function PUT(request: Request, { params }: RouteParams) {
     });
 
     if (!guest) {
+      console.log("[Passport PUT] Guest not found:", guestId);
       return NextResponse.json(
         { error: "Guest not found" },
         { status: 404 }
       );
     }
 
-    // Check authorization - admin/agent or booking owner
-    const userRole = session.user.role?.toUpperCase();
+    // Get user role from database directly for reliability
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+    
+    const userRole = dbUser?.role?.toUpperCase() || (session.user as any).role?.toUpperCase();
     const isAdmin = userRole === "ADMIN" || userRole === "AGENT";
     const isOwner = guest.booking.userId === session.user.id;
     
     console.log("[Passport PUT] Auth check:", { 
       userId: session.user.id, 
-      userRole, 
+      userRole,
+      dbRole: dbUser?.role,
+      sessionRole: (session.user as any).role,
       bookingUserId: guest.booking.userId,
       isAdmin,
       isOwner 
     });
     
     if (!isOwner && !isAdmin) {
+      console.log("[Passport PUT] Authorization failed");
       return NextResponse.json(
-        { error: "Unauthorized - not owner or admin" },
+        { error: `Unauthorized - role: ${userRole}, isOwner: ${isOwner}` },
         { status: 401 }
       );
     }
