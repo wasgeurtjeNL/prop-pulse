@@ -128,7 +128,7 @@ To exercise any of these rights, please contact us using the details below.`
         >
           <h2 className="text-2xl font-bold text-emerald-900 mb-4">Overview</h2>
           <p className="text-gray-700 leading-relaxed">
-            Real Estate Pulse is committed to protecting your privacy while fulfilling our legal obligations under Thai immigration law. This policy explains how we handle your passport data when processing TM30 immigration notifications for foreign guests staying at our properties.
+            PSM Phuket is committed to protecting your privacy while fulfilling our legal obligations under Thai immigration law. This policy explains how we handle your passport data when processing TM30 immigration notifications for foreign guests staying at our properties.
           </p>
           <p className="text-gray-700 leading-relaxed mt-4">
             By providing your passport information for TM30 registration, you acknowledge that you have read and understood this privacy policy.
@@ -180,8 +180,8 @@ To exercise any of these rights, please contact us using the details below.`
               </div>
               <div>
                 <p className="text-sm text-gray-400">Email</p>
-                <a href="mailto:privacy@realestatepulse.co" className="text-white hover:text-emerald-400 transition-colors">
-                  privacy@realestatepulse.co
+                <a href="mailto:info@psmphuket.com" className="text-white hover:text-emerald-400 transition-colors">
+                  info@psmphuket.com
                 </a>
               </div>
             </div>
@@ -191,8 +191,8 @@ To exercise any of these rights, please contact us using the details below.`
               </div>
               <div>
                 <p className="text-sm text-gray-400">WhatsApp</p>
-                <a href="https://wa.me/66818889999" className="text-white hover:text-emerald-400 transition-colors">
-                  +66 81 888 9999
+                <a href="https://wa.me/66986261646" className="text-white hover:text-emerald-400 transition-colors">
+                  +66 98 626 1646
                 </a>
               </div>
             </div>

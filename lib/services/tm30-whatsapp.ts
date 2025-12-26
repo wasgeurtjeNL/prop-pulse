@@ -78,7 +78,7 @@ Your passport data is protected:
 ✅ *Retention:* Automatically deleted 90 days after checkout
 ✅ *Access:* Only authorized staff for TM30 processing
 
-📄 Full privacy policy: realestatepulse.co/legal/tm30-privacy
+📄 Full privacy policy: psmphuket.com/legal/tm30-privacy
 
 ━━━━━━━━━━━━━━━━━━━━━━
 
