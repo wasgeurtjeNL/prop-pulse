@@ -147,6 +147,7 @@ export default function PassportUploadModal({
       const res = await fetch(`/api/booking-guests/${guest.id}/passport`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           imageBase64,
           mimeType: "image/jpeg",
@@ -202,6 +203,7 @@ export default function PassportUploadModal({
         const uploadRes = await fetch(`/api/booking-guests/${guest.id}/passport`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
             imageBase64,
             mimeType: "image/jpeg",
@@ -219,6 +221,7 @@ export default function PassportUploadModal({
       const res = await fetch(`/api/booking-guests/${guest.id}/passport`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           ...formData,
           passportVerified: true,

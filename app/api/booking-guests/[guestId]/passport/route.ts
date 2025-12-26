@@ -240,11 +240,22 @@ export async function PUT(request: Request, { params }: RouteParams) {
       );
     }
 
-    // Check authorization - admin or booking owner
-    const isAdmin = session.user.role?.toLowerCase() === "admin";
-    if (guest.booking.userId !== session.user.id && !isAdmin) {
+    // Check authorization - admin/agent or booking owner
+    const userRole = session.user.role?.toUpperCase();
+    const isAdmin = userRole === "ADMIN" || userRole === "AGENT";
+    const isOwner = guest.booking.userId === session.user.id;
+    
+    console.log("[Passport PUT] Auth check:", { 
+      userId: session.user.id, 
+      userRole, 
+      bookingUserId: guest.booking.userId,
+      isAdmin,
+      isOwner 
+    });
+    
+    if (!isOwner && !isAdmin) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Unauthorized - not owner or admin" },
         { status: 401 }
       );
     }
