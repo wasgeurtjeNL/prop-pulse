@@ -23,7 +23,7 @@ function generateAdminEmailHtml(data: ViewingRequestBody & { property?: { title:
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 20px; border-radius: 10px 10px 0 0;">
+      <div style="background: linear-gradient(135deg, #004aac, #003380); padding: 20px; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 24px;">📅 New Viewing Request</h1>
         <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0;">Via AI Chatbot</p>
       </div>
@@ -52,10 +52,10 @@ function generateAdminEmailHtml(data: ViewingRequestBody & { property?: { title:
         ${data.property ? `
         <h2 style="color: #374151; margin-top: 20px;">Property Interest</h2>
         <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
-          <h3 style="margin: 0 0 5px 0; color: #10b981;">${data.property.title}</h3>
+          <h3 style="margin: 0 0 5px 0; color: #004aac;">${data.property.title}</h3>
           <p style="margin: 0; color: #6b7280;">📍 ${data.property.location}</p>
           <p style="margin: 5px 0 0 0; color: #374151; font-weight: bold;">${data.property.price}</p>
-          <a href="https://prop-pulse-nine.vercel.app/properties/${data.property.slug}" style="display: inline-block; margin-top: 10px; color: #10b981; text-decoration: none;">View Property →</a>
+          <a href="https://prop-pulse-nine.vercel.app/properties/${data.property.slug}" style="display: inline-block; margin-top: 10px; color: #004aac; text-decoration: none;">View Property →</a>
         </div>
         ` : `
         <p style="color: #6b7280; font-style: italic;">No specific property selected - general viewing inquiry</p>
@@ -89,7 +89,7 @@ function generateCustomerEmailHtml(data: ViewingRequestBody & { property?: { tit
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 30px 20px; border-radius: 10px 10px 0 0; text-align: center;">
+      <div style="background: linear-gradient(135deg, #004aac, #003380); padding: 30px 20px; border-radius: 10px 10px 0 0; text-align: center;">
         <h1 style="color: white; margin: 0; font-size: 28px;">🏡 PSM Phuket</h1>
         <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Your Viewing Request is Confirmed!</p>
       </div>
@@ -99,7 +99,7 @@ function generateCustomerEmailHtml(data: ViewingRequestBody & { property?: { tit
         
         <p>Thank you for your interest in viewing ${data.property ? `<strong>${data.property.title}</strong>` : 'properties with us'}!</p>
         
-        <div style="background: #10b981; color: white; padding: 15px 20px; border-radius: 8px; margin: 20px 0;">
+        <div style="background: #004aac; color: white; padding: 15px 20px; border-radius: 8px; margin: 20px 0;">
           <p style="margin: 0; font-size: 14px;"><strong>📅 Requested Date:</strong></p>
           <p style="margin: 5px 0 0 0; font-size: 18px;">${new Date(data.preferredDate).toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
@@ -115,15 +115,15 @@ function generateCustomerEmailHtml(data: ViewingRequestBody & { property?: { tit
         <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 20px;">
           <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 12px;">PROPERTY OF INTEREST</p>
           <h3 style="margin: 0; color: #374151;">${data.property.title}</h3>
-          <a href="https://prop-pulse-nine.vercel.app/properties/${data.property.slug}" style="display: inline-block; margin-top: 10px; background: #10b981; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">View Property Details</a>
+          <a href="https://prop-pulse-nine.vercel.app/properties/${data.property.slug}" style="display: inline-block; margin-top: 10px; background: #004aac; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">View Property Details</a>
         </div>
         ` : ''}
 
         <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
           <p style="margin: 0; color: #6b7280;">Questions? Contact us:</p>
-          <p style="margin: 5px 0;">📞 <a href="tel:+66986261646" style="color: #10b981;">+66 98 626 1646</a></p>
-          <p style="margin: 5px 0;">💬 <a href="https://wa.me/66986261646" style="color: #10b981;">WhatsApp</a></p>
-          <p style="margin: 5px 0;">✉️ <a href="mailto:info@psmphuket.com" style="color: #10b981;">info@psmphuket.com</a></p>
+          <p style="margin: 5px 0;">📞 <a href="tel:+66986261646" style="color: #004aac;">+66 98 626 1646</a></p>
+          <p style="margin: 5px 0;">💬 <a href="https://wa.me/66986261646" style="color: #004aac;">WhatsApp</a></p>
+          <p style="margin: 5px 0;">✉️ <a href="mailto:info@psmphuket.com" style="color: #004aac;">info@psmphuket.com</a></p>
         </div>
       </div>
       

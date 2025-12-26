@@ -215,7 +215,7 @@ body {
 /* New Design Theme Variables */
 @theme {
   /* Gradient colors */
-  --color-primary: #07be8a;
+  --color-primary: #004aac;
   --color-skyblue: #79adff;
   --color-lightskyblue: #9cc2dd;
   --color-dark: #172023;
@@ -408,7 +408,7 @@ body {
 .blog-details h2::before {
   content: "";
   @apply absolute top-0 left-0 w-14 h-1 rounded-full;
-  background: linear-gradient(90deg, #10b981, #14b8a6);
+  background: linear-gradient(90deg, #004aac, #0066cc);
 }
 
 .blog-details h3 {

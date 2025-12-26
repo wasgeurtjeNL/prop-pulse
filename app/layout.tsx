@@ -100,7 +100,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className={`${font.className} bg-white dark:bg-black antialiased h-full m-0 p-0`}>
-        <NextTopLoader color="#07be8a" />
+        <NextTopLoader color="#004aac" />
         <SessionProvider>
           <ThemeProvider
             attribute="class"

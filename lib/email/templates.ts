@@ -26,7 +26,7 @@ const styles = {
     background-color: #ffffff;
   `,
   header: `
-    background: linear-gradient(135deg, #07be8a 0%, #059669 100%);
+    background: linear-gradient(135deg, #004aac 0%, #003380 100%);
     padding: 32px;
     text-align: center;
   `,
@@ -51,14 +51,14 @@ const styles = {
     margin: 0 0 16px 0;
   `,
   highlight: `
-    background-color: #f0fdf4;
-    border-left: 4px solid #07be8a;
+    background-color: #eff6ff;
+    border-left: 4px solid #004aac;
     padding: 16px;
     margin: 24px 0;
   `,
   button: `
     display: inline-block;
-    background: #07be8a;
+    background: #004aac;
     color: white;
     padding: 14px 28px;
     text-decoration: none;

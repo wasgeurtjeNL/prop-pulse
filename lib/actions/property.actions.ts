@@ -57,6 +57,7 @@ export interface PropertyFilterParams {
   beds?: string;
   baths?: string;
   amenities?: string | string[];
+  shortStay?: string | boolean; // Filter for daily rental properties (< 30 days)
 }
 
 // Type for highlighted property with images
@@ -178,7 +179,7 @@ export async function getPropertyByFullSlug(province: string, area: string, slug
 
 export async function getProperties(params: PropertyFilterParams) {
   try {
-    const { query, type, category, beds, baths, amenities } = params;
+    const { query, type, category, beds, baths, amenities, shortStay } = params;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
@@ -189,12 +190,22 @@ export async function getProperties(params: PropertyFilterParams) {
       where.OR = [
         { title: { contains: query, mode: "insensitive" } },
         { location: { contains: query, mode: "insensitive" } },
+        { listingNumber: { contains: query, mode: "insensitive" } },
       ];
     }
 
     if (type && type !== "all") {
-      where.type =
-        type === "buy" ? PropertyType.FOR_SALE : PropertyType.FOR_RENT;
+      // Support both enum values (FOR_SALE, FOR_RENT) and legacy values (buy, rent)
+      if (type === "FOR_SALE" || type === "buy") {
+        where.type = PropertyType.FOR_SALE;
+      } else if (type === "FOR_RENT" || type === "rent") {
+        where.type = PropertyType.FOR_RENT;
+      }
+    }
+
+    // Short Stay filter - properties with daily rental enabled (< 30 days)
+    if (shortStay === true || shortStay === "true") {
+      where.enableDailyRental = true;
     }
 
     // Category filter - convert slug to database enum

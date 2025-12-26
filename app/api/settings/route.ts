@@ -174,7 +174,7 @@ export async function POST(request: Request) {
           subject: "🧪 Test Email - SMTP Configuratie Werkt!",
           html: `
             <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-              <h2 style="color: #07be8a;">✅ SMTP Test Succesvol!</h2>
+              <h2 style="color: #004aac;">✅ SMTP Test Succesvol!</h2>
               <p>Dit is een test email om te bevestigen dat je SMTP configuratie correct werkt.</p>
               <p><strong>Verzonden vanaf:</strong> ${settings.smtpFromEmail || settings.smtpUser}</p>
               <p><strong>Server:</strong> ${settings.smtpHost}:${settings.smtpPort}</p>

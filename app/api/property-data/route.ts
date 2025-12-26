@@ -14,6 +14,7 @@ export const GET = async (request: Request) => {
       beds: searchParams.get('beds') || undefined,
       baths: searchParams.get('baths') || undefined,
       amenities: searchParams.get('amenities') || undefined,
+      shortStay: searchParams.get('shortStay') || undefined,
     });
     
     // Transform to frontend format

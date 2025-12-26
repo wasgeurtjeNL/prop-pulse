@@ -16,6 +16,8 @@ const PropertiesWithFilters: React.FC = () => {
   const searchParams = useSearchParams();
 
   const categoryParam = searchParams.get("category");
+  const shortStayParam = searchParams.get("shortStay");
+  const typeParam = searchParams.get("type");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,7 +27,7 @@ const PropertiesWithFilters: React.FC = () => {
         const queryParams = new URLSearchParams();
         
         // Add all filter parameters
-        const filters = ['query', 'type', 'category', 'beds', 'baths', 'amenities'];
+        const filters = ['query', 'type', 'category', 'beds', 'baths', 'amenities', 'shortStay'];
         filters.forEach(filter => {
           const value = searchParams.get(filter);
           if (value) {
@@ -62,6 +64,14 @@ const PropertiesWithFilters: React.FC = () => {
     { name: 'Properties', href: '/properties' },
   ];
   
+  // Add Short Stay to breadcrumbs if filtered
+  if (shortStayParam === "true") {
+    breadcrumbs.push({ 
+      name: 'Short Stay', 
+      href: '/properties?type=FOR_RENT&shortStay=true' 
+    });
+  }
+  
   // Add category to breadcrumbs if filtered
   if (categoryParam) {
     breadcrumbs.push({ 
@@ -70,12 +80,40 @@ const PropertiesWithFilters: React.FC = () => {
     });
   }
 
+  // Determine page title
+  const getPageTitle = () => {
+    if (shortStayParam === "true") {
+      return "Short Stay Rentals";
+    }
+    if (typeParam === "FOR_RENT") {
+      return "Rental Properties";
+    }
+    if (typeParam === "FOR_SALE") {
+      return "Properties for Sale";
+    }
+    if (categoryParam) {
+      return formatCategory(categoryParam);
+    }
+    return "Discover inspiring designed homes.";
+  };
+
+  // Determine page description
+  const getPageDescription = () => {
+    if (shortStayParam === "true") {
+      return "Daily and weekly vacation rentals. Perfect for holidays and short-term stays under 30 days.";
+    }
+    if (typeParam === "FOR_RENT") {
+      return "Find your perfect rental property. Monthly and yearly contracts available.";
+    }
+    return "Experience elegance and comfort with our exclusive luxury villas, designed for sophisticated living.";
+  };
+
   return (
     <>
       <HeroSub
-        title={categoryParam ? formatCategory(categoryParam) : "Discover inspiring designed homes."}
-        description="Experience elegance and comfort with our exclusive luxury villas, designed for sophisticated living."
-        badge="Properties"
+        title={getPageTitle()}
+        description={getPageDescription()}
+        badge={shortStayParam === "true" ? "Short Stay" : "Properties"}
         breadcrumbs={breadcrumbs}
       />
       

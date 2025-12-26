@@ -79,14 +79,20 @@ const navLinks = [
     href: '/rental-services',
     children: [
       { 
+        label: 'Short Stay', 
+        href: '/properties?type=FOR_RENT&shortStay=true',
+        description: 'Daily & weekly rentals (< 30 days)',
+        icon: 'ph:calendar-blank'
+      },
+      { 
         label: 'Long-term Rentals', 
-        href: '/properties?listing-type=rent',
+        href: '/properties?type=FOR_RENT',
         description: 'Monthly & yearly contracts',
         icon: 'ph:calendar-check'
       },
       { 
         label: 'Vacation Rentals', 
-        href: '/properties?listing-type=rent&category=vacation',
+        href: '/properties?type=FOR_RENT&category=luxury-villa',
         description: 'Holiday homes & villas',
         icon: 'ph:sun-horizon'
       },

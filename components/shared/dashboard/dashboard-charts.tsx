@@ -513,7 +513,7 @@ export function DashboardCharts({
                     }}
                     formatter={(value: number) => [value, "Views"]}
                   />
-                  <Bar dataKey="views" fill="#10b981" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="views" fill="#004aac" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
