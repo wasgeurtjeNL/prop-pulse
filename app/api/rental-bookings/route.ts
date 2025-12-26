@@ -164,6 +164,30 @@ export async function POST(request: Request) {
       },
     });
 
+    // Create BookingGuest records for each guest (for TM30 passport management)
+    const guestsToCreate = [];
+    for (let i = 0; i < (adults || 1); i++) {
+      guestsToCreate.push({
+        bookingId: booking.id,
+        guestType: "adult",
+        guestNumber: i + 1,
+      });
+    }
+    for (let i = 0; i < (children || 0); i++) {
+      guestsToCreate.push({
+        bookingId: booking.id,
+        guestType: "child",
+        guestNumber: (adults || 1) + i + 1,
+      });
+    }
+    
+    if (guestsToCreate.length > 0) {
+      await prisma.bookingGuest.createMany({
+        data: guestsToCreate,
+      });
+      console.log(`[Booking] Created ${guestsToCreate.length} guest records for TM30`);
+    }
+
     // Send WhatsApp passport request if property has TM30 enabled
     if (property.tm30AccommodationId) {
       try {

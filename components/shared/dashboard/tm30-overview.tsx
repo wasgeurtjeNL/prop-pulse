@@ -75,6 +75,34 @@ export default function TM30Overview() {
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<TM30Booking | null>(null);
   const [uploadGuest, setUploadGuest] = useState<{ guest: Guest; bookingId: string } | null>(null);
+  const [creatingGuests, setCreatingGuests] = useState<string | null>(null);
+
+  // Function to create guest records for a booking
+  const createGuestsForBooking = async (bookingId: string) => {
+    setCreatingGuests(bookingId);
+    try {
+      const res = await fetch("/api/booking-guests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
+      });
+      
+      if (res.ok) {
+        // Refresh bookings to get the new guests
+        await fetchTM30Bookings();
+        // Also refresh selected booking if it's the same
+        if (selectedBooking?.id === bookingId) {
+          const data = await fetch("/api/tm30/bookings").then(r => r.json());
+          const updated = data.bookings.find((b: TM30Booking) => b.id === bookingId);
+          if (updated) setSelectedBooking(updated);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to create guests:", error);
+    } finally {
+      setCreatingGuests(null);
+    }
+  };
 
   useEffect(() => {
     fetchTM30Bookings();
@@ -375,9 +403,28 @@ export default function TM30Overview() {
             <CardContent>
               <div className="space-y-4">
                 {selectedBooking.guests.length === 0 ? (
-                  <p className="text-muted-foreground">
-                    No guest passports registered yet
-                  </p>
+                  <div className="text-center py-8">
+                    <Icon icon="ph:users" className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      No guest records created yet
+                    </p>
+                    <Button
+                      onClick={() => createGuestsForBooking(selectedBooking.id)}
+                      disabled={creatingGuests === selectedBooking.id}
+                    >
+                      {creatingGuests === selectedBooking.id ? (
+                        <>
+                          <Icon icon="ph:spinner" className="w-4 h-4 mr-2 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Icon icon="ph:plus" className="w-4 h-4 mr-2" />
+                          Create Guest Records ({selectedBooking.passportsRequired} guests)
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 ) : (
                   selectedBooking.guests.map((guest) => (
                     <div
