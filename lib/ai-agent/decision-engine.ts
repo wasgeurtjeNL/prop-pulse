@@ -137,7 +137,11 @@ export class AIDecisionEngine {
         priority: 9,
         estimatedEffort: 'small',
         estimatedImpact: 'high',
-        dataEvidence: snapshot.systemHealth.errorsByType,
+        dataEvidence: {
+          ...snapshot.systemHealth.errorsByType,
+          // Include specific property details
+          propertiesWithIssues: snapshot.systemHealth.propertiesWithIssues,
+        },
       });
     }
 

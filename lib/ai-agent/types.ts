@@ -118,6 +118,24 @@ export interface DataSnapshot {
   systemHealth: {
     errorCount: number;
     errorsByType: Record<string, number>;
+    propertiesWithIssues?: {
+      missingImages: Array<{
+        id: string;
+        title: string;
+        slug: string;
+        listingNumber: number | null;
+        address: string;
+        url: string;
+      }>;
+      missingLocation: Array<{
+        id: string;
+        title: string;
+        slug: string;
+        listingNumber: number | null;
+        address: string;
+        url: string;
+      }>;
+    };
     slowPages: Array<{ path: string; loadTime: number }>;
     brokenLinks: Array<{ url: string; source: string }>;
   };

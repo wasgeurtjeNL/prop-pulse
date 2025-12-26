@@ -315,31 +315,45 @@ export class AIDataCollector {
   }
 
   /**
-   * Collect system health data
+   * Collect system health data with specific property details
    */
   private async collectSystemHealthData() {
-    // In a real implementation, this would pull from error logging service
-    // For now, we'll check what we can from the database
-
-    // Check for potential data issues
-    const propertiesWithNoImages = await prisma.property.count({
+    // Get properties with missing images - WITH SPECIFIC DETAILS
+    const propertiesNoImages = await prisma.property.findMany({
       where: {
         status: 'ACTIVE',
         images: { none: {} },
       },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        listingNumber: true,
+        address: true,
+      },
+      take: 20,
     });
 
-    const propertiesWithNoLocation = await prisma.property.count({
+    // Get properties with missing location - WITH SPECIFIC DETAILS
+    const propertiesNoLocation = await prisma.property.findMany({
       where: {
         status: 'ACTIVE',
         latitude: null,
       },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        listingNumber: true,
+        address: true,
+      },
+      take: 20,
     });
 
-    // Build error summary
+    // Build error summary with details
     const errorsByType: Record<string, number> = {
-      'missing_images': propertiesWithNoImages,
-      'missing_location': propertiesWithNoLocation,
+      'missing_images': propertiesNoImages.length,
+      'missing_location': propertiesNoLocation.length,
     };
 
     const errorCount = Object.values(errorsByType).reduce((a, b) => a + b, 0);
@@ -347,8 +361,27 @@ export class AIDataCollector {
     return {
       errorCount,
       errorsByType,
-      slowPages: [], // Would need performance monitoring
-      brokenLinks: [], // Would need link checking
+      // NEW: Include specific property details
+      propertiesWithIssues: {
+        missingImages: propertiesNoImages.map((p: { id: string; title: string | null; slug: string; listingNumber: number | null; address: string | null }) => ({
+          id: p.id,
+          title: p.title || 'Untitled',
+          slug: p.slug,
+          listingNumber: p.listingNumber,
+          address: p.address || 'No address',
+          url: `/properties/${p.slug}`,
+        })),
+        missingLocation: propertiesNoLocation.map((p: { id: string; title: string | null; slug: string; listingNumber: number | null; address: string | null }) => ({
+          id: p.id,
+          title: p.title || 'Untitled',
+          slug: p.slug,
+          listingNumber: p.listingNumber,
+          address: p.address || 'No address',
+          url: `/properties/${p.slug}`,
+        })),
+      },
+      slowPages: [],
+      brokenLinks: [],
     };
   }
 

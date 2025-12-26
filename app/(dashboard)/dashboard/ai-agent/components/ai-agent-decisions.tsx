@@ -60,6 +60,25 @@ interface Decision {
     unique_visitors?: number;
     conversion_rate?: number;
     error_count?: number;
+    // Specific property details
+    propertiesWithIssues?: {
+      missingImages?: Array<{
+        id: string;
+        title: string;
+        slug: string;
+        listingNumber?: number;
+        address: string;
+        url: string;
+      }>;
+      missingLocation?: Array<{
+        id: string;
+        title: string;
+        slug: string;
+        listingNumber?: number;
+        address: string;
+        url: string;
+      }>;
+    };
     [key: string]: unknown;
   };
   actionPayload?: {
@@ -614,21 +633,62 @@ function DecisionCard({
               </h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {decision.dataSnapshot.missing_images !== undefined && decision.dataSnapshot.missing_images > 0 && (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-                    <ImageOff className="h-4 w-4 text-red-500" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Ontbrekende afbeeldingen</p>
-                      <p className="text-sm font-semibold text-red-600">{decision.dataSnapshot.missing_images}</p>
+                  <div className="col-span-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <ImageOff className="h-4 w-4 text-red-500" />
+                      <p className="text-sm font-semibold text-red-600">
+                        {decision.dataSnapshot.missing_images} Properties zonder afbeeldingen
+                      </p>
                     </div>
+                    {decision.dataSnapshot.propertiesWithIssues?.missingImages && (
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {decision.dataSnapshot.propertiesWithIssues.missingImages.map((prop) => (
+                          <a
+                            key={prop.id}
+                            href={`/dashboard/edit/${prop.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between p-1.5 rounded bg-white/50 hover:bg-white/80 transition-colors text-xs group"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="font-mono text-muted-foreground">#{prop.listingNumber || 'N/A'}</span>
+                              <span className="truncate font-medium">{prop.title}</span>
+                            </div>
+                            <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-red-500 flex-shrink-0" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
                 {decision.dataSnapshot.missing_location !== undefined && decision.dataSnapshot.missing_location > 0 && (
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                    <MapPinOff className="h-4 w-4 text-orange-500" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Ontbrekende locatie</p>
-                      <p className="text-sm font-semibold text-orange-600">{decision.dataSnapshot.missing_location}</p>
+                  <div className="col-span-2 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPinOff className="h-4 w-4 text-orange-500" />
+                      <p className="text-sm font-semibold text-orange-600">
+                        {decision.dataSnapshot.missing_location} Properties zonder locatie
+                      </p>
                     </div>
+                    {decision.dataSnapshot.propertiesWithIssues?.missingLocation && (
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {decision.dataSnapshot.propertiesWithIssues.missingLocation.map((prop) => (
+                          <a
+                            key={prop.id}
+                            href={`/dashboard/edit/${prop.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between p-1.5 rounded bg-white/50 hover:bg-white/80 transition-colors text-xs group"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="font-mono text-muted-foreground">#{prop.listingNumber || 'N/A'}</span>
+                              <span className="truncate font-medium">{prop.title}</span>
+                              <span className="text-muted-foreground truncate">({prop.address})</span>
+                            </div>
+                            <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-orange-500 flex-shrink-0" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
                 {decision.dataSnapshot.total_views !== undefined && (
