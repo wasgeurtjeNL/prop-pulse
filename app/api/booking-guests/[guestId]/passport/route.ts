@@ -204,6 +204,103 @@ export async function POST(request: Request, { params }: RouteParams) {
   }
 }
 
+// PUT - Manually update passport data
+export async function PUT(request: Request, { params }: RouteParams) {
+  try {
+    const { guestId } = await params;
+    
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Get guest and verify access
+    const guest = await prisma.bookingGuest.findUnique({
+      where: { id: guestId },
+      include: {
+        booking: {
+          select: {
+            id: true,
+            userId: true,
+          },
+        },
+      },
+    });
+
+    if (!guest) {
+      return NextResponse.json(
+        { error: "Guest not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check authorization - admin or booking owner
+    const isAdmin = session.user.role?.toLowerCase() === "admin";
+    if (guest.booking.userId !== session.user.id && !isAdmin) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { 
+      firstName, 
+      lastName, 
+      passportNumber, 
+      nationality, 
+      dateOfBirth, 
+      gender,
+      passportVerified 
+    } = body;
+
+    // Update guest with manual data
+    const updatedGuest = await prisma.bookingGuest.update({
+      where: { id: guestId },
+      data: {
+        firstName: firstName || null,
+        lastName: lastName || null,
+        fullName: firstName && lastName ? `${firstName} ${lastName}` : null,
+        passportNumber: passportNumber || null,
+        nationality: nationality || null,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+        gender: gender || null,
+        passportVerified: passportVerified ?? false,
+        tm30Status: passportVerified ? "VERIFIED" : "SCANNED",
+      },
+    });
+
+    // Update booking TM30 status
+    await updateBookingTM30Status(guest.booking.id);
+
+    return NextResponse.json({
+      success: true,
+      guest: {
+        id: updatedGuest.id,
+        firstName: updatedGuest.firstName,
+        lastName: updatedGuest.lastName,
+        fullName: updatedGuest.fullName,
+        nationality: updatedGuest.nationality,
+        passportNumber: updatedGuest.passportNumber,
+        tm30Status: updatedGuest.tm30Status,
+        passportVerified: updatedGuest.passportVerified,
+      },
+    });
+  } catch (error: any) {
+    console.error("Error updating passport data:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to update passport data" },
+      { status: 500 }
+    );
+  }
+}
+
 // GET - Get passport status for a guest
 export async function GET(request: Request, { params }: RouteParams) {
   try {

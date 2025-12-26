@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
+import PassportUploadModal from "./passport-upload-modal";
 
 interface Guest {
   id: string;
@@ -73,6 +74,7 @@ export default function TM30Overview() {
   const [bookings, setBookings] = useState<TM30Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<TM30Booking | null>(null);
+  const [uploadGuest, setUploadGuest] = useState<{ guest: Guest; bookingId: string } | null>(null);
 
   useEffect(() => {
     fetchTM30Bookings();
@@ -432,9 +434,23 @@ export default function TM30Overview() {
                           </div>
                         )}
                       </div>
-                      <Badge className={STATUS_COLORS[guest.tm30Status]}>
-                        {guest.tm30Status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant={guest.passportImageUrl ? "outline" : "default"}
+                          onClick={() => setUploadGuest({ guest, bookingId: selectedBooking.id })}
+                          title={guest.passportImageUrl ? "Edit passport" : "Upload passport"}
+                        >
+                          <Icon 
+                            icon={guest.passportImageUrl ? "ph:pencil" : "ph:upload"} 
+                            className="w-4 h-4 mr-1" 
+                          />
+                          {guest.passportImageUrl ? "Edit" : "Upload"}
+                        </Button>
+                        <Badge className={STATUS_COLORS[guest.tm30Status]}>
+                          {guest.tm30Status}
+                        </Badge>
+                      </div>
                     </div>
                   ))
                 )}
@@ -442,6 +458,29 @@ export default function TM30Overview() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Passport Upload Modal */}
+      {uploadGuest && (
+        <PassportUploadModal
+          guest={uploadGuest.guest}
+          bookingId={uploadGuest.bookingId}
+          open={true}
+          onClose={() => setUploadGuest(null)}
+          onSuccess={() => {
+            fetchTM30Bookings();
+            // Also refresh selected booking if it's the same
+            if (selectedBooking && selectedBooking.id === uploadGuest.bookingId) {
+              // Refetch to update the guest data in the modal
+              fetch(`/api/tm30/bookings`)
+                .then(res => res.json())
+                .then(data => {
+                  const updated = data.bookings.find((b: TM30Booking) => b.id === selectedBooking.id);
+                  if (updated) setSelectedBooking(updated);
+                });
+            }
+          }}
+        />
       )}
     </div>
   );
