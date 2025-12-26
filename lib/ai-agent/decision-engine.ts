@@ -183,11 +183,23 @@ export class AIDecisionEngine {
   ): Promise<AIDecisionPayload[]> {
     const decisions: AIDecisionPayload[] = [];
 
-    // Check for existing pending/approved decisions to avoid duplicates
+    // Check for existing pending/approved/executed decisions to avoid duplicates
+    // Also check if there's an open GitHub PR that hasn't been merged yet
     const existingDecisions = await prisma.aIDecision.findMany({
       where: {
-        status: { in: ['PENDING', 'APPROVED'] },
-        createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // Last 24 hours
+        OR: [
+          // Pending or approved decisions from last 24 hours
+          {
+            status: { in: ['PENDING', 'APPROVED'] },
+            createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          },
+          // Executed decisions with an open GitHub PR (last 7 days)
+          {
+            status: 'EXECUTED',
+            createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+            wasSuccessful: true,
+          },
+        ],
       },
       select: { type: true, subType: true },
     });
