@@ -51,25 +51,34 @@ Thank you for booking *${booking.propertyName}*!
 
 🇹🇭 *TM30 Immigration Registration*
 
-According to Thai law, all foreign guests must be registered with Immigration within 24 hours of arrival at any accommodation. This is called the *"TM30 notification"*.
+Under Thai Immigration Act B.E. 2522 (Section 38), all accommodation providers are *legally required* to register foreign guests with Immigration within 24 hours of arrival. This is called the *"TM30 notification"*.
 
-*We handle this for you!* 🙌
+*We handle this registration for you!* 🙌
 
-To complete your registration and confirm your booking, please send a clear photo of the passport photo page for each guest.
+To comply with Thai law and confirm your booking, please send a clear photo of the passport photo page for each guest.
 
 📸 *${totalGuests} passport${totalGuests > 1 ? "s" : ""} needed*
 
 ━━━━━━━━━━━━━━━━━━━━━━
 
-📷 *Photo requirements:*
-• Full passport page visible
-• Clear text & photo
-• No glare or blur
+📷 *Photo Requirements:*
+• Full passport data page visible
+• Clear, readable text & photo
+• No glare, shadows, or blur
 
-🔒 *Your data is secure:*
-• Passports are only used for TM30 registration
-• Data is encrypted and stored securely
-• Images are deleted after your stay
+━━━━━━━━━━━━━━━━━━━━━━
+
+🔒 *Privacy & Data Protection*
+
+Your passport data is protected:
+
+✅ *Legal Basis:* Collection is required by Thai Immigration law (TM30)
+✅ *Purpose:* Used exclusively for TM30 registration
+✅ *Security:* End-to-end encrypted transmission, secure storage
+✅ *Retention:* Automatically deleted 90 days after checkout
+✅ *Access:* Only authorized staff for TM30 processing
+
+📄 Full privacy policy: realestatepulse.co/legal/tm30-privacy
 
 ━━━━━━━━━━━━━━━━━━━━━━
 
@@ -167,7 +176,9 @@ Your TM30 notification has been successfully submitted to Thai Immigration.
 
 📋 *Reference Number:* ${referenceNumber}
 
-This registration is valid for your entire stay. No further action is needed.
+This registration is valid for your entire stay. No further action is needed from you.
+
+🔒 *Your Data:* Your passport information was used solely for this registration and will be automatically deleted 90 days after checkout as per our privacy policy.
 
 Enjoy your stay! 🏖️`,
 
