@@ -54,12 +54,21 @@ interface ViewsOverTimeData {
   views: number;
 }
 
-interface ViewsStats {
+interface ViewsStatsDefault {
   total: number;
   today: number;
   thisWeek: number;
   thisMonth: number;
 }
+
+interface ViewsStatsRange {
+  total: number;
+  label: string;
+  avgPerDay: number;
+  days: number;
+}
+
+type ViewsStats = ViewsStatsDefault | ViewsStatsRange;
 
 interface ViewsByCountryData {
   country: string;
@@ -340,36 +349,64 @@ export function DashboardCharts({
           <CardDescription>Property page traffic statistics</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
-                <Eye className="h-4 w-4" />
-                <span className="text-xs font-medium">Total Views</span>
+          {"label" in viewsStats ? (
+            // Date range selected - show range stats
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
+                  <Eye className="h-4 w-4" />
+                  <span className="text-xs font-medium">{viewsStats.label}</span>
+                </div>
+                <p className="text-2xl font-bold">{viewsStats.total.toLocaleString()}</p>
               </div>
-              <p className="text-2xl font-bold">{viewsStats.total.toLocaleString()}</p>
-            </div>
-            <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-lg p-4 border border-green-200 dark:border-green-800">
-              <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
-                <ArrowUp className="h-4 w-4" />
-                <span className="text-xs font-medium">Today</span>
+              <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="text-xs font-medium">Avg/Day</span>
+                </div>
+                <p className="text-2xl font-bold">{viewsStats.avgPerDay.toLocaleString()}</p>
               </div>
-              <p className="text-2xl font-bold">{viewsStats.today.toLocaleString()}</p>
-            </div>
-            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
-              <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
-                <Calendar className="h-4 w-4" />
-                <span className="text-xs font-medium">This Week</span>
+              <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
+                  <Calendar className="h-4 w-4" />
+                  <span className="text-xs font-medium">Days</span>
+                </div>
+                <p className="text-2xl font-bold">{viewsStats.days}</p>
               </div>
-              <p className="text-2xl font-bold">{viewsStats.thisWeek.toLocaleString()}</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
-              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-1">
-                <TrendingUp className="h-4 w-4" />
-                <span className="text-xs font-medium">This Month</span>
+          ) : (
+            // Default - show today/week/month stats
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
+                  <Eye className="h-4 w-4" />
+                  <span className="text-xs font-medium">Total Views</span>
+                </div>
+                <p className="text-2xl font-bold">{viewsStats.total.toLocaleString()}</p>
               </div>
-              <p className="text-2xl font-bold">{viewsStats.thisMonth.toLocaleString()}</p>
+              <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-1">
+                  <ArrowUp className="h-4 w-4" />
+                  <span className="text-xs font-medium">Today</span>
+                </div>
+                <p className="text-2xl font-bold">{viewsStats.today.toLocaleString()}</p>
+              </div>
+              <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 mb-1">
+                  <Calendar className="h-4 w-4" />
+                  <span className="text-xs font-medium">This Week</span>
+                </div>
+                <p className="text-2xl font-bold">{viewsStats.thisWeek.toLocaleString()}</p>
+              </div>
+              <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-1">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="text-xs font-medium">This Month</span>
+                </div>
+                <p className="text-2xl font-bold">{viewsStats.thisMonth.toLocaleString()}</p>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 

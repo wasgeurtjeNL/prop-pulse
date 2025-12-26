@@ -25,11 +25,16 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   const params = await searchParams;
   const currentTab = params.tab || "analytics";
   
-  // Parse date range from URL params
-  const dateRange = params.from && params.to ? {
-    from: new Date(params.from),
-    to: new Date(params.to),
-  } : undefined;
+  // Parse date range from URL params with validation
+  let dateRange: { from: Date; to: Date } | undefined = undefined;
+  if (params.from && params.to) {
+    const from = new Date(params.from);
+    const to = new Date(params.to);
+    // Only use if both dates are valid
+    if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
+      dateRange = { from, to };
+    }
+  }
 
   return (
     <div className="space-y-6">
