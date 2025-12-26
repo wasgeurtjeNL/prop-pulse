@@ -28,7 +28,18 @@ import {
   Download,
   Eye,
   ExternalLink,
-  CheckCircle2
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  Database,
+  Target,
+  Zap,
+  ImageOff,
+  MapPinOff,
+  BarChart3,
+  Users,
+  Activity
 } from 'lucide-react';
 
 interface Decision {
@@ -42,6 +53,24 @@ interface Decision {
   wasSuccessful?: boolean;
   createdAt: string;
   executedAt?: string;
+  dataSnapshot?: {
+    missing_images?: number;
+    missing_location?: number;
+    total_views?: number;
+    unique_visitors?: number;
+    conversion_rate?: number;
+    error_count?: number;
+    [key: string]: unknown;
+  };
+  actionPayload?: {
+    files?: string[];
+    modifications?: Array<{
+      target: string;
+      fix: string;
+    }>;
+    [key: string]: unknown;
+  };
+  estimatedImpact?: string;
   executionResult?: {
     mode?: string;
     filesChanged?: string[];
@@ -455,99 +484,264 @@ function DecisionCard({
   onDownload?: () => void;
   loading?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const icon = typeIcons[decision.type] || typeIcons.default;
   const priorityColor = priorityColors[decision.priority] || priorityColors.medium;
 
+  const hasDetails = decision.dataSnapshot || decision.actionPayload || decision.estimatedImpact;
+
   return (
-    <div className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-      <div className={`p-2 rounded-full ${priorityColor} text-white`}>
-        {icon}
-      </div>
-      
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline">{decision.type}</Badge>
-          <Badge variant="secondary">{decision.priority}</Badge>
-          <span className="text-xs text-muted-foreground">
-            {Math.round(decision.confidence)}% confidence
-          </span>
+    <div className="border rounded-lg hover:bg-muted/50 transition-colors overflow-hidden">
+      {/* Main Card Content */}
+      <div className="flex items-start gap-4 p-4">
+        <div className={`p-2 rounded-full ${priorityColor} text-white flex-shrink-0`}>
+          {icon}
         </div>
-        <p className="mt-1 text-sm line-clamp-2">{decision.reasoning}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <p className="text-xs text-muted-foreground">
-            {new Date(decision.createdAt).toLocaleString()}
-          </p>
-          {decision.executionResult?.githubPrUrl && (
-            <a 
-              href={decision.executionResult.githubPrUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center"
-            >
-              <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 cursor-pointer">
-                <ExternalLink className="h-3 w-3 mr-1" />
-                View GitHub PR
-              </Badge>
-            </a>
-          )}
-          {decision.executionResult?.mode === 'serverless' && !decision.executionResult?.githubPrUrl && (
-            <Badge variant="outline" className="text-xs">
-              <ExternalLink className="h-3 w-3 mr-1" />
-              Code Ready for Manual Apply
-            </Badge>
-          )}
-          {decision.executionResult?.filesChanged && decision.executionResult.filesChanged.length > 0 && (
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline">{decision.type}</Badge>
+            {decision.subType && (
+              <Badge variant="secondary" className="text-xs">{decision.subType}</Badge>
+            )}
+            <Badge variant="secondary">{decision.priority}</Badge>
             <span className="text-xs text-muted-foreground">
-              {decision.executionResult.filesChanged.length} file(s)
+              {Math.round(decision.confidence)}% confidence
             </span>
+          </div>
+          <p className="mt-1 text-sm">{decision.reasoning}</p>
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <p className="text-xs text-muted-foreground">
+              {new Date(decision.createdAt).toLocaleString()}
+            </p>
+            {decision.executionResult?.githubPrUrl && (
+              <a 
+                href={decision.executionResult.githubPrUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center"
+              >
+                <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700 cursor-pointer">
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  View GitHub PR
+                </Badge>
+              </a>
+            )}
+            {decision.executionResult?.mode === 'serverless' && !decision.executionResult?.githubPrUrl && (
+              <Badge variant="outline" className="text-xs">
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Code Ready for Manual Apply
+              </Badge>
+            )}
+            {decision.executionResult?.filesChanged && decision.executionResult.filesChanged.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {decision.executionResult.filesChanged.length} file(s) changed
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              {hasDetails && (
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => setExpanded(!expanded)}
+                  className="text-muted-foreground"
+                >
+                  {expanded ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                  Details
+                </Button>
+              )}
+              {onApprove && (
+                <Button size="sm" variant="outline" onClick={onApprove}>
+                  <Check className="h-4 w-4 mr-1" />
+                  Approve
+                </Button>
+              )}
+              {onReject && (
+                <Button size="sm" variant="outline" onClick={onReject}>
+                  <X className="h-4 w-4 mr-1" />
+                  Reject
+                </Button>
+              )}
+              {onExecute && (
+                <Button size="sm" onClick={onExecute}>
+                  <Play className="h-4 w-4 mr-1" />
+                  Execute
+                </Button>
+              )}
+              {onViewCode && decision.status === 'EXECUTED' && (
+                <Button size="sm" variant="outline" onClick={onViewCode}>
+                  <Eye className="h-4 w-4 mr-1" />
+                  View Code
+                </Button>
+              )}
+              {onDownload && decision.status === 'EXECUTED' && (
+                <Button size="sm" variant="outline" onClick={onDownload}>
+                  <Download className="h-4 w-4 mr-1" />
+                  Download
+                </Button>
+              )}
+              {onRollback && decision.status === 'EXECUTED' && (
+                <Button size="sm" variant="outline" onClick={onRollback}>
+                  <RotateCcw className="h-4 w-4 mr-1" />
+                  Rollback
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <>
-            {onApprove && (
-              <Button size="sm" variant="outline" onClick={onApprove}>
-                <Check className="h-4 w-4 mr-1" />
-                Approve
-              </Button>
-            )}
-            {onReject && (
-              <Button size="sm" variant="outline" onClick={onReject}>
-                <X className="h-4 w-4 mr-1" />
-                Reject
-              </Button>
-            )}
-            {onExecute && (
-              <Button size="sm" onClick={onExecute}>
-                <Play className="h-4 w-4 mr-1" />
-                Execute
-              </Button>
-            )}
-            {onViewCode && decision.status === 'EXECUTED' && (
-              <Button size="sm" variant="outline" onClick={onViewCode}>
-                <Eye className="h-4 w-4 mr-1" />
-                View Code
-              </Button>
-            )}
-            {onDownload && decision.status === 'EXECUTED' && (
-              <Button size="sm" variant="outline" onClick={onDownload}>
-                <Download className="h-4 w-4 mr-1" />
-                Download
-              </Button>
-            )}
-            {onRollback && decision.status === 'EXECUTED' && (
-              <Button size="sm" variant="outline" onClick={onRollback}>
-                <RotateCcw className="h-4 w-4 mr-1" />
-                Rollback
-              </Button>
-            )}
-          </>
-        )}
-      </div>
+      {/* Expanded Details Section */}
+      {expanded && hasDetails && (
+        <div className="border-t bg-muted/30 p-4 space-y-4">
+          {/* Data Snapshot - What the AI saw */}
+          {decision.dataSnapshot && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Database className="h-4 w-4 text-blue-500" />
+                Data Basis (Wat de AI zag)
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {decision.dataSnapshot.missing_images !== undefined && decision.dataSnapshot.missing_images > 0 && (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <ImageOff className="h-4 w-4 text-red-500" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Ontbrekende afbeeldingen</p>
+                      <p className="text-sm font-semibold text-red-600">{decision.dataSnapshot.missing_images}</p>
+                    </div>
+                  </div>
+                )}
+                {decision.dataSnapshot.missing_location !== undefined && decision.dataSnapshot.missing_location > 0 && (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                    <MapPinOff className="h-4 w-4 text-orange-500" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Ontbrekende locatie</p>
+                      <p className="text-sm font-semibold text-orange-600">{decision.dataSnapshot.missing_location}</p>
+                    </div>
+                  </div>
+                )}
+                {decision.dataSnapshot.total_views !== undefined && (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <BarChart3 className="h-4 w-4 text-blue-500" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Totale views</p>
+                      <p className="text-sm font-semibold">{decision.dataSnapshot.total_views}</p>
+                    </div>
+                  </div>
+                )}
+                {decision.dataSnapshot.unique_visitors !== undefined && (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <Users className="h-4 w-4 text-green-500" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Unieke bezoekers</p>
+                      <p className="text-sm font-semibold">{decision.dataSnapshot.unique_visitors}</p>
+                    </div>
+                  </div>
+                )}
+                {decision.dataSnapshot.conversion_rate !== undefined && (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <TrendingUp className="h-4 w-4 text-purple-500" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Conversie rate</p>
+                      <p className="text-sm font-semibold">{decision.dataSnapshot.conversion_rate}%</p>
+                    </div>
+                  </div>
+                )}
+                {decision.dataSnapshot.error_count !== undefined && decision.dataSnapshot.error_count > 0 && (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <AlertTriangle className="h-4 w-4 text-red-500" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Totaal fouten</p>
+                      <p className="text-sm font-semibold text-red-600">{decision.dataSnapshot.error_count}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Action Payload - What the AI wants to do */}
+          {decision.actionPayload && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Target className="h-4 w-4 text-green-500" />
+                Geplande Acties (Wat de AI wil doen)
+              </h4>
+              <div className="space-y-2">
+                {decision.actionPayload.modifications?.map((mod, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-background border">
+                    <div className="p-1.5 rounded-full bg-green-500/10">
+                      <Activity className="h-3 w-3 text-green-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium capitalize">{mod.target.replace(/_/g, ' ')}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{mod.fix}</p>
+                    </div>
+                  </div>
+                ))}
+                {decision.actionPayload.files && decision.actionPayload.files.length > 0 && (
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-background border">
+                    <div className="p-1.5 rounded-full bg-blue-500/10">
+                      <FileCode className="h-3 w-3 text-blue-500" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Bestanden</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {decision.actionPayload.files.map((file, index) => (
+                          <code key={index} className="text-xs px-1.5 py-0.5 rounded bg-muted">
+                            {file}
+                          </code>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Estimated Impact */}
+          {decision.estimatedImpact && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Zap className="h-4 w-4 text-yellow-500" />
+                Verwachte Impact
+              </h4>
+              <p className="text-sm text-muted-foreground bg-background p-3 rounded-lg border">
+                {decision.estimatedImpact}
+              </p>
+            </div>
+          )}
+
+          {/* Files that will be changed (for executed) */}
+          {decision.executionResult?.filesChanged && decision.executionResult.filesChanged.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <FileCode className="h-4 w-4 text-blue-500" />
+                Gewijzigde Bestanden
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {decision.executionResult.filesChanged.map((file, index) => (
+                  <code key={index} className="text-xs px-2 py-1 rounded bg-background border font-mono">
+                    {file}
+                  </code>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

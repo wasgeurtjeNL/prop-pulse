@@ -474,7 +474,7 @@ export class RealEstateAIAgent {
   }
 
   /**
-   * Get recent decisions with full details
+   * Get recent decisions with full details including data snapshot and actions
    */
   async getRecentDecisions(limit: number = 20): Promise<Array<{
     id: string;
@@ -487,6 +487,10 @@ export class RealEstateAIAgent {
     wasSuccessful: boolean | null;
     createdAt: Date;
     executedAt: Date | null;
+    dataSnapshot: Record<string, unknown> | null;
+    actionPayload: Record<string, unknown> | null;
+    estimatedImpact: string | null;
+    executionResult: Record<string, unknown> | null;
   }>> {
     return prisma.aIDecision.findMany({
       orderBy: { createdAt: 'desc' },
@@ -502,6 +506,10 @@ export class RealEstateAIAgent {
         wasSuccessful: true,
         createdAt: true,
         executedAt: true,
+        dataSnapshot: true,
+        actionPayload: true,
+        estimatedImpact: true,
+        executionResult: true,
       },
     });
   }
