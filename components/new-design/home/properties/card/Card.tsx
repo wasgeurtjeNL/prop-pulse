@@ -19,7 +19,7 @@ interface PropertyCardItem extends PropertyHomes {
 }
 
 const PropertyCard: React.FC<{ item: PropertyCardItem; priority?: boolean }> = ({ item, priority = false }) => {
-  const { name, location, rate, beds, baths, area, slug, images, type, seaDistance, amenities, yearBuilt, provinceSlug, areaSlug } = item
+  const { name, location, rate, beds, baths, area, slug, images, type, seaDistance, amenities, yearBuilt, provinceSlug, areaSlug, status } = item
   const propertyUrl = getPropertyUrl({ slug, provinceSlug, areaSlug })
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
@@ -28,6 +28,7 @@ const PropertyCard: React.FC<{ item: PropertyCardItem; priority?: boolean }> = (
   const currentImageBlur = (images[currentImageIndex] as any)?.blurDataURL;
   const isRental = type === 'FOR_RENT';
   const hasMultipleImages = images.length > 1;
+  const isSoldOrRented = status === 'SOLD' || status === 'RENTED';
 
   // Convert images to lightbox format
   const lightboxImages = images.map((img, index) => ({
@@ -67,11 +68,29 @@ const PropertyCard: React.FC<{ item: PropertyCardItem; priority?: boolean }> = (
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                     priority={priority && currentImageIndex === 0}
+                    loading={priority && currentImageIndex === 0 ? "eager" : "lazy"}
                     placeholder={currentImageBlur ? "blur" : "empty"}
                     blurDataURL={currentImageBlur}
-                    className='object-cover rounded-t-2xl group-hover:brightness-50 group-hover:scale-125 transition duration-300 delay-75'
-                    unoptimized={true}
+                    className={`object-cover rounded-t-2xl transition duration-300 delay-75 ${
+                      isSoldOrRented 
+                        ? 'brightness-75' 
+                        : 'group-hover:brightness-50 group-hover:scale-125'
+                    }`}
                   />
+                )}
+                
+                {/* SOLD / RENTED Overlay */}
+                {isSoldOrRented && (
+                  <div className='absolute inset-0 flex items-center justify-center z-20 pointer-events-none'>
+                    <span className={`
+                      px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-white font-bold 
+                      text-lg sm:text-xl md:text-2xl uppercase tracking-wider
+                      shadow-xl rotate-[-12deg] transform
+                      ${status === 'SOLD' ? 'bg-blue-600' : 'bg-amber-500'}
+                    `}>
+                      {status}
+                    </span>
+                  </div>
                 )}
                 
                 {/* Image counter indicator */}

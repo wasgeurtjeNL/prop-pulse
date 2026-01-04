@@ -1,11 +1,43 @@
 import dynamic from "next/dynamic";
 import { Metadata } from "next";
-import { getPropertyByFullSlug, getRelatedProperties } from "@/lib/actions/property.actions";
+import { getPropertyByFullSlug, getRelatedProperties, getAllPropertySlugs } from "@/lib/actions/property.actions";
 import { getNearbyPois } from "@/lib/actions/poi.actions";
 import { notFound } from "next/navigation";
 import { generatePropertySchema, generatePropertyFAQSchema, renderJsonLd } from "@/lib/utils/structured-data";
 import { transformPropertyToTemplate } from "@/lib/adapters/property-adapter";
 import { TrackPropertyView } from "@/components/shared/analytics/track-property-view";
+import { unstable_cache } from "next/cache";
+
+// Revalidate pages every 60 seconds (ISR - Incremental Static Regeneration)
+export const revalidate = 60;
+
+// Pre-generate all active property pages at build time for instant loading
+export async function generateStaticParams() {
+    const properties = await getAllPropertySlugs();
+    return properties.map((p) => ({
+        province: p.provinceSlug || 'thailand',
+        area: p.areaSlug || 'properties',
+        slug: p.slug,
+    }));
+}
+
+// Cached property fetch to prevent duplicate database calls
+const getCachedProperty = unstable_cache(
+    async (province: string, area: string, slug: string) => {
+        return getPropertyByFullSlug(province, area, slug);
+    },
+    ['property-detail'],
+    { revalidate: 60, tags: ['properties'] }
+);
+
+// Cached related properties
+const getCachedRelatedProperties = unstable_cache(
+    async (slug: string, type: string, location: string, category: string | null) => {
+        return getRelatedProperties(slug, type, location, category, 3);
+    },
+    ['related-properties'],
+    { revalidate: 300, tags: ['properties'] }
+);
 
 // Dynamic import for the heavy property detail component
 const Details = dynamic(() => import("@/components/new-design/properties/property-detail"), {
@@ -18,7 +50,7 @@ interface PropertyDetailPageProps {
 
 export async function generateMetadata({ params }: PropertyDetailPageProps): Promise<Metadata> {
     const { province, area, slug } = await params;
-    const property = await getPropertyByFullSlug(province, area, slug);
+    const property = await getCachedProperty(province, area, slug);
 
     if (!property) {
         return {
@@ -37,7 +69,10 @@ export async function generateMetadata({ params }: PropertyDetailPageProps): Pro
     const propertyType = property.category?.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) || 'Property';
     const areaName = area.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     const provinceName = province.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    const metaTitle = `${property.title} | ${areaName}, ${provinceName} | ${property.price} | Real Estate Pulse`;
+    
+    // Add SOLD/RENTED prefix to title if property is no longer available
+    const statusPrefix = property.status === 'SOLD' ? 'SOLD - ' : property.status === 'RENTED' ? 'RENTED - ' : '';
+    const metaTitle = `${statusPrefix}${property.title} | ${areaName}, ${provinceName} | ${property.price} | Real Estate Pulse`;
     
     // Create rich description with POI highlights
     const poiHighlights: string[] = [];
@@ -97,10 +132,11 @@ export async function generateMetadata({ params }: PropertyDetailPageProps): Pro
             images: [mainImage.startsWith('http') ? mainImage : `${baseUrl}${mainImage}`],
         },
         robots: {
-            index: property.status === 'ACTIVE',
+            // Index ACTIVE, SOLD, and RENTED properties (INACTIVE is hidden)
+            index: property.status !== 'INACTIVE',
             follow: true,
             googleBot: {
-                index: property.status === 'ACTIVE',
+                index: property.status !== 'INACTIVE',
                 follow: true,
                 'max-image-preview': 'large',
                 'max-snippet': -1,
@@ -114,7 +150,9 @@ export async function generateMetadata({ params }: PropertyDetailPageProps): Pro
 
 const PropertyDetailPage = async ({ params }: PropertyDetailPageProps) => {
     const { province, area, slug } = await params;
-    const property = await getPropertyByFullSlug(province, area, slug);
+    
+    // Use cached property fetch (same cache as generateMetadata to prevent duplicate calls)
+    const property = await getCachedProperty(province, area, slug);
 
     if (!property) {
         notFound();
@@ -127,17 +165,12 @@ const PropertyDetailPage = async ({ params }: PropertyDetailPageProps) => {
     // Transform property to frontend format
     const transformedProperty = transformPropertyToTemplate(property);
 
-    // Fetch related properties server-side for faster rendering
-    const relatedProperties = await getRelatedProperties(
-        property.slug,
-        property.type,
-        property.location,
-        property.category,
-        3
-    );
+    // Fetch related properties and POIs in parallel for faster rendering
+    const [relatedProperties, nearbyPoisResult] = await Promise.all([
+        getCachedRelatedProperties(property.slug, property.type, property.location, property.category),
+        getNearbyPois(property.id, { maxDistance: 10000, limit: 20 })
+    ]);
 
-    // Fetch nearby POIs for structured data
-    const nearbyPoisResult = await getNearbyPois(property.id, { maxDistance: 10000, limit: 20 });
     const nearbyPoisFlat = nearbyPoisResult.success && nearbyPoisResult.data 
         ? nearbyPoisResult.data.flatMap(group => group.pois.map(poi => ({
             name: poi.name,

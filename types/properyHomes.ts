@@ -12,6 +12,9 @@ export type PropertyHomes = {
   area: number
   images: PropertyImage[]
   
+  // Property status for SOLD/RENTED overlay
+  status?: 'ACTIVE' | 'INACTIVE' | 'SOLD' | 'RENTED'
+  
   // Property features for badges
   amenities?: string[]
   yearBuilt?: number
@@ -32,4 +35,5 @@ export type PropertyHomes = {
 
 interface PropertyImage {
   src: string;
+  alt?: string;
 }

@@ -22,8 +22,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
 import Link from "next/link";
-import { PropertyType, Status } from "@/lib/generated/prisma/client";
+import { PropertyType, Status } from "@prisma/client";
 import { formatType } from "@/lib/utils";
+import { getStatusConfig } from "@/lib/utils/property-status";
 import { deleteProperty, bulkDeleteProperties } from "@/lib/actions/property.actions";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
@@ -233,11 +234,9 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
                 </TableCell>
                 <TableCell>
                   <Badge
-                    variant={
-                      property.status === "ACTIVE" ? "default" : "secondary"
-                    }
+                    className={getStatusConfig(property.status).badgeClass}
                   >
-                    {property.status}
+                    {getStatusConfig(property.status).label}
                   </Badge>
                 </TableCell>
                 <TableCell>

@@ -2,7 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import prisma from "../prisma";
-import { PropertyType, Status, PropertyCategory, Property, PropertyImage, OwnershipType } from "../generated/prisma/client";
+import { PropertyType, Status, PropertyCategory, Property, PropertyImage, OwnershipType } from "@prisma/client";
 import { auth } from "../auth";
 import { headers } from "next/headers";
 import { slugify } from "../utils";
@@ -58,6 +58,8 @@ export interface PropertyFilterParams {
   baths?: string;
   amenities?: string | string[];
   shortStay?: string | boolean; // Filter for daily rental properties (< 30 days)
+  includeUnavailable?: boolean; // Include SOLD/RENTED properties (for "Recently Sold" section)
+  status?: string; // Filter by specific status (ACTIVE, SOLD, RENTED, etc.)
 }
 
 // Type for highlighted property with images
@@ -176,15 +178,48 @@ export async function getPropertyByFullSlug(province: string, area: string, slug
   }
 }
 
+/**
+ * Get all property slugs for Static Site Generation (SSG)
+ * Returns minimal data needed for generateStaticParams
+ */
+export async function getAllPropertySlugs(): Promise<{ slug: string; provinceSlug: string | null; areaSlug: string | null }[]> {
+  try {
+    const properties = await prisma.property.findMany({
+      where: {
+        status: Status.ACTIVE,
+      },
+      select: {
+        slug: true,
+        provinceSlug: true,
+        areaSlug: true,
+      },
+    });
+    return properties;
+  } catch (error) {
+    console.error("Error fetching property slugs for SSG:", error);
+    return [];
+  }
+}
+
 
 export async function getProperties(params: PropertyFilterParams) {
   try {
-    const { query, type, category, beds, baths, amenities, shortStay } = params;
+    const { query, type, category, beds, baths, amenities, shortStay, includeUnavailable, status } = params;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {
-      status: Status.ACTIVE,
-    };
+    const where: any = {};
+    
+    // Status filtering logic:
+    // 1. If specific status is provided, use that
+    // 2. If includeUnavailable is true, include ACTIVE, SOLD, and RENTED
+    // 3. Default to ACTIVE only
+    if (status && status !== 'all') {
+      where.status = status as Status;
+    } else if (includeUnavailable) {
+      where.status = { in: [Status.ACTIVE, Status.SOLD, Status.RENTED] };
+    } else {
+      where.status = Status.ACTIVE;
+    }
 
     if (query) {
       where.OR = [
@@ -800,16 +835,16 @@ export async function updateProperty(id: string, data: any) {
       ownerNotes: data.ownerNotes !== undefined ? (data.ownerNotes || null) : undefined,
       commissionRate: data.commissionRate !== undefined ? data.commissionRate : null,
       
-      // Property Access Details (for daily rentals)
-      defaultCheckInTime: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultCheckInTime || "14:00") : null,
-      defaultCheckOutTime: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultCheckOutTime || "11:00") : null,
-      defaultPropertyAddress: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultPropertyAddress || null) : null,
-      defaultWifiName: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultWifiName || null) : null,
-      defaultWifiPassword: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultWifiPassword || null) : null,
-      defaultAccessCode: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultAccessCode || null) : null,
-      defaultEmergencyContact: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultEmergencyContact || null) : null,
-      defaultPropertyInstructions: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultPropertyInstructions || null) : null,
-      defaultHouseRules: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultHouseRules || null) : null,
+      // Property Access Details (for daily rentals) - using snake_case to match Prisma schema
+      default_check_in_time: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultCheckInTime || "14:00") : null,
+      default_check_out_time: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultCheckOutTime || "11:00") : null,
+      default_property_address: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultPropertyAddress || null) : null,
+      default_wifi_name: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultWifiName || null) : null,
+      default_wifi_password: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultWifiPassword || null) : null,
+      default_access_code: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultAccessCode || null) : null,
+      default_emergency_contact: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultEmergencyContact || null) : null,
+      default_property_instructions: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultPropertyInstructions || null) : null,
+      default_house_rules: data.type === "FOR_RENT" && data.enableDailyRental ? (data.defaultHouseRules || null) : null,
       
       // URL structure slugs for hierarchical URLs
       provinceSlug,
@@ -889,24 +924,36 @@ export async function updateImagePositions(propertyId: string, imagePositions: {
   }
 
   try {
-    // First, set all positions to temporary negative values to avoid unique constraint conflicts
-    // The unique constraint is on (propertyId, position), so we need to do this in two steps
-    await prisma.$transaction([
-      // Step 1: Set all to temporary negative positions
-      ...imagePositions.map(({ id }, index) =>
-        prisma.propertyImage.update({
-          where: { id },
-          data: { position: -(index + 1000) }, // Use negative values to avoid conflicts
-        })
-      ),
-      // Step 2: Set to final positions
-      ...imagePositions.map(({ id, position }) =>
-        prisma.propertyImage.update({
-          where: { id },
-          data: { position },
-        })
-      ),
-    ]);
+    // Use raw SQL for efficient batch position updates
+    // This avoids the 2N individual updates that can cause transaction timeouts
+    if (imagePositions.length === 0) {
+      return { success: true };
+    }
+
+    // Build a single UPDATE query using CASE WHEN for efficiency
+    // First, set all to temporary negative values to avoid unique constraint conflicts
+    const tempUpdateCases = imagePositions
+      .map(({ id }, index) => `WHEN id = '${id}' THEN ${-(index + 1000)}`)
+      .join(' ');
+    const ids = imagePositions.map(({ id }) => `'${id}'`).join(', ');
+
+    // Step 1: Set to temporary negative positions
+    await prisma.$executeRawUnsafe(`
+      UPDATE "property_image" 
+      SET position = CASE ${tempUpdateCases} END 
+      WHERE id IN (${ids})
+    `);
+
+    // Step 2: Set to final positions
+    const finalUpdateCases = imagePositions
+      .map(({ id, position }) => `WHEN id = '${id}' THEN ${position}`)
+      .join(' ');
+
+    await prisma.$executeRawUnsafe(`
+      UPDATE "property_image" 
+      SET position = CASE ${finalUpdateCases} END 
+      WHERE id IN (${ids})
+    `);
 
     revalidatePath("/dashboard");
     revalidatePath("/");
@@ -1099,5 +1146,38 @@ export async function backfillListingNumbers(): Promise<{ updated: number; total
   } catch (error) {
     console.error("Error backfilling listing numbers:", error);
     throw new Error(`Failed to backfill listing numbers: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Get recently sold/rented properties for marketing "Recently Sold" section
+ * Returns properties that were marked as SOLD or RENTED in the last 90 days
+ */
+export async function getRecentlySoldProperties(limit: number = 6) {
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+  try {
+    const properties = await prisma.property.findMany({
+      where: {
+        status: { in: [Status.SOLD, Status.RENTED] },
+        updatedAt: { gte: ninetyDaysAgo },
+      },
+      include: {
+        images: {
+          orderBy: { position: "asc" },
+          take: 1,
+        },
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+      take: limit,
+    });
+
+    return properties;
+  } catch (error) {
+    console.error("Error fetching recently sold properties:", error);
+    return [];
   }
 }

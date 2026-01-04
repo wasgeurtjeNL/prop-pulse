@@ -44,6 +44,14 @@ const RentalBookingWidget = dynamic(
   { ssr: false }
 );
 
+const PropertyMap = dynamic(
+  () => import('@/components/shared/property-map'),
+  { 
+    ssr: false,
+    loading: () => <div className="animate-pulse bg-slate-100 dark:bg-slate-800 h-[250px] sm:h-[350px] md:h-[400px] rounded-2xl mt-6 sm:mt-8" />
+  }
+);
+
 // Skeleton component for image placeholders with fixed aspect ratio to prevent CLS
 const ImageSkeleton = ({ className = "", aspectRatio = "4/3" }: { className?: string; aspectRatio?: string }) => (
   <div 
@@ -101,7 +109,6 @@ const PropertyImage = ({
         blurDataURL={blurDataURL}
         className={`object-cover ${className}`}
         onError={() => setError(true)}
-        unoptimized={true}
       />
     </div>
   );
@@ -219,6 +226,12 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
         { name: item.name || item.title || 'Property', href: `/properties/${item.slug}` }
     ] : [];
 
+    // Check if property is sold or rented
+    const isSoldOrRented = item?.status === 'SOLD' || item?.status === 'RENTED';
+    const statusLabel = item?.status === 'SOLD' ? 'Sold' : 'Rented';
+    const statusColor = item?.status === 'SOLD' ? 'from-blue-600 to-blue-800' : 'from-amber-500 to-amber-700';
+    const statusIcon = item?.status === 'SOLD' ? 'ph:seal-check-fill' : 'ph:key-fill';
+
     return (
         <main className="py-[5px] relative overflow-x-hidden" role="main">
             <div className="container mx-auto max-w-8xl px-3 sm:px-4 md:px-5 2xl:px-0">
@@ -226,6 +239,33 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                 {item && (
                     <div className="mb-1 sm:mb-2">
                         <Breadcrumb items={breadcrumbs} />
+                    </div>
+                )}
+                
+                {/* SOLD / RENTED Banner */}
+                {isSoldOrRented && (
+                    <div className={`bg-gradient-to-r ${statusColor} text-white py-4 px-4 sm:px-6 mb-4 sm:mb-6 rounded-xl shadow-lg`}>
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <Icon icon={statusIcon} className="w-6 h-6 sm:w-8 sm:h-8" />
+                                <div>
+                                    <span className="text-lg sm:text-xl font-bold uppercase tracking-wide">
+                                        This Property Has Been {statusLabel}
+                                    </span>
+                                    <p className="text-white/80 text-sm mt-0.5">
+                                        Interested in similar properties?
+                                    </p>
+                                </div>
+                            </div>
+                            <Link 
+                                href={`/properties?type=${item?.type === 'FOR_RENT' ? 'rent' : 'buy'}`}
+                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-lg font-medium text-sm transition-colors whitespace-nowrap"
+                            >
+                                <Icon icon="ph:buildings" className="w-4 h-4" />
+                                View Available Properties
+                                <Icon icon="ph:arrow-right" className="w-4 h-4" />
+                            </Link>
+                        </div>
                     </div>
                 )}
                 
@@ -364,13 +404,27 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                         containerClassName="w-full"
                                         aspectRatio="4/3"
                                     />
+                                    {/* SOLD/RENTED Overlay on Mobile Images (first image only) */}
+                                    {isSoldOrRented && index === 0 && (
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20 pointer-events-none rounded-xl">
+                                            <div className={`
+                                                transform rotate-[-12deg] px-6 py-3 
+                                                ${item?.status === 'SOLD' ? 'bg-blue-600' : 'bg-amber-500'}
+                                                shadow-xl border-2 border-white/30
+                                            `}>
+                                                <span className="text-white font-black text-2xl uppercase tracking-widest">
+                                                    {item?.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
                                     {/* Image counter badge */}
                                     <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 z-10" aria-hidden="true">
                                         <Icon icon="ph:images" width={14} height={14} aria-hidden="true" />
                                         {index + 1}/{item.images.length}
                                     </div>
-                                    {/* Tap to expand hint on first image */}
-                                    {index === 0 && (
+                                    {/* Tap to expand hint on first image (hide when sold) */}
+                                    {index === 0 && !isSoldOrRented && (
                                         <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1 z-10" aria-hidden="true">
                                             <Icon icon="ph:arrows-out" width={12} height={12} aria-hidden="true" />
                                             Tap to expand
@@ -403,6 +457,20 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                     containerClassName="w-full"
                                     aspectRatio="16/10"
                                 />
+                                {/* SOLD/RENTED Overlay on Main Image */}
+                                {isSoldOrRented && (
+                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20 pointer-events-none rounded-xl sm:rounded-2xl">
+                                        <div className={`
+                                            transform rotate-[-12deg] px-8 sm:px-12 py-4 sm:py-6 
+                                            ${item?.status === 'SOLD' ? 'bg-blue-600' : 'bg-amber-500'}
+                                            shadow-2xl border-4 border-white/30
+                                        `}>
+                                            <span className="text-white font-black text-3xl sm:text-5xl md:text-6xl lg:text-7xl uppercase tracking-widest drop-shadow-lg">
+                                                {item?.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center z-10" aria-hidden="true">
                                     <Icon icon="ph:magnifying-glass-plus" className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" width={36} height={36} aria-hidden="true" />
                                 </div>
@@ -598,49 +666,100 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                             />
                         )}
 
-                        {item?.mapUrl && (
-                            <iframe
-                                src={item.mapUrl}
-                                width="1114" height="400" loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="rounded-2xl w-full h-[250px] sm:h-[350px] md:h-[400px] mt-6 sm:mt-8">
-                            </iframe>
-                        )}
-                    </div>
-                    <div className="lg:col-span-4 col-span-12 mt-4 sm:mt-6 lg:mt-0">
-                        {/* Rental Booking Widget - Only for FOR_RENT with daily rental enabled */}
-                        {item?.type === 'FOR_RENT' && item?.enableDailyRental && item?.monthlyRentalPrice && (
-                            <div className="mb-6">
-                                <RentalBookingWidget
-                                    monthlyPrice={item.monthlyRentalPrice}
-                                    maxGuests={item.maxGuests || 10}
-                                    allowPets={item.allowPets || false}
-                                    pricingConfig={pricingConfig}
-                                    property={{
-                                        id: item.id,
-                                        title: item.title,
-                                        image: item.images?.[0]?.src || item.image || '/images/properties/property7.jpg',
-                                        location: item.location,
-                                    }}
-                                    onBookingConfirmed={(booking) => {
-                                        console.log('Booking confirmed:', booking);
-                                    }}
+                        {/* Property Map - Uses Google Embed if valid, otherwise OpenStreetMap fallback */}
+                        {(item?.mapUrl || (item?.latitude && item?.longitude)) && (
+                            <div className="mt-6 sm:mt-8">
+                                <PropertyMap
+                                    mapUrl={item.mapUrl}
+                                    latitude={item.latitude}
+                                    longitude={item.longitude}
+                                    title={item.title}
+                                    className="rounded-2xl w-full h-[250px] sm:h-[350px] md:h-[400px]"
                                 />
                             </div>
                         )}
-                        {/* Property Request Tabs */}
-                        {item && (
-                            <PropertyRequestTabs
-                                propertyId={item.id}
-                                propertyTitle={item.title}
-                                propertySlug={item.slug}
-                                phoneNumber="+66 (0)98 626 1646"
-                            />
+                    </div>
+                    <div className="lg:col-span-4 col-span-12 mt-4 sm:mt-6 lg:mt-0">
+                        {/* SOLD / RENTED - Show Alternative CTA */}
+                        {isSoldOrRented ? (
+                            <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-6 bg-slate-50 dark:bg-slate-800/50">
+                                <div className="text-center">
+                                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
+                                        item?.status === 'SOLD' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-amber-100 dark:bg-amber-900/30'
+                                    }`}>
+                                        <Icon 
+                                            icon={item?.status === 'SOLD' ? 'ph:seal-check-fill' : 'ph:key-fill'} 
+                                            className={`w-8 h-8 ${
+                                                item?.status === 'SOLD' ? 'text-blue-600 dark:text-blue-400' : 'text-amber-600 dark:text-amber-400'
+                                            }`}
+                                        />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                                        This Property is No Longer Available
+                                    </h3>
+                                    <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">
+                                        This property has been {item?.status?.toLowerCase()}. Browse our other {item?.type === 'FOR_RENT' ? 'rental' : 'sale'} properties to find your perfect home.
+                                    </p>
+                                    <Link 
+                                        href={`/properties?type=${item?.type === 'FOR_RENT' ? 'rent' : 'buy'}`}
+                                        className="inline-flex items-center justify-center gap-2 w-full py-3 px-4 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg transition-colors"
+                                    >
+                                        <Icon icon="ph:buildings" className="w-5 h-5" />
+                                        Browse Available Properties
+                                    </Link>
+                                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                                            Or contact us for similar properties:
+                                        </p>
+                                        <a 
+                                            href="tel:+66986261646"
+                                            className="inline-flex items-center gap-2 text-primary hover:underline text-sm font-medium"
+                                        >
+                                            <Icon icon="ph:phone" className="w-4 h-4" />
+                                            +66 (0)98 626 1646
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Rental Booking Widget - Only for FOR_RENT with daily rental enabled */}
+                                {item?.type === 'FOR_RENT' && item?.enableDailyRental && item?.monthlyRentalPrice && (
+                                    <div className="mb-6">
+                                        <RentalBookingWidget
+                                            monthlyPrice={item.monthlyRentalPrice}
+                                            maxGuests={item.maxGuests || 10}
+                                            allowPets={item.allowPets || false}
+                                            pricingConfig={pricingConfig}
+                                            property={{
+                                                id: item.id,
+                                                title: item.title,
+                                                image: item.images?.[0]?.src || item.image || '/images/properties/property7.jpg',
+                                                location: item.location,
+                                            }}
+                                            onBookingConfirmed={(booking) => {
+                                                console.log('Booking confirmed:', booking);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                                {/* Property Request Tabs */}
+                                {item && (
+                                    <PropertyRequestTabs
+                                        propertyId={item.id}
+                                        propertyTitle={item.title}
+                                        propertySlug={item.slug}
+                                        phoneNumber="+66 (0)98 626 1646"
+                                    />
+                                )}
+                            </>
                         )}
                         {testimonials && testimonials?.slice(0, 1).map((item:any, index:any) => (
                             <div key={index} className="border p-4 sm:p-6 md:p-10 rounded-xl sm:rounded-2xl border-dark/10 dark:border-white/20 mt-4 sm:mt-6 md:mt-10 flex flex-col gap-3 sm:gap-4 md:gap-6">
                                 <Icon icon="ph:house-simple" width={36} height={36} className="text-primary sm:w-11 sm:h-11" />
                                 <p className='text-sm sm:text-base text-dark dark:text-white'>{item.review}</p>
                                 <div className="flex items-center gap-4 sm:gap-6">
-                                    <Image src={item.image} alt={item.name} width={80} height={80} className='w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex-shrink-0' unoptimized={true} />
+                                    <Image src={item.image} alt={item.name} width={80} height={80} className='w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex-shrink-0' loading="lazy" />
                                     <div className="">
                                         <h3 className='text-sm sm:text-base text-dark dark:text-white'>{item.name}</h3>
                                         <h4 className='text-xs sm:text-sm text-dark/60 dark:text-white/50'>{item.position}</h4>
@@ -652,97 +771,115 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                 </div>
             </div>
 
-            {/* Lightbox Modal */}
+            {/* Lightbox Modal - Improved for mobile */}
             {lightboxOpen && item?.images && (
                 <div 
-                    className="fixed inset-0 bg-black/95 z-[9999] flex items-center justify-center p-2 sm:p-4"
+                    className="fixed inset-0 bg-black z-[9999] flex flex-col"
                     onClick={closeLightbox}
                 >
-                    {/* Close Button */}
-                    <button
-                        onClick={closeLightbox}
-                        className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[10000] text-white hover:text-gray-300 transition-colors p-1.5 sm:p-2 rounded-full bg-black/50 hover:bg-black/70"
-                        aria-label="Close lightbox"
-                    >
-                        <Icon icon="ph:x" width={24} height={24} className="sm:w-8 sm:h-8" />
-                    </button>
-
-                    {/* Previous Button */}
-                    {item.images.length > 1 && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                previousImage();
-                            }}
-                            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-[10000] text-white hover:text-gray-300 transition-colors p-2 sm:p-3 rounded-full bg-black/50 hover:bg-black/70"
-                            aria-label="Previous image"
-                        >
-                            <Icon icon="ph:caret-left" width={28} height={28} className="sm:w-10 sm:h-10" />
-                        </button>
-                    )}
-
-                    {/* Image Container */}
-                    <div 
-                        className="relative max-w-7xl max-h-[85vh] sm:max-h-[90vh] w-full h-full flex items-center justify-center pb-20 sm:pb-24"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <Image
-                            src={item.images[currentImageIndex]?.src}
-                            alt={`Property Image ${currentImageIndex + 1}`}
-                            width={1920}
-                            height={1080}
-                            className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
-                            unoptimized={true}
-                        />
-                        
-                        {/* Image Counter */}
-                        <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium">
+                    {/* Header with close button and counter - Minimal on mobile */}
+                    <div className="flex items-center justify-between px-3 py-2 sm:px-4 sm:py-3 flex-shrink-0 absolute top-0 left-0 right-0 z-20">
+                        <div className="bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium">
                             {currentImageIndex + 1} / {item.images.length}
                         </div>
+                        <button
+                            onClick={closeLightbox}
+                            className="text-white hover:text-gray-300 transition-colors p-1.5 sm:p-2 rounded-full bg-black/60 backdrop-blur-sm hover:bg-black/80"
+                            aria-label="Close lightbox"
+                        >
+                            <Icon icon="ph:x" width={22} height={22} className="sm:w-6 sm:h-6" />
+                        </button>
                     </div>
 
-                    {/* Next Button */}
-                    {item.images.length > 1 && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                nextImage();
-                            }}
-                            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-[10000] text-white hover:text-gray-300 transition-colors p-2 sm:p-3 rounded-full bg-black/50 hover:bg-black/70"
-                            aria-label="Next image"
-                        >
-                            <Icon icon="ph:caret-right" width={28} height={28} className="sm:w-10 sm:h-10" />
-                        </button>
-                    )}
+                    {/* Main Image Area - Takes maximum space */}
+                    <div 
+                        className="flex-1 relative flex items-center justify-center px-1 sm:px-4 pt-12 sm:pt-14 pb-16 sm:pb-20 min-h-0"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Previous Button */}
+                        {item.images.length > 1 && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    previousImage();
+                                }}
+                                className="absolute left-1 sm:left-4 top-1/2 -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-1.5 sm:p-3 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm"
+                                aria-label="Previous image"
+                            >
+                                <Icon icon="ph:caret-left" width={28} height={28} className="sm:w-10 sm:h-10" />
+                            </button>
+                        )}
 
-                    {/* Thumbnail Strip */}
+                        {/* Image - Uses fill to take full container space */}
+                        <div className="relative w-full h-full max-w-7xl mx-auto">
+                            <Image
+                                src={item.images[currentImageIndex]?.src}
+                                alt={`Property Image ${currentImageIndex + 1}`}
+                                fill
+                                sizes="100vw"
+                                className="object-contain"
+                                priority
+                            />
+                            
+                            {/* SOLD Overlay in Lightbox */}
+                            {isSoldOrRented && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div className={`
+                                        transform rotate-[-12deg] px-6 sm:px-10 py-3 sm:py-5 
+                                        ${item?.status === 'SOLD' ? 'bg-blue-600/90' : 'bg-amber-500/90'}
+                                        shadow-2xl border-2 sm:border-4 border-white/40
+                                    `}>
+                                        <span className="text-white font-black text-2xl sm:text-4xl md:text-5xl uppercase tracking-widest drop-shadow-lg">
+                                            {item?.status}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Next Button */}
+                        {item.images.length > 1 && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    nextImage();
+                                }}
+                                className="absolute right-1 sm:right-4 top-1/2 -translate-y-1/2 z-10 text-white hover:text-gray-300 transition-colors p-1.5 sm:p-3 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm"
+                                aria-label="Next image"
+                            >
+                                <Icon icon="ph:caret-right" width={28} height={28} className="sm:w-10 sm:h-10" />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Thumbnail Strip - Ultra compact on mobile, positioned at bottom */}
                     {item.images.length > 1 && (
-                        <div className="absolute bottom-12 sm:bottom-16 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 max-w-[90vw] overflow-x-auto px-2 sm:px-4 pb-2 scrollbar-hide">
-                            {item.images.map((image: any, index: number) => (
-                                <button
-                                    key={index}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setCurrentImageIndex(index);
-                                    }}
-                                    className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                                        currentImageIndex === index
-                                            ? 'border-white scale-110'
-                                            : 'border-transparent opacity-60 hover:opacity-100'
-                                    }`}
-                                    aria-label={`View image ${index + 1} of ${item.images.length}`}
-                                    aria-current={currentImageIndex === index ? 'true' : undefined}
-                                >
-                                    <Image
-                                        src={image.src}
-                                        alt={`Thumbnail ${index + 1}`}
-                                        width={64}
-                                        height={64}
-                                        className="w-full h-full object-cover"
-                                        unoptimized={true}
-                                    />
-                                </button>
-                            ))}
+                        <div className="absolute bottom-0 left-0 right-0 flex-shrink-0 py-1.5 sm:py-3 px-2 sm:px-4 bg-gradient-to-t from-black/80 via-black/60 to-transparent">
+                            <div className="flex gap-1 sm:gap-2 justify-center max-w-full overflow-x-auto scrollbar-hide">
+                                {item.images.map((image: any, index: number) => (
+                                    <button
+                                        key={index}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setCurrentImageIndex(index);
+                                        }}
+                                        className={`relative flex-shrink-0 rounded overflow-hidden transition-all duration-200 ${
+                                            index === currentImageIndex 
+                                                ? 'ring-2 ring-white opacity-100 scale-110' 
+                                                : 'opacity-40 hover:opacity-70'
+                                        }`}
+                                        aria-label={`View image ${index + 1}`}
+                                    >
+                                        <Image
+                                            src={image.src}
+                                            alt={`Thumbnail ${index + 1}`}
+                                            width={48}
+                                            height={36}
+                                            className="w-10 h-7 sm:w-14 sm:h-10 object-cover"
+                                        />
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>

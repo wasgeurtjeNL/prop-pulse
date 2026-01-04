@@ -3,7 +3,7 @@
  * Converts Prisma Property models to PropertyHomes format expected by frontend
  */
 
-import type { Property, PropertyImage } from "@/lib/generated/prisma/client";
+import type { Property, PropertyImage } from "@prisma/client";
 import { getOptimizedImageUrl, getBlurPlaceholderUrl } from "@/lib/imagekit";
 import { parseLocationToSlugs } from "@/lib/property-url";
 
@@ -15,6 +15,7 @@ export interface PropertyTemplateFormat {
   title: string; // Full title
   category: string;
   type: "FOR_SALE" | "FOR_RENT"; // Property type
+  status?: "ACTIVE" | "INACTIVE" | "SOLD" | "RENTED"; // Property availability status
   location: string;
   rate: string;
   beds: number;
@@ -43,6 +44,10 @@ export interface PropertyTemplateFormat {
   // Ownership details (only for FOR_SALE properties)
   ownershipType?: "FREEHOLD" | "LEASEHOLD" | null;
   isResale?: boolean | null;
+  
+  // Geo coordinates for map fallback
+  latitude?: number | null;
+  longitude?: number | null;
   
   // POI Location data (for badges)
   beachScore?: number | null;
@@ -116,6 +121,7 @@ export function transformPropertyToTemplate(
     slug: property.slug,
     category: mapCategoryToSlug(property.category),
     type: property.type as "FOR_SALE" | "FOR_RENT", // Property type
+    status: property.status as "ACTIVE" | "INACTIVE" | "SOLD" | "RENTED", // Property availability status
     location: property.location,
     rate: property.price,
     beds: property.beds,
@@ -139,6 +145,10 @@ export function transformPropertyToTemplate(
     // Ownership details (only for FOR_SALE properties)
     ownershipType: (property as any).ownershipType || undefined,
     isResale: (property as any).isResale || undefined,
+    
+    // Geo coordinates for map fallback
+    latitude: (property as any).latitude ?? null,
+    longitude: (property as any).longitude ?? null,
     
     // POI Location data (for badges)
     beachScore: (property as any).beachScore ?? null,
