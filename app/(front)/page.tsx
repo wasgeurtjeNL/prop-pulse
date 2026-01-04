@@ -44,6 +44,8 @@ const FAQ = dynamic(() => import('@/components/new-design/home/faqs'), {
   loading: () => <div className="animate-pulse h-64 bg-slate-100 dark:bg-slate-800" />,
 });
 
+const FavoritesSection = dynamic(() => import('@/components/new-design/home/favorites-section'));
+
 export const metadata: Metadata = {
   title: 'Luxury Phuket Real Estate | Villas & Condos | PSM Phuket',
   description:
@@ -119,6 +121,9 @@ export default async function HomePage() {
         </section>
 
         <Services />
+        
+        {/* Favorites Section - Only shows when user has favorites */}
+        <FavoritesSection allProperties={propertyHomes} />
         
         {/* Properties - server-side data for instant image loading */}
         <Properties initialProperties={propertyHomes} />
