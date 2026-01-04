@@ -291,21 +291,6 @@ const Header: React.FC = () => {
                   </div>
                 )
               })}
-            {/* Add a visible Contact link on desktop */}
-            <Link
-              href="/contactus"
-              prefetch={false}
-              className={cn(
-                "px-3 py-2 rounded-full text-sm font-semibold transition-all duration-200",
-                pathname.startsWith('/contact')
-                  ? "text-primary bg-primary/10"
-                  : isHomepage && !sticky
-                    ? "text-white/90 hover:text-white hover:bg-white/10"
-                    : "text-dark/70 dark:text-white/70 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10"
-              )}
-            >
-              Contact
-            </Link>
           </div>
         </div>
 

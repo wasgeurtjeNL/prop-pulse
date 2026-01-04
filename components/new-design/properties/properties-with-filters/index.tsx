@@ -29,9 +29,12 @@ const PropertiesWithFilters: React.FC = () => {
         // Add all filter parameters
         const filters = [
           'query', 'type', 'category', 'beds', 'baths', 'amenities', 'shortStay',
-          // New filters
+          // Price & area filters
           'minPrice', 'maxPrice', 'minArea', 'maxArea', 
-          'hasSeaView', 'allowPets', 'ownershipType', 'isResale'
+          // Feature filters
+          'hasSeaView', 'allowPets', 'ownershipType', 'isResale',
+          // Location filter
+          'area'
         ];
         filters.forEach(filter => {
           const value = searchParams.get(filter);
@@ -120,23 +123,19 @@ const PropertiesWithFilters: React.FC = () => {
         description={getPageDescription()}
         badge={shortStayParam === "true" ? "Short Stay" : "Properties"}
         breadcrumbs={breadcrumbs}
+        propertyCount={propertyHomes.length}
+        isLoading={isLoading}
       />
       
       <section className='pb-6 sm:pb-8'>
         <div className='container max-w-8xl mx-auto px-5 2xl:px-0'>
           {/* Filter Toggle Button */}
-          <div className='flex items-center justify-between'>
-            <h2 className='text-2xl font-semibold dark:text-white'>
-              {propertyHomes.length > 0 && !isLoading && (
-                <span className='text-muted-foreground text-lg font-normal ml-2'>
-                  ({propertyHomes.length} {propertyHomes.length === 1 ? 'property' : 'properties'})
-                </span>
-              )}
-            </h2>
+          <div className='flex items-center justify-end mb-4'>
             <Button
               onClick={() => setShowFilters(!showFilters)}
               variant="outline"
-              className="flex items-center gap-2"
+              size="sm"
+              className="flex items-center gap-2 rounded-full"
             >
               {showFilters ? (
                 <>

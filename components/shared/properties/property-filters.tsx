@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,6 +19,13 @@ import { Slider } from "@/components/ui/slider";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formUrlQuery, removeKeysFromQuery } from "@/lib/url";
 import { Icon } from "@iconify/react";
+
+// Type for dynamic area data
+interface AreaOption {
+  slug: string;
+  label: string;
+  count: number;
+}
 
 // Amenities that actually exist in the database (removed WiFi and Washing Machine)
 const AMENITIES_OPTIONS = [
@@ -69,6 +76,29 @@ export default function PropertyFilters() {
     parseInt(searchParams.get("maxArea") || "1000"),
   ]);
   const debouncedAreaRange = useDebounce(areaRange, 500);
+
+  // Dynamic location/area options
+  const [locationOptions, setLocationOptions] = useState<AreaOption[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState(true);
+
+  // Fetch locations on mount
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await fetch('/api/properties/areas');
+        const data = await response.json();
+        if (data.success && data.areas) {
+          setLocationOptions(data.areas);
+        }
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      } finally {
+        setLocationsLoading(false);
+      }
+    };
+    
+    fetchLocations();
+  }, []);
 
   // Reset price range when listing type changes
   useEffect(() => {
@@ -236,6 +266,7 @@ export default function PropertyFilters() {
     if (searchParams.get("minPrice") || searchParams.get("maxPrice")) count++;
     if (searchParams.get("minArea") || searchParams.get("maxArea")) count++;
     if (searchParams.get("ownershipType")) count++;
+    if (searchParams.get("area")) count++;
     return count;
   };
 
@@ -271,6 +302,43 @@ export default function PropertyFilters() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+      </div>
+
+      <Separator />
+
+      {/* Location Filter - Dynamic */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Icon icon="ph:map-pin" className="w-4 h-4 text-primary" />
+          <Label className="font-medium">Location</Label>
+        </div>
+        <Select
+          value={searchParams.get("area") || "all"}
+          onValueChange={(val) => updateFilter("area", val === "all" ? null : val)}
+          disabled={locationsLoading}
+        >
+          <SelectTrigger className="w-full">
+            {locationsLoading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Loading...</span>
+              </div>
+            ) : (
+              <SelectValue placeholder="All Locations" />
+            )}
+          </SelectTrigger>
+          <SelectContent className="w-full max-h-64">
+            <SelectItem value="all">All Locations</SelectItem>
+            {locationOptions.map((area) => (
+              <SelectItem key={area.slug} value={area.slug}>
+                <span className="flex items-center justify-between w-full gap-2">
+                  {area.label}
+                  <span className="text-xs text-muted-foreground">({area.count})</span>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Separator />

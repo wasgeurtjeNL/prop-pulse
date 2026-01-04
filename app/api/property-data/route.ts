@@ -15,15 +15,18 @@ export const GET = async (request: Request) => {
       baths: searchParams.get('baths') || undefined,
       amenities: searchParams.get('amenities') || undefined,
       shortStay: searchParams.get('shortStay') || undefined,
-      // New filters
+      // Price & area filters
       minPrice: searchParams.get('minPrice') || undefined,
       maxPrice: searchParams.get('maxPrice') || undefined,
       minArea: searchParams.get('minArea') || undefined,
       maxArea: searchParams.get('maxArea') || undefined,
+      // Feature filters
       hasSeaView: searchParams.get('hasSeaView') || undefined,
       allowPets: searchParams.get('allowPets') || undefined,
       ownershipType: searchParams.get('ownershipType') || undefined,
       isResale: searchParams.get('isResale') || undefined,
+      // Location filter
+      area: searchParams.get('area') || undefined,
     });
     
     // Transform to frontend format

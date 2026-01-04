@@ -60,15 +60,18 @@ export interface PropertyFilterParams {
   shortStay?: string | boolean; // Filter for daily rental properties (< 30 days)
   includeUnavailable?: boolean; // Include SOLD/RENTED properties (for "Recently Sold" section)
   status?: string; // Filter by specific status (ACTIVE, SOLD, RENTED, etc.)
-  // New filters
-  minPrice?: string; // Minimum price in millions THB
-  maxPrice?: string; // Maximum price in millions THB
+  // Price & area filters
+  minPrice?: string; // Minimum price in millions THB (or thousands for rentals)
+  maxPrice?: string; // Maximum price in millions THB (or thousands for rentals)
   minArea?: string; // Minimum area in sqm
   maxArea?: string; // Maximum area in sqm
+  // Feature filters
   hasSeaView?: string | boolean; // Sea view filter
   allowPets?: string | boolean; // Pet friendly filter
   ownershipType?: string; // FREEHOLD or LEASEHOLD
   isResale?: string | boolean; // New development (false) or resale (true)
+  // Location filter
+  area?: string; // Area slug (e.g., "rawai", "kata", "patong")
 }
 
 // Type for highlighted property with images
@@ -216,8 +219,12 @@ export async function getProperties(params: PropertyFilterParams) {
     const { 
       query, type, category, beds, baths, amenities, shortStay, 
       includeUnavailable, status,
-      // New filters
-      minPrice, maxPrice, minArea, maxArea, hasSeaView, allowPets, ownershipType, isResale
+      // Price & area filters
+      minPrice, maxPrice, minArea, maxArea,
+      // Feature filters
+      hasSeaView, allowPets, ownershipType, isResale,
+      // Location filter
+      area
     } = params;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -291,6 +298,11 @@ export async function getProperties(params: PropertyFilterParams) {
           hasEvery: amenitiesList,
         };
       }
+    }
+
+    // Location filter - filter by area slug
+    if (area && area !== "all") {
+      where.areaSlug = area;
     }
 
     // Price filter - prices are stored as strings like "฿15,000,000" or "15000000"
