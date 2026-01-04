@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Filter, X, SlidersHorizontal, Home, Key } from "lucide-react";
 import PropertyCard from "../../home/properties/card/Card";
 import HeroSub from "../../shared/hero-sub";
@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import { usePropertyNavigation } from "@/lib/contexts/PropertyNavigationContext";
 
 // Section Header Component
 function SectionHeader({ 
@@ -51,10 +52,110 @@ const PropertiesWithFilters: React.FC = () => {
   const [showFilters, setShowFilters] = useState(true); // Desktop sidebar
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false); // Mobile bottom sheet
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { saveNavigationState } = usePropertyNavigation();
 
   const categoryParam = searchParams.get("category");
   const shortStayParam = searchParams.get("shortStay");
   const typeParam = searchParams.get("type");
+
+  // Build active filters for HeroSub display
+  const activeFiltersForHero = useMemo(() => {
+    const filters: { label: string; value: string; onRemove: () => void }[] = [];
+    
+    const removeFilter = (key: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete(key);
+      router.push(`/properties${params.toString() ? `?${params.toString()}` : ''}`);
+    };
+
+    // Type
+    const type = searchParams.get('type');
+    if (type === 'FOR_SALE' || type === 'buy') {
+      filters.push({ label: 'For Sale', value: 'type', onRemove: () => removeFilter('type') });
+    }
+    if (type === 'FOR_RENT' || type === 'rent') {
+      filters.push({ label: 'For Rent', value: 'type', onRemove: () => removeFilter('type') });
+    }
+
+    // Category
+    const category = searchParams.get('category');
+    if (category) {
+      filters.push({ 
+        label: category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), 
+        value: 'category', 
+        onRemove: () => removeFilter('category') 
+      });
+    }
+
+    // Beds
+    const beds = searchParams.get('beds');
+    if (beds && beds !== 'Any') {
+      filters.push({ label: `${beds}+ Beds`, value: 'beds', onRemove: () => removeFilter('beds') });
+    }
+
+    // Area/Location
+    const area = searchParams.get('area');
+    if (area) {
+      filters.push({ 
+        label: area.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), 
+        value: 'area', 
+        onRemove: () => removeFilter('area') 
+      });
+    }
+
+    // Amenities
+    const amenities = searchParams.get('amenities');
+    if (amenities) {
+      const amenityList = amenities.split(',');
+      if (amenityList.length === 1) {
+        filters.push({ 
+          label: amenityList[0].replace(/\b\w/g, l => l.toUpperCase()), 
+          value: 'amenities', 
+          onRemove: () => removeFilter('amenities') 
+        });
+      } else {
+        filters.push({ 
+          label: `${amenityList.length} Amenities`, 
+          value: 'amenities', 
+          onRemove: () => removeFilter('amenities') 
+        });
+      }
+    }
+
+    // Price
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    if (minPrice || maxPrice) {
+      filters.push({ 
+        label: 'Price Range', 
+        value: 'price', 
+        onRemove: () => { removeFilter('minPrice'); removeFilter('maxPrice'); } 
+      });
+    }
+
+    // Short Stay
+    if (searchParams.get('shortStay') === 'true') {
+      filters.push({ label: 'Short Stay', value: 'shortStay', onRemove: () => removeFilter('shortStay') });
+    }
+
+    // Sea View
+    if (searchParams.get('hasSeaView') === 'true') {
+      filters.push({ label: 'Sea View', value: 'hasSeaView', onRemove: () => removeFilter('hasSeaView') });
+    }
+
+    // Pets
+    if (searchParams.get('allowPets') === 'true') {
+      filters.push({ label: 'Pets Allowed', value: 'allowPets', onRemove: () => removeFilter('allowPets') });
+    }
+
+    return filters;
+  }, [searchParams, router]);
+
+  // Clear all filters
+  const handleClearFilters = useCallback(() => {
+    router.push('/properties');
+  }, [router]);
 
   // Count active filters for badge (excluding 'type' for grouping logic)
   const activeFilterCount = useMemo(() => {
@@ -199,27 +300,55 @@ const PropertiesWithFilters: React.FC = () => {
     return "Experience elegance and comfort with our exclusive luxury villas, designed for sophisticated living.";
   };
 
+  // Create property list for navigation context
+  const propertyListForNavigation = useMemo(() => {
+    return propertyHomes.map((p: any) => ({
+      slug: p.slug,
+      provinceSlug: p.provinceSlug || 'phuket',
+      areaSlug: p.areaSlug || 'other',
+    }));
+  }, [propertyHomes]);
+
+  // Handler for saving navigation context when clicking a property
+  const handlePropertyClick = useCallback((index: number) => {
+    const filterQueryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    saveNavigationState(filterQueryString, propertyListForNavigation, index);
+  }, [searchParams, propertyListForNavigation, saveNavigationState]);
+
   // Render property grid (reusable for both grouped and ungrouped)
-  const renderPropertyGrid = (items: any[], startPriority: number = 0) => (
+  const renderPropertyGrid = (items: any[], startPriority: number = 0, globalStartIndex: number = 0) => (
     <>
       {/* Mobile Horizontal Scroll */}
       <div className='md:hidden -mx-5 px-5'>
         <div className='flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4'>
-          {items.map((item: any, index: number) => (
-            <div key={item?.slug ?? index} className='flex-shrink-0 w-[85%] snap-start'>
-              <PropertyCard item={item} priority={index === 0 && startPriority === 0} />
-            </div>
-          ))}
+          {items.map((item: any, index: number) => {
+            const globalIndex = propertyHomes.findIndex((p: any) => p.slug === item.slug);
+            return (
+              <div 
+                key={item?.slug ?? index} 
+                className='flex-shrink-0 w-[85%] snap-start'
+                onClick={() => handlePropertyClick(globalIndex !== -1 ? globalIndex : globalStartIndex + index)}
+              >
+                <PropertyCard item={item} priority={index === 0 && startPriority === 0} />
+              </div>
+            );
+          })}
         </div>
       </div>
       
       {/* Tablet & Desktop Grid */}
       <div className='hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-6'>
-        {items.map((item: any, index: number) => (
-          <div key={item?.slug ?? index}>
-            <PropertyCard item={item} priority={index === 0 && startPriority === 0} />
-          </div>
-        ))}
+        {items.map((item: any, index: number) => {
+          const globalIndex = propertyHomes.findIndex((p: any) => p.slug === item.slug);
+          return (
+            <div 
+              key={item?.slug ?? index}
+              onClick={() => handlePropertyClick(globalIndex !== -1 ? globalIndex : globalStartIndex + index)}
+            >
+              <PropertyCard item={item} priority={index === 0 && startPriority === 0} />
+            </div>
+          );
+        })}
       </div>
     </>
   );
@@ -233,6 +362,8 @@ const PropertiesWithFilters: React.FC = () => {
         breadcrumbs={breadcrumbs}
         propertyCount={propertyHomes.length}
         isLoading={isLoading}
+        activeFilters={activeFiltersForHero}
+        onClearFilters={activeFiltersForHero.length > 0 ? handleClearFilters : undefined}
       />
       
       <section className='pb-6 sm:pb-8'>

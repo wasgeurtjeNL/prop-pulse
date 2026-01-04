@@ -52,6 +52,11 @@ const PropertyMap = dynamic(
   }
 );
 
+const PropertyNavigationBar = dynamic(
+  () => import('@/components/new-design/properties/PropertyNavigationBar'),
+  { ssr: false }
+);
+
 // Skeleton component for image placeholders with fixed aspect ratio to prevent CLS
 const ImageSkeleton = ({ className = "", aspectRatio = "4/3" }: { className?: string; aspectRatio?: string }) => (
   <div 
@@ -233,6 +238,10 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
     const statusIcon = item?.status === 'SOLD' ? 'ph:seal-check-fill' : 'ph:key-fill';
 
     return (
+        <>
+        {/* Property Navigation Bar - Shows when coming from filtered search */}
+        {item?.slug && <PropertyNavigationBar currentSlug={item.slug} />}
+        
         <main className="py-[5px] relative overflow-x-hidden" role="main">
             <div className="container mx-auto max-w-8xl px-3 sm:px-4 md:px-5 2xl:px-0">
                 {/* Breadcrumbs */}
@@ -888,5 +897,6 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
             {/* Admin Edit Button */}
             {item && <AdminEditButton editType="property" editId={item.id} />}
         </main>
+        </>
     );
 }

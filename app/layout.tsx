@@ -9,6 +9,7 @@ import SessionProvider from "@/components/providers/SessionProvider";
 import { UTMCaptureProvider } from "@/components/providers/UTMCaptureProvider";
 import { LanguageProvider } from "@/lib/contexts/language-context";
 import { LayoutDataProvider } from "@/lib/contexts/layout-data-context";
+import { PropertyNavigationProvider } from "@/lib/contexts/PropertyNavigationContext";
 
 const font = Bricolage_Grotesque({ 
   subsets: ["latin"],
@@ -157,9 +158,11 @@ export default function RootLayout({
           >
             <LanguageProvider>
               <LayoutDataProvider>
-                <UTMCaptureProvider>
-                  {children}
-                </UTMCaptureProvider>
+                <PropertyNavigationProvider>
+                  <UTMCaptureProvider>
+                    {children}
+                  </UTMCaptureProvider>
+                </PropertyNavigationProvider>
                 <Toaster richColors />
               </LayoutDataProvider>
             </LanguageProvider>

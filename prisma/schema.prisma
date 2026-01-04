@@ -909,7 +909,7 @@ model rental_booking {
 model rental_pricing_config {
   id                   String   @id @default("default")
   createdAt            DateTime @default(now())
-  updatedAt            DateTime
+  updatedAt            DateTime @default(now()) @updatedAt
   lowSeasonSurcharges  Json     @default("[{\"maxDays\": 7, \"minDays\": 1, \"surchargePercent\": 20}, {\"maxDays\": 14, \"minDays\": 8, \"surchargePercent\": 17}, {\"maxDays\": 19, \"minDays\": 15, \"surchargePercent\": 13}, {\"maxDays\": 30, \"minDays\": 20, \"surchargePercent\": 0}]")
   maximumStayDays      Int      @default(30)
   minimumStayDays      Int      @default(1)

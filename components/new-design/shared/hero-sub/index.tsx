@@ -2,6 +2,12 @@ import React, { FC } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import Breadcrumb, { BreadcrumbItem } from "@/components/new-design/breadcrumb";
 
+interface ActiveFilter {
+    label: string;
+    value: string;
+    onRemove?: () => void;
+}
+
 interface HeroSubProps {
     title: string;
     description: string;
@@ -12,9 +18,24 @@ interface HeroSubProps {
     propertyCount?: number;
     /** Optional loading state */
     isLoading?: boolean;
+    /** Optional active filters to display */
+    activeFilters?: ActiveFilter[];
+    /** Optional callback when "Clear All" is clicked */
+    onClearFilters?: () => void;
 }
 
-const HeroSub: FC<HeroSubProps> = ({ title, description, badge, breadcrumbs, propertyCount, isLoading }) => {
+const HeroSub: FC<HeroSubProps> = ({ 
+    title, 
+    description, 
+    badge, 
+    breadcrumbs, 
+    propertyCount, 
+    isLoading,
+    activeFilters = [],
+    onClearFilters 
+}) => {
+    const hasFilters = activeFilters.length > 0;
+
     return (
         <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-primary/5 dark:from-dark dark:via-dark dark:to-primary/10 py-8 sm:py-12 mb-6">
             {/* Decorative Elements */}
@@ -50,9 +71,10 @@ const HeroSub: FC<HeroSubProps> = ({ title, description, badge, breadcrumbs, pro
                         </p>
                     </div>
                     
-                    {/* Right: Stats */}
-                    {propertyCount !== undefined && (
-                        <div className="flex items-center gap-3 lg:flex-shrink-0">
+                    {/* Right: Stats + Active Filters */}
+                    <div className="flex flex-col items-start lg:items-end gap-3 lg:flex-shrink-0">
+                        {/* Property Count */}
+                        {propertyCount !== undefined && (
                             <div className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-white/5 rounded-2xl shadow-sm border border-slate-100 dark:border-white/10">
                                 <div className="p-2 bg-primary/10 rounded-xl">
                                     <Icon icon={'ph:house-line-fill'} width={20} height={20} className="text-primary" />
@@ -66,12 +88,52 @@ const HeroSub: FC<HeroSubProps> = ({ title, description, badge, breadcrumbs, pro
                                         </p>
                                     )}
                                     <p className="text-xs text-dark/50 dark:text-white/50">
-                                        {propertyCount === 1 ? 'Property' : 'Properties'}
+                                        {hasFilters ? 'Filtered Results' : (propertyCount === 1 ? 'Property' : 'Properties')}
                                     </p>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+                        
+                        {/* Active Filters Display */}
+                        {hasFilters && (
+                            <div className="flex flex-wrap items-center gap-2 max-w-md">
+                                <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                                    <Icon icon="ph:funnel-fill" className="w-3.5 h-3.5 text-primary" />
+                                    <span className="font-medium">Filters:</span>
+                                </div>
+                                {activeFilters.slice(0, 4).map((filter, idx) => (
+                                    <span 
+                                        key={idx}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 dark:bg-primary/20 text-primary text-xs font-medium rounded-full"
+                                    >
+                                        {filter.label}
+                                        {filter.onRemove && (
+                                            <button 
+                                                onClick={filter.onRemove}
+                                                className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                                                aria-label={`Remove ${filter.label} filter`}
+                                            >
+                                                <Icon icon="ph:x-bold" className="w-3 h-3" />
+                                            </button>
+                                        )}
+                                    </span>
+                                ))}
+                                {activeFilters.length > 4 && (
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                        +{activeFilters.length - 4} more
+                                    </span>
+                                )}
+                                {onClearFilters && (
+                                    <button
+                                        onClick={onClearFilters}
+                                        className="text-xs text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary underline transition-colors"
+                                    >
+                                        Clear all
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
