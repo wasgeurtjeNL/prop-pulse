@@ -65,25 +65,47 @@ export default function FavoritesSection({ allProperties }: FavoritesSectionProp
           </Link>
         </div>
 
-        {/* Properties Grid - Show max 3 on homepage */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {favoriteProperties.slice(0, 3).map((property, index) => (
-            <PropertyCard key={property.slug || index} item={property} />
-          ))}
-        </div>
-
-        {/* Show more indicator if more than 3 favorites */}
-        {favoriteProperties.length > 3 && (
-          <div className="mt-8 text-center">
-            <Link
-              href="/properties?favorites=true"
-              className="inline-flex items-center gap-2 text-red-500 hover:text-red-600 font-medium transition-colors"
-            >
-              <span>+{favoriteProperties.length - 3} more favorites</span>
-              <Icon icon="ph:arrow-right" className="w-4 h-4" />
-            </Link>
+        {/* Horizontal Scroll Container */}
+        <div className="relative">
+          {/* Scroll Wrapper */}
+          <div className="-mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+            <div className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4">
+              {favoriteProperties.map((property, index) => (
+                <div 
+                  key={property.slug || index} 
+                  className="flex-shrink-0 w-[85%] sm:w-[45%] lg:w-[32%] xl:w-[380px] snap-start"
+                >
+                  <PropertyCard item={property} />
+                </div>
+              ))}
+              
+              {/* View All Card */}
+              {favoriteProperties.length > 2 && (
+                <div className="flex-shrink-0 w-[85%] sm:w-[45%] lg:w-[32%] xl:w-[380px] snap-start">
+                  <Link 
+                    href="/properties?favorites=true"
+                    className="flex flex-col items-center justify-center h-full min-h-[300px] rounded-2xl border-2 border-dashed border-red-300 dark:border-red-500/30 bg-red-50/50 dark:bg-red-500/5 hover:bg-red-100 dark:hover:bg-red-500/10 transition-colors group"
+                  >
+                    <div className="p-4 bg-red-500 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                      <Icon icon="ph:heart-fill" className="w-8 h-8 text-white" />
+                    </div>
+                    <p className="text-lg font-semibold text-red-600 dark:text-red-400">View All Favorites</p>
+                    <p className="text-sm text-red-500/70 dark:text-red-400/70 mt-1">
+                      {favoritesCount} saved {favoritesCount === 1 ? 'property' : 'properties'}
+                    </p>
+                    <Icon icon="ph:arrow-right-bold" className="w-6 h-6 text-red-500 mt-4 group-hover:translate-x-2 transition-transform" />
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+          
+          {/* Scroll Hint */}
+          <div className="flex items-center justify-center gap-2 mt-4 text-sm text-dark/40 dark:text-white/40">
+            <Icon icon="ph:hand-swipe-right" className="w-5 h-5" />
+            <span>Swipe to see all {favoritesCount} favorites</span>
+          </div>
+        </div>
       </div>
     </section>
   );
