@@ -13,6 +13,7 @@ import { geocodePropertyLocation } from "../services/poi/geocoding";
 import { analyzeProperty } from "../services/poi/sync";
 import { getOptimizedImageUrl } from "../imagekit";
 import { parseLocationToSlugs } from "../property-url";
+import { expandAmenitySearchTerms } from "../amenity-mapping";
 
 /**
  * Generate the next unique listing number in format "PP-XXXX"
@@ -294,9 +295,20 @@ export async function getProperties(params: PropertyFilterParams) {
         ? amenities
         : amenities.split(",");
       if (amenitiesList.length > 0) {
-        where.amenities = {
-          hasEvery: amenitiesList,
-        };
+        // Expand search terms to include aliases (e.g., "wifi" → ["WiFi", "High-Speed WiFi"])
+        const expandedTerms = expandAmenitySearchTerms(amenitiesList);
+        
+        // Use hasSome for fuzzy matching - property must have at least one of the expanded terms
+        // If user selects multiple amenities, we need ALL selected amenities to match (AND logic)
+        // So we create multiple hasSome conditions
+        where.AND = [
+          ...(where.AND || []),
+          ...amenitiesList.map(term => ({
+            amenities: {
+              hasSome: expandAmenitySearchTerms([term]),
+            },
+          })),
+        ];
       }
     }
 

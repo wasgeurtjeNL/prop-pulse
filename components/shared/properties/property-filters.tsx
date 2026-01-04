@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, ChevronDown, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,13 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formUrlQuery, removeKeysFromQuery } from "@/lib/url";
 import { Icon } from "@iconify/react";
+import { AMENITY_FILTER_OPTIONS } from "@/lib/amenity-mapping";
+import { cn } from "@/lib/utils";
 
 // Type for dynamic area data
 interface AreaOption {
@@ -26,13 +26,6 @@ interface AreaOption {
   label: string;
   count: number;
 }
-
-// Amenities that actually exist in the database (removed WiFi and Washing Machine)
-const AMENITIES_OPTIONS = [
-  { label: "Swimming Pool", value: "Swimming Pool", icon: "ph:swimming-pool" },
-  { label: "Air Conditioning", value: "Air Conditioning", icon: "ph:thermometer-cold" },
-  { label: "Gym", value: "Gym", icon: "ph:barbell" },
-];
 
 // Price ranges - dynamic based on listing type
 const SALE_PRICE_MIN = 0;
@@ -44,6 +37,113 @@ const RENT_PRICE_MAX = 500; // 500,000 THB per month
 // Area ranges in sqm
 const AREA_MIN = 0;
 const AREA_MAX = 1000;
+
+// Collapsible Section Component
+function FilterSection({ 
+  title, 
+  icon, 
+  children, 
+  defaultOpen = true,
+  badge
+}: { 
+  title: string; 
+  icon: string; 
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  badge?: string | number;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="rounded-xl bg-slate-50/80 dark:bg-slate-800/50 overflow-hidden">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full p-3.5 text-left hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition-colors"
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Icon icon={icon} className="w-4 h-4 text-primary" />
+          </div>
+          <span className="font-medium text-sm">{title}</span>
+          {badge && (
+            <span className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full font-medium">
+              {badge}
+            </span>
+          )}
+        </div>
+        <ChevronDown 
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform duration-200",
+            isOpen && "rotate-180"
+          )} 
+        />
+      </button>
+      <div className={cn(
+        "overflow-hidden transition-all duration-200",
+        isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+      )}>
+        <div className="px-3.5 pb-3.5">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Pill button for beds/baths
+function PillButton({ 
+  active, 
+  onClick, 
+  children 
+}: { 
+  active: boolean; 
+  onClick: () => void; 
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "h-10 px-4 rounded-full text-sm font-medium transition-all duration-200",
+        "border-2 min-w-[3rem]",
+        active 
+          ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/25" 
+          : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:bg-primary/5"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+// Amenity Chip Component
+function AmenityChip({ 
+  label, 
+  icon, 
+  active, 
+  onClick 
+}: { 
+  label: string; 
+  icon: string; 
+  active: boolean; 
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all duration-200",
+        "border-2",
+        active 
+          ? "bg-primary/10 border-primary text-primary font-medium" 
+          : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-primary/50"
+      )}
+    >
+      <Icon icon={icon} className={cn("w-4 h-4", active ? "text-primary" : "text-muted-foreground")} />
+      <span className="whitespace-nowrap">{label}</span>
+    </button>
+  );
+}
 
 export default function PropertyFilters() {
   const router = useRouter();
@@ -210,14 +310,14 @@ export default function PropertyFilters() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedAreaRange]);
 
-  const handleAmenityChange = (amenity: string, checked: boolean) => {
+  const handleAmenityChange = (amenity: string) => {
     const current = searchParams.get("amenities")?.split(",").filter(Boolean) || [];
     let newAmenities;
 
-    if (checked) {
-      newAmenities = [...current, amenity];
-    } else {
+    if (current.includes(amenity)) {
       newAmenities = current.filter((a) => a !== amenity);
+    } else {
+      newAmenities = [...current, amenity];
     }
 
     updateFilter(
@@ -229,12 +329,10 @@ export default function PropertyFilters() {
   // Format price based on mode
   const formatPrice = (value: number) => {
     if (isRentalMode) {
-      // Rental mode: prices in thousands THB per month
       if (value >= RENT_PRICE_MAX) return "฿500K+";
       if (value === 0) return "฿0";
       return `฿${value}K`;
     } else {
-      // Sale mode: prices in millions THB
       if (value >= SALE_PRICE_MAX) return "฿100M+";
       if (value === 0) return "฿0";
       return `฿${value}M`;
@@ -271,53 +369,78 @@ export default function PropertyFilters() {
   };
 
   const activeFilterCount = countActiveFilters();
+  const selectedAmenities = searchParams.get("amenities")?.split(",") || [];
 
   return (
-    <div className="sticky top-24 space-y-5 pb-8">
+    <div className="space-y-3 pb-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-lg">Filters</h3>
+      <div className="flex items-center justify-between px-1 mb-4">
+        <h3 className="font-semibold text-lg flex items-center gap-2">
+          Filters
           {activeFilterCount > 0 && (
             <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-medium">
               {activeFilterCount}
             </span>
           )}
-        </div>
-        <Button
-          variant="link"
-          className="px-0 text-muted-foreground h-auto text-sm"
-          onClick={resetAllFilters}
-        >
-          Reset
-        </Button>
+        </h3>
+        {activeFilterCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground gap-1.5 h-8 px-2"
+            onClick={resetAllFilters}
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset
+          </Button>
+        )}
       </div>
 
-      {/* Search Location */}
+      {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search location..."
-          className="pl-9"
+          placeholder="Search location, title..."
+          className="pl-10 h-11 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 
-      <Separator />
+      {/* Quick Filters: Buy/Rent */}
+      <div className="flex gap-2 p-1">
+        {[
+          { value: "all", label: "All" },
+          { value: "buy", label: "Buy" },
+          { value: "rent", label: "Rent" },
+        ].map((type) => {
+          const isActive = searchParams.get("type") === type.value || 
+            (type.value === "all" && !searchParams.get("type"));
+          return (
+            <button
+              key={type.value}
+              onClick={() => updateFilter("type", type.value === "all" ? null : type.value)}
+              className={cn(
+                "flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+                isActive 
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" 
+                  : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
+              )}
+            >
+              {type.label}
+            </button>
+          );
+        })}
+      </div>
 
-      {/* Location Filter - Dynamic */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Icon icon="ph:map-pin" className="w-4 h-4 text-primary" />
-          <Label className="font-medium">Location</Label>
-        </div>
+      {/* Location */}
+      <FilterSection title="Location" icon="ph:map-pin-fill" defaultOpen={true}>
         <Select
           value={searchParams.get("area") || "all"}
           onValueChange={(val) => updateFilter("area", val === "all" ? null : val)}
           disabled={locationsLoading}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full h-11 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
             {locationsLoading ? (
               <div className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -327,7 +450,7 @@ export default function PropertyFilters() {
               <SelectValue placeholder="All Locations" />
             )}
           </SelectTrigger>
-          <SelectContent className="w-full max-h-64">
+          <SelectContent className="max-h-64">
             <SelectItem value="all">All Locations</SelectItem>
             {locationOptions.map((area) => (
               <SelectItem key={area.slug} value={area.slug}>
@@ -339,224 +462,172 @@ export default function PropertyFilters() {
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </FilterSection>
 
-      <Separator />
-
-      {/* Listing Status - Moved up so price filter can react to it */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Icon icon="ph:tag" className="w-4 h-4 text-primary" />
-          <Label className="font-medium">Listing Status</Label>
-        </div>
-        <Select
-          value={searchParams.get("type") || "all"}
-          onValueChange={(val) => updateFilter("type", val === "all" ? null : val)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent className="w-full">
-            <SelectItem value="all">Buy & Rent</SelectItem>
-            <SelectItem value="buy">For Sale</SelectItem>
-            <SelectItem value="rent">For Rent</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Separator />
-
-      {/* Price Range - Dynamic based on listing type */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Icon icon="ph:currency-circle-dollar" className="w-4 h-4 text-primary" />
-          <Label className="font-medium">
-            Price Range {isRentalMode && <span className="text-xs text-muted-foreground">(monthly)</span>}
-          </Label>
-        </div>
-        <div className="px-1">
+      {/* Price Range */}
+      <FilterSection 
+        title={isRentalMode ? "Monthly Rent" : "Price"} 
+        icon="ph:currency-circle-dollar-fill" 
+        defaultOpen={true}
+        badge={
+          (searchParams.get("minPrice") || searchParams.get("maxPrice")) 
+            ? "Active" 
+            : undefined
+        }
+      >
+        <div className="space-y-4">
           <Slider
             value={priceRange}
             onValueChange={(value) => setPriceRange(value as [number, number])}
             min={priceMin}
             max={priceMax}
             step={isRentalMode ? 5 : 1}
-            className="mb-2"
+            className="mt-2"
           />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{formatPrice(priceRange[0])}</span>
-            <span>{formatPrice(priceRange[1])}</span>
+          <div className="flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-900 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium">
+              {formatPrice(priceRange[0])}
+            </div>
+            <span className="text-muted-foreground text-sm">to</span>
+            <div className="bg-white dark:bg-slate-900 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium">
+              {formatPrice(priceRange[1])}
+            </div>
           </div>
         </div>
-      </div>
+      </FilterSection>
 
-      <Separator />
+      {/* Property Type */}
+      <FilterSection title="Property Type" icon="ph:buildings-fill" defaultOpen={true}>
+        <Select
+          value={searchParams.get("category") || "all"}
+          onValueChange={(val) => updateFilter("category", val === "all" ? null : val)}
+        >
+          <SelectTrigger className="w-full h-11 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="luxury-villa">🏡 Luxury Villa</SelectItem>
+            <SelectItem value="apartment">🏢 Apartment</SelectItem>
+            <SelectItem value="residential-home">🏠 Residential Home</SelectItem>
+            <SelectItem value="office-spaces">🏬 Office Spaces</SelectItem>
+          </SelectContent>
+        </Select>
+      </FilterSection>
 
-      {/* Area Range */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Icon icon="ph:rulers" className="w-4 h-4 text-primary" />
-          <Label className="font-medium">Living Area (m²)</Label>
+      {/* Bedrooms & Bathrooms */}
+      <FilterSection title="Rooms" icon="ph:bed-fill" defaultOpen={true}>
+        <div className="space-y-4">
+          <div>
+            <Label className="text-xs text-muted-foreground mb-2 block">Bedrooms</Label>
+            <div className="flex gap-2 flex-wrap">
+              {["Any", "1", "2", "3", "4"].map((b) => {
+                const isActive =
+                  searchParams.get("beds") === b ||
+                  (b === "Any" && !searchParams.get("beds"));
+                return (
+                  <PillButton
+                    key={b}
+                    active={isActive}
+                    onClick={() => updateFilter("beds", b === "Any" ? null : b)}
+                  >
+                    {b === "Any" ? "Any" : `${b}+`}
+                  </PillButton>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs text-muted-foreground mb-2 block">Bathrooms</Label>
+            <div className="flex gap-2 flex-wrap">
+              {["Any", "1", "2", "3", "4"].map((b) => {
+                const isActive =
+                  searchParams.get("baths") === b ||
+                  (b === "Any" && !searchParams.get("baths"));
+                return (
+                  <PillButton
+                    key={b}
+                    active={isActive}
+                    onClick={() => updateFilter("baths", b === "Any" ? null : b)}
+                  >
+                    {b === "Any" ? "Any" : `${b}+`}
+                  </PillButton>
+                );
+              })}
+            </div>
+          </div>
         </div>
-        <div className="px-1">
+      </FilterSection>
+
+      {/* Living Area */}
+      <FilterSection 
+        title="Living Area" 
+        icon="ph:ruler-fill" 
+        defaultOpen={false}
+        badge={
+          (searchParams.get("minArea") || searchParams.get("maxArea")) 
+            ? "Active" 
+            : undefined
+        }
+      >
+        <div className="space-y-4">
           <Slider
             value={areaRange}
             onValueChange={(value) => setAreaRange(value as [number, number])}
             min={AREA_MIN}
             max={AREA_MAX}
             step={10}
-            className="mb-2"
+            className="mt-2"
           />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{formatArea(areaRange[0])}</span>
-            <span>{formatArea(areaRange[1])}</span>
+          <div className="flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-900 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium">
+              {formatArea(areaRange[0])}
+            </div>
+            <span className="text-muted-foreground text-sm">to</span>
+            <div className="bg-white dark:bg-slate-900 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium">
+              {formatArea(areaRange[1])}
+            </div>
           </div>
         </div>
-      </div>
+      </FilterSection>
 
-      <Separator />
-
-      {/* Property Category */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Icon icon="ph:buildings" className="w-4 h-4 text-primary" />
-          <Label className="font-medium">Property Category</Label>
-        </div>
-        <Select
-          value={searchParams.get("category") || "all"}
-          onValueChange={(val) => updateFilter("category", val === "all" ? null : val)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent className="w-full">
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="luxury-villa">Luxury Villa</SelectItem>
-            <SelectItem value="apartment">Apartment</SelectItem>
-            <SelectItem value="residential-home">Residential Home</SelectItem>
-            <SelectItem value="office-spaces">Office Spaces</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Separator />
-
-      {/* Ownership Type - Important for Thailand */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Icon icon="ph:scroll" className="w-4 h-4 text-primary" />
-          <Label className="font-medium">Ownership Type</Label>
-        </div>
+      {/* Ownership */}
+      <FilterSection title="Ownership" icon="ph:scroll-fill" defaultOpen={false}>
         <Select
           value={searchParams.get("ownershipType") || "all"}
           onValueChange={(val) => updateFilter("ownershipType", val === "all" ? null : val)}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full h-11 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
             <SelectValue placeholder="All Types" />
           </SelectTrigger>
-          <SelectContent className="w-full">
+          <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="FREEHOLD">Freehold</SelectItem>
-            <SelectItem value="LEASEHOLD">Leasehold</SelectItem>
+            <SelectItem value="FREEHOLD">✅ Freehold</SelectItem>
+            <SelectItem value="LEASEHOLD">📋 Leasehold</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <Separator />
-
-      {/* Bedrooms & Bathrooms */}
-      <div className="space-y-4">
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Icon icon="ph:bed" className="w-4 h-4 text-primary" />
-            <Label className="font-medium">Bedrooms</Label>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {["Any", "1", "2", "3", "4"].map((b) => {
-              const isActive =
-                searchParams.get("beds") === b ||
-                (b === "Any" && !searchParams.get("beds"));
-              return (
-                <button
-                  key={b}
-                  onClick={() => updateFilter("beds", b === "Any" ? null : b)}
-                  className={`h-9 w-10 rounded-md border text-sm font-medium transition-colors
-                            ${
-                              isActive
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-background hover:bg-accent border-input"
-                            }
-                        `}
-                >
-                  {b === "Any" ? "Any" : `${b}+`}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Icon icon="ph:bathtub" className="w-4 h-4 text-primary" />
-            <Label className="font-medium">Bathrooms</Label>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {["Any", "1", "2", "3", "4"].map((b) => {
-              const isActive =
-                searchParams.get("baths") === b ||
-                (b === "Any" && !searchParams.get("baths"));
-              return (
-                <button
-                  key={b}
-                  onClick={() => updateFilter("baths", b === "Any" ? null : b)}
-                  className={`h-9 w-10 rounded-md border text-sm font-medium transition-colors
-                            ${
-                              isActive
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "bg-background hover:bg-accent border-input"
-                            }
-                        `}
-                >
-                  {b === "Any" ? "Any" : `${b}+`}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <Separator />
+      </FilterSection>
 
       {/* Amenities */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Icon icon="ph:list-checks" className="w-4 h-4 text-primary" />
-          <Label className="font-medium">Amenities</Label>
+      <FilterSection 
+        title="Amenities" 
+        icon="ph:star-fill" 
+        defaultOpen={true}
+        badge={selectedAmenities.length > 0 ? selectedAmenities.length : undefined}
+      >
+        <div className="flex flex-wrap gap-2">
+          {AMENITY_FILTER_OPTIONS.map((item) => (
+            <AmenityChip
+              key={item.value}
+              label={item.label}
+              icon={item.icon}
+              active={selectedAmenities.includes(item.value)}
+              onClick={() => handleAmenityChange(item.value)}
+            />
+          ))}
         </div>
-        <div className="space-y-2.5">
-          {AMENITIES_OPTIONS.map((item) => {
-            const isChecked = searchParams
-              .get("amenities")
-              ?.split(",")
-              .includes(item.value);
-            return (
-              <div key={item.value} className="flex items-center space-x-3">
-                <Checkbox
-                  id={item.value}
-                  checked={isChecked}
-                  onCheckedChange={(checked) =>
-                    handleAmenityChange(item.value, checked as boolean)
-                  }
-                />
-                <Label htmlFor={item.value} className="font-normal cursor-pointer flex items-center gap-2">
-                  <Icon icon={item.icon} className="w-4 h-4 text-muted-foreground" />
-                  {item.label}
-                </Label>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      </FilterSection>
     </div>
   );
 }
