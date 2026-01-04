@@ -83,6 +83,13 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       
+      // Property city filters → properties listing (patong, chalong, bang-tao, kamala, krabi, etc.)
+      {
+        source: '/property-city/:path*',
+        destination: '/properties',
+        permanent: true,
+      },
+      
       // Properties search pagina's
       {
         source: '/properties-search/:path*',
@@ -104,6 +111,32 @@ const nextConfig: NextConfig = {
       {
         source: '/gallery-2-columns',
         destination: '/properties',
+        permanent: true,
+      },
+      
+      // Grid layout pagina's
+      {
+        source: '/grid-layout',
+        destination: '/properties',
+        permanent: true,
+      },
+      {
+        source: '/grid-layout-full-width',
+        destination: '/properties',
+        permanent: true,
+      },
+      
+      // Agencies pagina → about
+      {
+        source: '/agencies',
+        destination: '/about',
+        permanent: true,
+      },
+      
+      // Tag pagina's (WordPress blog tags)
+      {
+        source: '/tag/:path*',
+        destination: '/',
         permanent: true,
       },
       
