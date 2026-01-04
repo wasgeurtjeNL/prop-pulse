@@ -12,6 +12,35 @@ interface PropertiesProps {
   initialProperties?: any[];
 }
 
+// Mobile Section Header Component
+function MobileSectionHeader({ 
+  icon, 
+  title, 
+  count,
+  color = "primary"
+}: { 
+  icon: string; 
+  title: string; 
+  count: number;
+  color?: "primary" | "emerald";
+}) {
+  return (
+    <div className="flex items-center gap-2.5 mb-3 px-1">
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+        color === "emerald" ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-primary/10"
+      }`}>
+        <Icon icon={icon} className={`w-4 h-4 ${
+          color === "emerald" ? "text-emerald-600 dark:text-emerald-400" : "text-primary"
+        }`} />
+      </div>
+      <div>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{title}</h3>
+        <p className="text-xs text-muted-foreground">{count} properties</p>
+      </div>
+    </div>
+  );
+}
+
 const Properties: React.FC<PropertiesProps> = ({ initialProperties }) => {
 
   // Use initial properties if provided, otherwise fetch client-side
@@ -72,6 +101,26 @@ const Properties: React.FC<PropertiesProps> = ({ initialProperties }) => {
       return true;
     });
   }, [propertyHomes, activeFilter, showShortStay, searchQuery]);
+
+  // Check if we should show grouped view (only when "All" is selected and no other filters)
+  const showGroupedView = useMemo(() => {
+    return activeFilter === 'all' && !searchQuery.trim() && !showShortStay;
+  }, [activeFilter, searchQuery, showShortStay]);
+
+  // Group properties by type for grouped view
+  const groupedProperties = useMemo(() => {
+    if (!showGroupedView) {
+      return { sale: [], rent: [] };
+    }
+    
+    const saleProperties = filteredProperties.filter((p: any) => p.type === 'FOR_SALE');
+    const rentProperties = filteredProperties.filter((p: any) => p.type === 'FOR_RENT');
+    
+    return {
+      sale: saleProperties,
+      rent: rentProperties,
+    };
+  }, [filteredProperties, showGroupedView]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredProperties.length / ITEMS_PER_PAGE);
@@ -211,7 +260,7 @@ const Properties: React.FC<PropertiesProps> = ({ initialProperties }) => {
               {searchQuery && (
                 <span className='inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary text-xs rounded-full'>
                   <Icon icon="solar:magnifer-linear" className="w-3 h-3" />
-                  "{searchQuery}"
+                  &quot;{searchQuery}&quot;
                   <button onClick={() => setSearchQuery("")} className='hover:text-primary/70'>
                     <Icon icon="solar:close-circle-bold" className="w-3.5 h-3.5" />
                   </button>
@@ -243,7 +292,7 @@ const Properties: React.FC<PropertiesProps> = ({ initialProperties }) => {
         ) : currentProperties && currentProperties.length > 0 ? (
           <div className="relative">
             {/* Navigation Arrows - Desktop */}
-            {totalPages > 1 && (
+            {totalPages > 1 && !showGroupedView && (
               <>
                 {/* Previous Arrow */}
                 <button
@@ -277,20 +326,86 @@ const Properties: React.FC<PropertiesProps> = ({ initialProperties }) => {
               </>
             )}
 
-            {/* Properties - Mobile Horizontal Scroll (shows ALL filtered properties) */}
+            {/* Mobile View */}
             <div className='sm:hidden -mx-4 px-4'>
-              <div className='flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4'>
-                {filteredProperties.map((item: any, index: number) => (
-                  <div key={`${item.slug}-${index}`} className='flex-shrink-0 w-[85%] snap-start'>
-                    <PropertyCard item={item} />
+              {showGroupedView ? (
+                /* Grouped Mobile View: Sale first, then Rent */
+                <div className="space-y-6">
+                  {/* For Sale Section */}
+                  {groupedProperties.sale.length > 0 && (
+                    <div>
+                      <MobileSectionHeader 
+                        icon="ph:house-fill" 
+                        title="For Sale" 
+                        count={groupedProperties.sale.length}
+                        color="primary"
+                      />
+                      <div className='flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2'>
+                        {groupedProperties.sale.map((item: any, index: number) => (
+                          <div key={`sale-${item.slug}-${index}`} className='flex-shrink-0 w-[85%] snap-start'>
+                            <PropertyCard item={item} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Divider */}
+                  {groupedProperties.sale.length > 0 && groupedProperties.rent.length > 0 && (
+                    <div className="relative py-1">
+                      <div className="absolute inset-0 flex items-center px-4">
+                        <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-white dark:bg-dark px-3 text-xs text-muted-foreground">
+                          or explore rentals
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* For Rent Section */}
+                  {groupedProperties.rent.length > 0 && (
+                    <div>
+                      <MobileSectionHeader 
+                        icon="ph:key-fill" 
+                        title="For Rent" 
+                        count={groupedProperties.rent.length}
+                        color="emerald"
+                      />
+                      <div className='flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2'>
+                        {groupedProperties.rent.map((item: any, index: number) => (
+                          <div key={`rent-${item.slug}-${index}`} className='flex-shrink-0 w-[85%] snap-start'>
+                            <PropertyCard item={item} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Scroll hint */}
+                  <div className="flex items-center justify-center gap-2 text-xs text-gray-400 dark:text-white/40">
+                    <Icon icon="ph:arrows-left-right" width={14} height={14} />
+                    <span>Swipe to see all {filteredProperties.length} properties</span>
                   </div>
-                ))}
-              </div>
-              {/* Scroll hint with count */}
-              <div className="flex items-center justify-center gap-2 mt-2 text-xs text-gray-400 dark:text-white/40">
-                <Icon icon="ph:arrows-left-right" width={14} height={14} />
-                <span>Swipe to see all {filteredProperties.length} properties</span>
-              </div>
+                </div>
+              ) : (
+                /* Regular Mobile Horizontal Scroll */
+                <>
+                  <div className='flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4'>
+                    {filteredProperties.map((item: any, index: number) => (
+                      <div key={`${item.slug}-${index}`} className='flex-shrink-0 w-[85%] snap-start'>
+                        <PropertyCard item={item} />
+                      </div>
+                    ))}
+                  </div>
+                  {/* Scroll hint with count */}
+                  <div className="flex items-center justify-center gap-2 mt-2 text-xs text-gray-400 dark:text-white/40">
+                    <Icon icon="ph:arrows-left-right" width={14} height={14} />
+                    <span>Swipe to see all {filteredProperties.length} properties</span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Properties Grid - Tablet & Desktop */}
@@ -303,7 +418,7 @@ const Properties: React.FC<PropertiesProps> = ({ initialProperties }) => {
             </div>
 
             {/* Pagination Controls - Tablet & Desktop Only */}
-            {totalPages > 1 && (
+            {totalPages > 1 && !showGroupedView && (
               <div className="hidden sm:flex items-center justify-center gap-4 mt-10">
                 {/* Previous Button - Tablet */}
                 <button
