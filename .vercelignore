@@ -1,0 +1,27 @@
+# Vercel ignore file
+# Note: This overrides .gitignore for Vercel deployments
+
+# Standard ignores
+node_modules
+.next
+.vercel
+*.log
+
+# Environment files (these are configured in Vercel dashboard)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.idea
+.vscode
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Note: lib/generated/prisma is explicitly NOT ignored here
+# so that the generated Prisma client is uploaded to Vercel
+

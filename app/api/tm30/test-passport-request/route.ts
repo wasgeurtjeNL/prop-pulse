@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   }
 
   // Get booking
-  const booking = await prisma.rentalBooking.findUnique({
+  const booking = await prisma.rental_booking.findUnique({
     where: { id: bookingId },
     include: {
       property: { select: { title: true } },

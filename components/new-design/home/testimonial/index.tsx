@@ -50,7 +50,7 @@ const Testimonial = () => {
                     width={700}
                     height={1039}
                     className="max-w-[50vw] sm:max-w-none"
-                    unoptimized={true}
+                    loading="lazy"
                 />
             </div>
             <div className="w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-0 relative z-10">
@@ -86,7 +86,7 @@ const Testimonial = () => {
                                                     width={80}
                                                     height={80}
                                                     className="rounded-full lg:hidden block w-12 h-12 sm:w-16 sm:h-16 object-cover"
-                                                    unoptimized={true}
+                                                    loading="lazy"
                                                 />
                                                 <div>
                                                     <h6 className="text-white text-sm sm:text-base lg:text-lg font-medium">{item.name}</h6>
@@ -102,7 +102,7 @@ const Testimonial = () => {
                                             width={260}
                                             height={260}
                                             className="w-full h-auto object-cover"
-                                            unoptimized={true}
+                                            loading="lazy"
                                         />
                                     </div>
                                 </div>

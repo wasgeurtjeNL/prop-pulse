@@ -18,7 +18,8 @@ export async function GET() {
     }
 
     // Only admins/agents can access this
-    const isAdmin = session.user.role === "ADMIN" || session.user.role === "AGENT";
+    const userRole = (session.user as { role?: string })?.role;
+    const isAdmin = userRole === "ADMIN" || userRole === "AGENT";
     if (!isAdmin) {
       return NextResponse.json(
         { error: "Forbidden" },
@@ -27,7 +28,8 @@ export async function GET() {
     }
 
     // Get all bookings with message counts
-    const bookings = await prisma.rentalBooking.findMany({
+    // Note: model is rental_booking (snake_case) and booking_message
+    const bookings = await prisma.rental_booking.findMany({
       select: {
         id: true,
         guestName: true,
@@ -42,25 +44,25 @@ export async function GET() {
             title: true,
           },
         },
-        messages: {
+        booking_message: {
           select: {
             id: true,
             message: true,
-            senderRole: true,
-            isRead: true,
-            createdAt: true,
+            sender_role: true,
+            is_read: true,
+            created_at: true,
           },
           orderBy: {
-            createdAt: "desc",
+            created_at: "desc",
           },
           take: 1, // Get only the latest message
         },
         _count: {
           select: {
-            messages: {
+            booking_message: {
               where: {
-                senderRole: "customer",
-                isRead: false,
+                sender_role: "customer",
+                is_read: false,
               },
             },
           },
@@ -81,8 +83,14 @@ export async function GET() {
       status: booking.status,
       checkIn: booking.checkIn,
       checkOut: booking.checkOut,
-      lastMessage: booking.messages[0] || null,
-      unreadCount: booking._count.messages,
+      lastMessage: booking.booking_message[0] ? {
+        id: booking.booking_message[0].id,
+        message: booking.booking_message[0].message,
+        senderRole: booking.booking_message[0].sender_role,
+        isRead: booking.booking_message[0].is_read,
+        createdAt: booking.booking_message[0].created_at,
+      } : null,
+      unreadCount: booking._count.booking_message,
       createdAt: booking.createdAt,
     }));
 
@@ -108,6 +116,7 @@ export async function GET() {
     );
   }
 }
+
 
 
 

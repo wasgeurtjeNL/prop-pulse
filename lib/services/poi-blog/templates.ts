@@ -5,7 +5,7 @@
  * for automated, data-driven blog generation.
  */
 
-import { PoiCategory, PropertyCategory } from '@/lib/generated/prisma';
+import { PoiCategory, PropertyCategory } from '@prisma/client';
 
 export interface PoiBlogTemplate {
   id: string;

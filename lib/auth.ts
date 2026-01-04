@@ -17,6 +17,9 @@ export const auth = betterAuth({
     "https://prop-pulse-nine.vercel.app",
     "https://prop-pulse.vercel.app",
     "https://prop-pulse-wasgeurtjes-projects.vercel.app",
+    // Production domain
+    "https://psmphuket.com",
+    "https://www.psmphuket.com",
     // Allow all Vercel preview deployments
     /^https:\/\/prop-pulse-.*\.vercel\.app$/,
   ],

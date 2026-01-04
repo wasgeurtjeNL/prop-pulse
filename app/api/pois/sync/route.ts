@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { syncPois } from '@/lib/services/poi/sync';
-import { PoiCategory } from '@/lib/generated/prisma';
+import { PoiCategory } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {

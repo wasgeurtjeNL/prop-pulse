@@ -164,7 +164,7 @@ export default function RelatedProperties({
                   sizes="(max-width: 768px) 80vw, 33vw"
                   placeholder={property.blurDataURL ? "blur" : "empty"}
                   blurDataURL={property.blurDataURL}
-                  unoptimized={true}
+                  loading="lazy"
                 />
                 
                 {/* Gradient Overlay */}
@@ -257,7 +257,7 @@ export default function RelatedProperties({
                 sizes="(max-width: 768px) 100vw, 33vw"
                 placeholder={property.blurDataURL ? "blur" : "empty"}
                 blurDataURL={property.blurDataURL}
-                unoptimized={true}
+                loading="lazy"
               />
               
               {/* Gradient Overlay */}

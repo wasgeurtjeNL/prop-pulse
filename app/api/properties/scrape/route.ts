@@ -4,7 +4,7 @@ import OpenAI from "openai";
 import prisma from "@/lib/prisma";
 import { geocodePropertyLocation } from "@/lib/services/poi/geocoding";
 import { haversineDistance, formatDistance } from "@/lib/services/poi/distance";
-import { PoiCategory } from "@/lib/generated/prisma";
+import { PoiCategory } from "@prisma/client";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

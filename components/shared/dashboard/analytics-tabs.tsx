@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Users } from "lucide-react";
+import { BarChart3, Users, Target, UserCheck } from "lucide-react";
 
 export function AnalyticsTabs() {
   const router = useRouter();
@@ -18,8 +18,18 @@ export function AnalyticsTabs() {
   const tabs = [
     { 
       value: "analytics", 
-      label: "Analytics", 
+      label: "Overview", 
       icon: BarChart3 
+    },
+    { 
+      value: "traffic", 
+      label: "Traffic Sources", 
+      icon: Target 
+    },
+    { 
+      value: "leads", 
+      label: "Leads", 
+      icon: UserCheck 
     },
     { 
       value: "visitors", 
@@ -30,7 +40,7 @@ export function AnalyticsTabs() {
 
   return (
     <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="grid w-full max-w-md grid-cols-2">
+      <TabsList className="grid w-full max-w-2xl grid-cols-4">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -40,7 +50,7 @@ export function AnalyticsTabs() {
               className="flex items-center gap-2"
             >
               <Icon className="h-4 w-4" />
-              {tab.label}
+              <span className="hidden sm:inline">{tab.label}</span>
             </TabsTrigger>
           );
         })}
@@ -48,6 +58,7 @@ export function AnalyticsTabs() {
     </Tabs>
   );
 }
+
 
 
 

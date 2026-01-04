@@ -3,11 +3,11 @@ import Image from 'next/image'
 const Logo: React.FC = () => {
   return (
     <Image
-      src='https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?updatedAt=1765040666333'
-      alt='logo'
+      src='https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?tr=w-150,q-90,f-auto'
+      alt='PSM Phuket Real Estate Logo'
       width={150}
       height={68}
-      unoptimized={true}
+      priority={true}
     />
   )
 }

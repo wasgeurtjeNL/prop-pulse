@@ -1,13 +1,21 @@
 import { getHeroImages } from '@/lib/actions/hero-image.actions';
-import { getOptimizedImageUrl, getImageKitSrcSet } from '@/lib/imagekit';
 
 /**
  * Server component that preloads hero images for faster LCP
- * Uses ImageKit transformations for optimal image delivery:
- * - Smaller file sizes with quality optimization
- * - Auto format (WebP/AVIF) based on browser support
- * - Responsive srcset for mobile devices
+ * 
+ * CRITICAL: This must generate the EXACT same URLs that Next.js Image will use
+ * Otherwise the preloaded resources won't be used (wasted bandwidth + no LCP benefit)
+ * 
+ * Next.js default loader format: /_next/image?url=<encoded_url>&w=<width>&q=<quality>
  */
+
+/**
+ * Generate a Next.js Image URL that matches the default loader output
+ */
+function getNextImageUrl(src: string, width: number, quality: number): string {
+  return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=${quality}`;
+}
+
 export default async function HeroImagePreloader() {
   const result = await getHeroImages('home');
   const images = result.data || [];
@@ -20,7 +28,7 @@ export default async function HeroImagePreloader() {
       <link
         rel="preload"
         as="image"
-        href={defaultImage}
+        href={getNextImageUrl(defaultImage, 1920, 75)}
         fetchPriority="high"
       />
     );
@@ -29,35 +37,49 @@ export default async function HeroImagePreloader() {
   const mobileImage = images.find(img => img.deviceType === 'MOBILE');
   const desktopImage = images.find(img => img.deviceType === 'DESKTOP');
 
+  // Quality values MUST match the Image component quality props
+  // Hero desktop uses quality={80}, mobile uses quality={75}
+  const MOBILE_QUALITY = 75;
+  const DESKTOP_QUALITY = 80;
+
+  // Generate srcset that matches Next.js Image output
+  // These widths correspond to deviceSizes in next.config.ts
+  const mobileSrcSet = mobileImage ? [
+    `${getNextImageUrl(mobileImage.imageUrl, 640, MOBILE_QUALITY)} 640w`,
+    `${getNextImageUrl(mobileImage.imageUrl, 750, MOBILE_QUALITY)} 750w`,
+    `${getNextImageUrl(mobileImage.imageUrl, 828, MOBILE_QUALITY)} 828w`,
+    `${getNextImageUrl(mobileImage.imageUrl, 1080, MOBILE_QUALITY)} 1080w`,
+  ].join(', ') : '';
+
+  const desktopSrcSet = desktopImage ? [
+    `${getNextImageUrl(desktopImage.imageUrl, 1080, DESKTOP_QUALITY)} 1080w`,
+    `${getNextImageUrl(desktopImage.imageUrl, 1200, DESKTOP_QUALITY)} 1200w`,
+    `${getNextImageUrl(desktopImage.imageUrl, 1920, DESKTOP_QUALITY)} 1920w`,
+    `${getNextImageUrl(desktopImage.imageUrl, 2048, DESKTOP_QUALITY)} 2048w`,
+  ].join(', ') : '';
+
   return (
     <>
-      {/* Mobile hero image - optimized for smaller screens */}
+      {/* Mobile hero image preload - matches sizes="100vw" on mobile */}
       {mobileImage && (
         <link
           rel="preload"
           as="image"
-          href={getOptimizedImageUrl(mobileImage.imageUrl, { 
-            width: 480, 
-            quality: 75,
-            focus: 'auto'
-          })}
-          imageSrcSet={getImageKitSrcSet(mobileImage.imageUrl, [320, 480, 640, 750], 75)}
+          href={getNextImageUrl(mobileImage.imageUrl, 750, MOBILE_QUALITY)}
+          imageSrcSet={mobileSrcSet}
           imageSizes="100vw"
           fetchPriority="high"
           media="(max-width: 1023px)"
         />
       )}
       
-      {/* Desktop hero image - higher quality for larger screens */}
+      {/* Desktop hero image preload - matches sizes="100vw" on desktop */}
       {desktopImage && (
         <link
           rel="preload"
           as="image"
-          href={getOptimizedImageUrl(desktopImage.imageUrl, { 
-            width: 1280, 
-            quality: 80 
-          })}
-          imageSrcSet={getImageKitSrcSet(desktopImage.imageUrl, [1024, 1280, 1536, 1920], 80)}
+          href={getNextImageUrl(desktopImage.imageUrl, 1920, DESKTOP_QUALITY)}
+          imageSrcSet={desktopSrcSet}
           imageSizes="100vw"
           fetchPriority="high"
           media="(min-width: 1024px)"

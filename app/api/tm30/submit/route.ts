@@ -49,30 +49,30 @@ export async function POST(request: Request) {
     }
 
     // Fetch booking with property and guests
-    const booking = await prisma.rentalBooking.findUnique({
+    const booking = await prisma.rental_booking.findUnique({
       where: { id: bookingId },
       include: {
         property: {
           select: {
             id: true,
             title: true,
-            tm30AccommodationId: true,
-            tm30AccommodationName: true,
+            tm30_accommodation_id: true,
+            tm30_accommodation_name: true,
           },
         },
-        guests: {
+        booking_guest: {
           where: guestId ? { id: guestId } : undefined,
           select: {
             id: true,
-            guestType: true,
-            guestNumber: true,
-            firstName: true,
-            lastName: true,
-            passportNumber: true,
-            dateOfBirth: true,
+            guest_type: true,
+            guest_number: true,
+            first_name: true,
+            last_name: true,
+            passport_number: true,
+            date_of_birth: true,
             nationality: true,
             gender: true,
-            tm30Status: true,
+            tm30_status: true,
           },
         },
       },
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!booking.property.tm30AccommodationId) {
+    if (!booking.property.tm30_accommodation_id) {
       return NextResponse.json(
         { error: "Property is not linked to a TM30 accommodation" },
         { status: 400 }
@@ -93,10 +93,10 @@ export async function POST(request: Request) {
     }
 
     // Filter guests that need TM30 submission
-    const guestsToSubmit = booking.guests.filter(
+    const guestsToSubmit = booking.booking_guest.filter(
       (guest) =>
-        guest.passportNumber && // Has passport data
-        guest.tm30Status !== "SUBMITTED" // Not already submitted
+        guest.passport_number && // Has passport data
+        guest.tm30_status !== "SUBMITTED" // Not already submitted
     );
 
     if (guestsToSubmit.length === 0) {
@@ -110,19 +110,19 @@ export async function POST(request: Request) {
     const submissions = guestsToSubmit.map((guest) => ({
       guestId: guest.id,
       foreigner: {
-        passportNumber: guest.passportNumber,
+        passportNumber: guest.passport_number,
         nationality: guest.nationality || "Unknown",
-        firstName: guest.firstName || "Unknown",
-        lastName: guest.lastName || "",
-        dateOfBirth: guest.dateOfBirth
-          ? formatDate(new Date(guest.dateOfBirth))
+        firstName: guest.first_name || "Unknown",
+        lastName: guest.last_name || "",
+        dateOfBirth: guest.date_of_birth
+          ? formatDate(new Date(guest.date_of_birth))
           : "",
         gender: guest.gender === "F" || guest.gender === "Female" ? "F" : "M",
         arrivalDate: formatDate(new Date(booking.checkIn)),
         stayUntil: formatDate(new Date(booking.checkOut)),
       },
       accommodation: {
-        name: booking.property.tm30AccommodationName || booking.property.tm30AccommodationId,
+        name: booking.property.tm30_accommodation_name || booking.property.tm30_accommodation_id,
         address: "", // Will be selected by name in TM30 system
       },
       checkInDate: formatDate(new Date(booking.checkIn)),
@@ -131,17 +131,17 @@ export async function POST(request: Request) {
     }));
 
     // Update booking status to PROCESSING
-    await prisma.rentalBooking.update({
+    await prisma.rental_booking.update({
       where: { id: bookingId },
-      data: { tm30Status: "PROCESSING" },
+      data: { tm30_status: "PROCESSING" },
     });
 
     // Update guest statuses to PENDING (processing)
-    await prisma.bookingGuest.updateMany({
+    await prisma.booking_guest.updateMany({
       where: { 
         id: { in: guestsToSubmit.map(g => g.id) }
       },
-      data: { tm30Status: "PENDING" },
+      data: { tm30_status: "PENDING" },
     });
 
     // Trigger GitHub Actions workflow
@@ -175,11 +175,11 @@ export async function POST(request: Request) {
           console.error("[TM30] GitHub Actions trigger failed:", errorText);
           
           // Revert status
-          await prisma.rentalBooking.update({
+          await prisma.rental_booking.update({
             where: { id: bookingId },
             data: { 
-              tm30Status: "PENDING",
-              tm30Error: `GitHub trigger failed: ${errorText}`,
+              tm30_status: "PENDING",
+              tm30_error: `GitHub trigger failed: ${errorText}`,
             },
           });
 
@@ -207,11 +207,11 @@ export async function POST(request: Request) {
       } catch (githubError: any) {
         console.error("[TM30] GitHub API error:", githubError);
         
-        await prisma.rentalBooking.update({
+        await prisma.rental_booking.update({
           where: { id: bookingId },
           data: { 
-            tm30Status: "PENDING",
-            tm30Error: githubError.message,
+            tm30_status: "PENDING",
+            tm30_error: githubError.message,
           },
         });
 
@@ -273,39 +273,39 @@ export async function GET(request: Request) {
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + days);
 
-    const pendingBookings = await prisma.rentalBooking.findMany({
+    const pendingBookings = await prisma.rental_booking.findMany({
       where: {
         checkIn: {
           gte: now,
           lte: targetDate,
         },
-        tm30Status: { in: ["PENDING", "FAILED"] },
+        tm30_status: { in: ["PENDING", "FAILED"] },
         property: {
-          tm30AccommodationId: { not: null },
+          tm30_accommodation_id: { not: null },
         },
-        passportsReceived: { gt: 0 }, // At least some passports received
+        passports_received: { gt: 0 }, // At least some passports received
       },
       include: {
         property: {
           select: {
             id: true,
             title: true,
-            tm30AccommodationId: true,
-            tm30AccommodationName: true,
+            tm30_accommodation_id: true,
+            tm30_accommodation_name: true,
           },
         },
-        guests: {
+        booking_guest: {
           where: {
-            passportNumber: { not: null },
-            tm30Status: { not: "SUBMITTED" },
+            passport_number: { not: null },
+            tm30_status: { not: "SUBMITTED" },
           },
           select: {
             id: true,
-            firstName: true,
-            lastName: true,
-            passportNumber: true,
+            first_name: true,
+            last_name: true,
+            passport_number: true,
             nationality: true,
-            tm30Status: true,
+            tm30_status: true,
           },
         },
       },
@@ -319,9 +319,9 @@ export async function GET(request: Request) {
         checkIn: b.checkIn,
         checkOut: b.checkOut,
         property: b.property.title,
-        tm30Accommodation: b.property.tm30AccommodationName,
-        tm30Status: b.tm30Status,
-        guestsReady: b.guests.length,
+        tm30Accommodation: b.property.tm30_accommodation_name,
+        tm30Status: b.tm30_status,
+        guestsReady: b.booking_guest.length,
       })),
       total: pendingBookings.length,
     });

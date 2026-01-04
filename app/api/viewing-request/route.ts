@@ -15,6 +15,12 @@ const viewingRequestSchema = z.object({
   language: z.string().optional(),
   message: z.string().optional(),
   offerAmount: z.string().optional(),
+  // UTM tracking parameters
+  utm_source: z.string().optional(),
+  utm_medium: z.string().optional(),
+  utm_campaign: z.string().optional(),
+  utm_term: z.string().optional(),
+  utm_content: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -79,6 +85,12 @@ export async function POST(request: NextRequest) {
       ipAddress,
       userAgent,
       status: 'PENDING' as const,
+      // UTM tracking for attribution
+      utmSource: validatedData.utm_source || undefined,
+      utmMedium: validatedData.utm_medium || undefined,
+      utmCampaign: validatedData.utm_campaign || undefined,
+      utmTerm: validatedData.utm_term || undefined,
+      utmContent: validatedData.utm_content || undefined,
     };
     
     console.log('Creating viewing request with data:', {

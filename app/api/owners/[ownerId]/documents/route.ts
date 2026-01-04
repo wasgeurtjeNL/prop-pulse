@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { transformOwnerDocument } from "@/lib/transforms";
 
 export async function GET(
   request: Request,
@@ -25,12 +26,12 @@ export async function GET(
 
     const { ownerId } = await params;
 
-    const documents = await prisma.ownerDocument.findMany({
-      where: { ownerId },
-      orderBy: { createdAt: "desc" },
+    const documents = await prisma.owner_document.findMany({
+      where: { owner_id: ownerId },
+      orderBy: { created_at: "desc" },
     });
 
-    return NextResponse.json({ documents });
+    return NextResponse.json({ documents: documents.map(transformOwnerDocument) });
   } catch (error: any) {
     console.error("[Owner Documents API] Error:", error);
     return NextResponse.json(
@@ -75,7 +76,7 @@ export async function POST(
     }
 
     // Verify owner exists
-    const owner = await prisma.propertyOwner.findUnique({
+    const owner = await prisma.property_owner.findUnique({
       where: { id: ownerId },
     });
 
@@ -83,18 +84,20 @@ export async function POST(
       return NextResponse.json({ error: "Owner not found" }, { status: 404 });
     }
 
-    const document = await prisma.ownerDocument.create({
+    const document = await prisma.owner_document.create({
       data: {
-        ownerId,
-        documentType,
-        imageUrl,
-        imagePath,
-        fileName,
-        ocrData,
-        ocrProcessedAt: ocrData ? new Date() : undefined,
-        propertyId,
-        houseId,
-        extractedAddress,
+        id: crypto.randomUUID(),
+        owner_id: ownerId,
+        document_type: documentType,
+        image_url: imageUrl,
+        image_path: imagePath,
+        file_name: fileName,
+        ocr_data: ocrData,
+        ocr_processed_at: ocrData ? new Date() : undefined,
+        property_id: propertyId,
+        house_id: houseId,
+        extracted_address: extractedAddress,
+        updated_at: new Date(),
       },
     });
 
@@ -103,14 +106,14 @@ export async function POST(
       await prisma.property.update({
         where: { id: propertyId },
         data: {
-          bluebookUrl: imageUrl,
-          bluebookHouseId: houseId,
-          propertyOwnerId: ownerId,
+          bluebook_url: imageUrl,
+          bluebook_house_id: houseId,
+          property_owner_id: ownerId,
         },
       });
     }
 
-    return NextResponse.json({ document }, { status: 201 });
+    return NextResponse.json({ document: transformOwnerDocument(document) }, { status: 201 });
   } catch (error: any) {
     console.error("[Owner Documents API] Create error:", error);
     return NextResponse.json(
@@ -119,6 +122,7 @@ export async function POST(
     );
   }
 }
+
 
 
 

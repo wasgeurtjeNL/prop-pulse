@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, PlusCircle, Settings, FileText, Files, ExternalLink, ImageIcon, BarChart3, MessageCircle, UserPlus, Plane } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Settings, FileText, Files, ExternalLink, ImageIcon, BarChart3, MessageCircle, UserPlus, Plane, Link2 } from "lucide-react";
 import AgentProfileCard from "@/components/shared/dashboard/agent-profile-card";
 import NavLink from "@/components/shared/dashboard/nav-link";
 import DashboardChatProvider from "@/components/shared/dashboard/dashboard-chat-provider";
@@ -69,6 +69,9 @@ export default async function DashboardLayout({
           </NavLink>
           <NavLink href="/dashboard/analytics" icon={<BarChart3 className="h-4 w-4" />}>
             Analytics
+          </NavLink>
+          <NavLink href="/dashboard/marketing" icon={<Link2 className="h-4 w-4" />}>
+            Marketing
           </NavLink>
           <NavLink href="/dashboard/messages" icon={<MessageCircle className="h-4 w-4" />}>
             Messages

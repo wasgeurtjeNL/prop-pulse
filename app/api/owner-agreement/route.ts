@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the agreement log
-    const agreement = await prisma.ownerAgreement.create({
+    const agreement = await prisma.owner_agreement.create({
       data: {
         propertyId: data.propertyId,
         commissionRate: data.commissionRate,
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Property ID required" }, { status: 400 });
     }
 
-    const agreements = await prisma.ownerAgreement.findMany({
+    const agreements = await prisma.owner_agreement.findMany({
       where: { propertyId },
       orderBy: { sentAt: "desc" },
     });
@@ -115,6 +115,7 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
 
 
 

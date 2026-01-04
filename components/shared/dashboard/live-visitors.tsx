@@ -31,6 +31,7 @@ interface Property {
 
 interface LiveVisitor {
   visitorId: string;
+  visitorCode: string;
   country: string | null;
   city: string | null;
   device: string;
@@ -39,6 +40,10 @@ interface LiveVisitor {
   lastSeen: string;
   currentPage: Property;
   recentPages: Property[];
+  isReturning: boolean;
+  totalVisits: number;
+  visitDays: number;
+  firstSeen: string;
 }
 
 interface RecentView {
@@ -51,13 +56,32 @@ interface RecentView {
   browser: string;
   referrer: string | null;
   visitorId: string;
+  visitorCode: string;
   isLive: boolean;
+  isReturning: boolean;
+  totalVisits: number;
+  visitDays: number;
+  firstSeen: string;
+}
+
+interface CountryBreakdown {
+  country: string;
+  uniqueVisitors: number;
+  totalViews: number;
+  returningVisitors: number;
+  newVisitors: number;
 }
 
 interface LiveData {
   liveCount: number;
   liveVisitors: LiveVisitor[];
   recentViews: RecentView[];
+  countryBreakdown: CountryBreakdown[];
+  stats: {
+    totalViews24h: number;
+    uniqueVisitors24h: number;
+    returningVisitors24h: number;
+  };
   timestamp: string;
 }
 
@@ -200,6 +224,87 @@ export function LiveVisitors() {
         </button>
       </div>
 
+      {/* Stats Summary */}
+      {data?.stats && (
+        <div className="grid grid-cols-3 gap-4">
+          <Card className="p-4">
+            <div className="text-2xl font-bold">{data.stats.uniqueVisitors24h}</div>
+            <div className="text-xs text-muted-foreground">Unique visitors (24h)</div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-2xl font-bold text-green-600">{data.stats.uniqueVisitors24h - data.stats.returningVisitors24h}</div>
+            <div className="text-xs text-muted-foreground">New visitors</div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-2xl font-bold text-blue-600">{data.stats.returningVisitors24h}</div>
+            <div className="text-xs text-muted-foreground">Returning visitors</div>
+          </Card>
+        </div>
+      )}
+
+      {/* Country Breakdown - Compact Table Layout */}
+      {data?.countryBreakdown && data.countryBreakdown.length > 0 && (
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            Visitors by Country (24h)
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="pb-2 font-medium">Country</th>
+                  <th className="pb-2 font-medium text-center">Unique</th>
+                  <th className="pb-2 font-medium text-center">New</th>
+                  <th className="pb-2 font-medium text-center">Returning</th>
+                  <th className="pb-2 font-medium text-right">Views</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {data.countryBreakdown.map((item) => (
+                  <tr key={item.country} className="hover:bg-muted/50">
+                    <td className="py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">
+                          {countryFlags[item.country] || "🌍"}
+                        </span>
+                        <span className="font-medium">
+                          {countryNames[item.country] || item.country}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2 text-center font-semibold">
+                      {item.uniqueVisitors}
+                    </td>
+                    <td className="py-2 text-center">
+                      {item.newVisitors > 0 ? (
+                        <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs font-medium">
+                          {item.newVisitors}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </td>
+                    <td className="py-2 text-center">
+                      {item.returningVisitors > 0 ? (
+                        <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-medium">
+                          {item.returningVisitors}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </td>
+                    <td className="py-2 text-right text-muted-foreground">
+                      {item.totalViews}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
         {/* Live Visitors Panel */}
         <Card>
@@ -228,13 +333,33 @@ export function LiveVisitors() {
                             <span className="text-lg">
                               {visitor.country ? countryFlags[visitor.country] || "🌍" : "🌍"}
                             </span>
+                            <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
+                              {visitor.visitorCode}
+                            </code>
                             <span className="font-medium text-sm truncate">
                               {visitor.city || (visitor.country ? countryNames[visitor.country] : "Unknown")}
                             </span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 mb-2">
+                            {visitor.isReturning ? (
+                              <Badge className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                Returning
+                              </Badge>
+                            ) : (
+                              <Badge className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                New
+                              </Badge>
+                            )}
                             <Badge variant="secondary" className="text-xs shrink-0">
                               {getDeviceIcon(visitor.device)}
                               <span className="ml-1">{visitor.device}</span>
                             </Badge>
+                            {visitor.totalVisits > 1 && (
+                              <span className="text-xs text-muted-foreground">
+                                {visitor.totalVisits} visits / {visitor.visitDays} days
+                              </span>
+                            )}
                           </div>
                           
                           <div className="text-xs text-muted-foreground mb-2">
@@ -303,6 +428,16 @@ export function LiveVisitors() {
                             {view.country ? countryFlags[view.country] || "🌍" : "🌍"}
                           </span>
                           <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <code className="text-[10px] font-mono bg-muted px-1 py-0.5 rounded">
+                                {view.visitorCode}
+                              </code>
+                              {view.isReturning ? (
+                                <span className="text-[10px] text-blue-600 dark:text-blue-400">↩ Returning</span>
+                              ) : (
+                                <span className="text-[10px] text-green-600 dark:text-green-400">✦ New</span>
+                              )}
+                            </div>
                             <Link
                               href={getPropertyUrl(view.property)}
                               target="_blank"
@@ -345,6 +480,7 @@ export function LiveVisitors() {
     </div>
   );
 }
+
 
 
 

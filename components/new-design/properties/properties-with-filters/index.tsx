@@ -27,7 +27,12 @@ const PropertiesWithFilters: React.FC = () => {
         const queryParams = new URLSearchParams();
         
         // Add all filter parameters
-        const filters = ['query', 'type', 'category', 'beds', 'baths', 'amenities', 'shortStay'];
+        const filters = [
+          'query', 'type', 'category', 'beds', 'baths', 'amenities', 'shortStay',
+          // New filters
+          'minPrice', 'maxPrice', 'minArea', 'maxArea', 
+          'hasSeaView', 'allowPets', 'ownershipType', 'isResale'
+        ];
         filters.forEach(filter => {
           const value = searchParams.get(filter);
           if (value) {

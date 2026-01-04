@@ -26,6 +26,7 @@ export async function DashboardChartsWrapper({ dateRange }: DashboardChartsWrapp
       trafficSources={analytics.trafficSources}
       peakTraffic={analytics.peakTraffic}
       insights={analytics.insights}
+      utmAnalytics={analytics.utmAnalytics}
     />
   );
 }

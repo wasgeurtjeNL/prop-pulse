@@ -147,6 +147,18 @@ interface PeakTrafficData {
   peakDay: string;
 }
 
+interface UtmAnalyticsData {
+  summary: {
+    trackedViews: number;
+    untrackedViews: number;
+    trackingRate: number;
+  };
+  sources: { source: string; count: number; icon?: string }[];
+  mediums: { medium: string; count: number }[];
+  campaigns: { campaign: string; count: number }[];
+  sourceMediums: { combo: string; count: number }[];
+}
+
 interface InsightData {
   type: 'success' | 'warning' | 'info';
   title: string;
@@ -170,6 +182,7 @@ interface DashboardChartsProps {
   trafficSources: TrafficSourcesData;
   peakTraffic: PeakTrafficData;
   insights: InsightData[];
+  utmAnalytics?: UtmAnalyticsData;
 }
 
 // ============================================
@@ -218,6 +231,7 @@ export function DashboardCharts({
   trafficSources,
   peakTraffic,
   insights,
+  utmAnalytics,
 }: DashboardChartsProps) {
   const [mounted, setMounted] = useState(false);
   
@@ -566,6 +580,85 @@ export function DashboardCharts({
           </CardContent>
         </Card>
       </div>
+
+      {/* ============================================ */}
+      {/* ROW 4B: UTM CAMPAIGN TRACKING */}
+      {/* ============================================ */}
+      {utmAnalytics && utmAnalytics.summary.trackedViews > 0 && (
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* Summary */}
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-primary" />
+                <CardTitle className="text-base">Campaign Tracking</CardTitle>
+              </div>
+              <CardDescription>Traffic from tracking links</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-xl font-bold text-primary">{utmAnalytics.summary.trackedViews}</p>
+                  <p className="text-xs text-muted-foreground">Tracked</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-muted-foreground">{utmAnalytics.summary.untrackedViews}</p>
+                  <p className="text-xs text-muted-foreground">Direct</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-green-600">{utmAnalytics.summary.trackingRate}%</p>
+                  <p className="text-xs text-muted-foreground">Rate</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Top Sources */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Top Marketing Sources</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {utmAnalytics.sources.length > 0 ? (
+                <div className="space-y-2">
+                  {utmAnalytics.sources.slice(0, 5).map((source) => (
+                    <div key={source.source} className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <span>{source.icon || "🔗"}</span>
+                        <span className="capitalize">{source.source}</span>
+                      </span>
+                      <span className="text-muted-foreground">{source.count} views</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No source data</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top Campaigns */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Active Campaigns</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {utmAnalytics.campaigns.length > 0 ? (
+                <div className="space-y-2">
+                  {utmAnalytics.campaigns.slice(0, 5).map((campaign) => (
+                    <div key={campaign.campaign} className="flex items-center justify-between text-sm">
+                      <span className="font-mono text-xs truncate max-w-[150px]">{campaign.campaign}</span>
+                      <span className="text-muted-foreground">{campaign.count}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No campaign data</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* ============================================ */}
       {/* ROW 5: VIEWS STATS + PEAK TRAFFIC */}

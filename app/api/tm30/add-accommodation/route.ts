@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { Tm30AccomRequestStatus } from '@/lib/generated/prisma';
+import { Tm30AccomRequestStatus } from '@prisma/client';
 
 // Default owner data (RUEDEEKORN - from TM30 profile)
 const DEFAULT_OWNER = {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status') as Tm30AccomRequestStatus | null;
     
-    const requests = await prisma.tm30AccommodationRequest.findMany({
+    const requests = await prisma.tm30_accommodation_request.findMany({
       where: status ? { status } : undefined,
       orderBy: { createdAt: 'desc' },
       take: 100,
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         );
       }
       
-      const newRequest = await prisma.tm30AccommodationRequest.create({
+      const newRequest = await prisma.tm30_accommodation_request.create({
         data: {
           // Owner (default to RUEDEEKORN)
           ownerSameAsRegistrant: data.ownerSameAsRegistrant ?? DEFAULT_OWNER.sameAsRegistrant,
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Get the request from database
-      const accomRequest = await prisma.tm30AccommodationRequest.findUnique({
+      const accomRequest = await prisma.tm30_accommodation_request.findUnique({
         where: { id: requestId },
       });
       
@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Update status to PROCESSING
-      await prisma.tm30AccommodationRequest.update({
+      await prisma.tm30_accommodation_request.update({
         where: { id: requestId },
         data: { status: Tm30AccomRequestStatus.PROCESSING },
       });
@@ -242,7 +242,7 @@ export async function POST(request: NextRequest) {
         console.error('GitHub dispatch error:', errorText);
         
         // Revert status
-        await prisma.tm30AccommodationRequest.update({
+        await prisma.tm30_accommodation_request.update({
           where: { id: requestId },
           data: { 
             status: Tm30AccomRequestStatus.FAILED,
@@ -322,17 +322,18 @@ export async function PATCH(request: NextRequest) {
       updateData.errorMessage = errorMessage;
     }
     
-    const updatedRequest = await prisma.tm30AccommodationRequest.update({
+    const updatedRequest = await prisma.tm30_accommodation_request.update({
       where: { id: requestId },
       data: updateData,
     });
     
     // If approved with TM30 ID, also create/update the Tm30Accommodation cache
     if (success && tm30Id) {
-      await prisma.tm30Accommodation.upsert({
-        where: { tm30Id },
+      await prisma.tm30_accommodation.upsert({
+        where: { tm30_id: tm30Id },
         create: {
-          tm30Id,
+          id: crypto.randomUUID(),
+          tm30_id: tm30Id,
           name: updatedRequest.accommodationName,
           address: `${updatedRequest.addressNumber}, ${updatedRequest.subDistrict}, ${updatedRequest.district}, ${updatedRequest.province}`,
           status: 'Approved',

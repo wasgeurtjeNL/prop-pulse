@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { PoiCategory } from '@/lib/generated/prisma';
+import { PoiCategory } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {

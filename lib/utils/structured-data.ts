@@ -3,6 +3,35 @@
  * for SEO optimization
  */
 
+/**
+ * Safely convert a Date or string to ISO string format
+ * Handles cases where dates may have been serialized through JSON/cache
+ */
+function toISOStringOrString(date: Date | string | null | undefined): string | undefined {
+  if (!date) return undefined;
+  
+  // If it's already a string, check if it's a valid ISO string or try to parse it
+  if (typeof date === 'string') {
+    // Already an ISO string
+    if (date.includes('T') && date.includes('Z')) {
+      return date;
+    }
+    // Try to parse it as a date
+    const parsed = new Date(date);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toISOString();
+    }
+    return date; // Return as-is if we can't parse it
+  }
+  
+  // If it's a Date object, convert normally
+  if (date instanceof Date && !isNaN(date.getTime())) {
+    return date.toISOString();
+  }
+  
+  return undefined;
+}
+
 interface NearbyPoiData {
   name: string;
   category: string;
@@ -23,8 +52,8 @@ interface PropertyStructuredDataProps {
   slug: string;
   type?: 'FOR_SALE' | 'FOR_RENT';
   category?: string;
-  datePublished?: Date;
-  dateModified?: Date;
+  datePublished?: Date | string;
+  dateModified?: Date | string;
   
   // POI & Location data (NEW)
   latitude?: number | null;
@@ -250,8 +279,8 @@ export function generatePropertySchema(
         } 
       }),
     },
-    ...(datePublished && { datePublished: datePublished.toISOString() }),
-    ...(dateModified && { dateModified: dateModified.toISOString() }),
+    ...(datePublished && { datePublished: toISOStringOrString(datePublished) }),
+    ...(dateModified && { dateModified: toISOStringOrString(dateModified) }),
   };
 
   return schema;
@@ -586,8 +615,8 @@ export function generateArticleSchema(props: {
   headline: string;
   description: string;
   image: string;
-  datePublished: Date;
-  dateModified?: Date;
+  datePublished: Date | string;
+  dateModified?: Date | string;
   author: string;
   url: string;
 }) {
@@ -599,8 +628,8 @@ export function generateArticleSchema(props: {
     headline,
     description,
     image,
-    datePublished: datePublished.toISOString(),
-    dateModified: (dateModified || datePublished).toISOString(),
+    datePublished: toISOStringOrString(datePublished) || new Date().toISOString(),
+    dateModified: toISOStringOrString(dateModified || datePublished) || new Date().toISOString(),
     author: {
       '@type': 'Person',
       name: author,
@@ -619,6 +648,7 @@ export function renderJsonLd(schema: object) {
     __html: JSON.stringify(schema),
   };
 }
+
 
 
 

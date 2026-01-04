@@ -1,6 +1,7 @@
 import Image from "next/image";
-import { Icon } from "@iconify/react/dist/iconify.js";
 import Link from "next/link";
+// Static SVG icons for critical path (no Iconify API calls)
+import { HouseSimpleFillIcon, ArrowRightIcon } from "@/components/icons/StaticIcons";
 
 const Services = () => {
   return (
@@ -27,7 +28,7 @@ const Services = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-6 sm:gap-8 lg:gap-10">
           <div className="lg:col-span-6">
             <p className="text-dark/75 dark:text-white/75 text-sm sm:text-base font-semibold flex items-center gap-2">
-              <Icon icon="ph:house-simple-fill" className="text-xl sm:text-2xl text-primary" />
+              <HouseSimpleFillIcon className="text-xl sm:text-2xl text-primary" />
               Property Categories
             </p>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl mt-3 sm:mt-4 mb-2 font-medium leading-tight text-dark dark:text-white">
@@ -48,14 +49,15 @@ const Services = () => {
                   alt="Residential homes in Thailand"
                   width={680}
                   height={386}
+                  sizes="(max-width: 1024px) 0px, 50vw"
+                  loading="lazy"
                   className="w-full h-auto aspect-[16/10] object-cover"
-                  unoptimized={true}
                 />
               </Link>
               <Link href="/properties?category=residential-home" prefetch={false} className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 lg:p-10 group-hover:top-0 duration-500">
                 <div className="flex justify-end">
                   <div className="bg-white text-dark rounded-full w-fit p-2.5 sm:p-3 lg:p-4">
-                    <Icon icon="ph:arrow-right" className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <ArrowRightIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5 sm:gap-2.5">
@@ -77,14 +79,15 @@ const Services = () => {
                   alt="Luxury villas in Phuket"
                   width={680}
                   height={386}
+                  sizes="(max-width: 1024px) 0px, 50vw"
+                  loading="lazy"
                   className="w-full h-auto aspect-[16/10] object-cover"
-                  unoptimized={true}
                 />
               </Link>
               <Link href="/properties?category=luxury-villa" prefetch={false} className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 lg:p-10 group-hover:top-0 duration-500">
                 <div className="flex justify-end">
                   <div className="bg-white text-dark rounded-full w-fit p-2.5 sm:p-3 lg:p-4">
-                    <Icon icon="ph:arrow-right" className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <ArrowRightIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5 sm:gap-2.5">
@@ -106,14 +109,15 @@ const Services = () => {
                   alt="Apartments in Thailand"
                   width={320}
                   height={386}
+                  sizes="(max-width: 1024px) 0px, 25vw"
+                  loading="lazy"
                   className="w-full h-auto aspect-[4/5] sm:aspect-[3/4] object-cover"
-                  unoptimized={true}
                 />
               </Link>
               <Link href="/properties?category=apartment" prefetch={false} className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 group-hover:top-0 duration-500">
                 <div className="flex justify-end">
                   <div className="bg-white text-dark rounded-full w-fit p-2.5 sm:p-3">
-                    <Icon icon="ph:arrow-right" className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1 sm:gap-2">
@@ -131,18 +135,19 @@ const Services = () => {
             <div className="relative rounded-xl sm:rounded-2xl overflow-hidden group">
               <Link href="/properties?type=FOR_RENT" prefetch={false}>
                 <Image
-                  src="https://ik.imagekit.io/slydc8kod/landing-pages/ai-generated/phuket-luxury-real-estate-section-1-1765803415374_vObjyLDkE.webp?updatedAt=1765803416903"
+                  src="https://ik.imagekit.io/slydc8kod/landing-pages/ai-generated/phuket-luxury-real-estate-section-1-1765803415374_vObjyLDkE.webp?tr=w-400,q-80,f-auto"
                   alt="Rental properties in Thailand"
                   width={320}
                   height={386}
+                  sizes="(max-width: 1024px) 0px, 25vw"
+                  loading="lazy"
                   className="w-full h-auto aspect-[4/5] sm:aspect-[3/4] object-cover"
-                  unoptimized={true}
                 />
               </Link>
               <Link href="/properties?type=FOR_RENT" prefetch={false} className="absolute w-full h-full bg-gradient-to-b from-black/0 to-black/80 top-full flex flex-col justify-between p-4 sm:p-6 group-hover:top-0 duration-500">
                 <div className="flex justify-end">
                   <div className="bg-white text-dark rounded-full w-fit p-2.5 sm:p-3">
-                    <Icon icon="ph:arrow-right" className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1 sm:gap-2">

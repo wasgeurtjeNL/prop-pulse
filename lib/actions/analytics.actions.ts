@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { Status, PropertyType } from "@/lib/generated/prisma/client";
+import { Status, PropertyType } from "@prisma/client";
 
 // Date range filter interface
 export interface DateRangeFilter {
@@ -816,6 +816,9 @@ export async function getTrafficSources(dateRange?: DateRangeFilter) {
     select: {
       userAgent: true,
       referrer: true,
+      utmSource: true,
+      utmMedium: true,
+      utmCampaign: true,
     },
   });
 
@@ -863,6 +866,125 @@ export async function getTrafficSources(dateRange?: DateRangeFilter) {
       { name: "Tablet", value: deviceCounts.Tablet, color: "#f59e0b" },
     ].filter(d => d.value > 0),
     referrers: topReferrers,
+  };
+}
+
+// ============================================
+// UTM CAMPAIGN ANALYTICS
+// ============================================
+export async function getUtmAnalytics(dateRange?: DateRangeFilter) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const userId = session.user.id;
+
+  const whereClause: { 
+    property: { userId: string }; 
+    viewedAt?: { gte?: Date; lte?: Date };
+    utmSource?: { not: null };
+  } = {
+    property: { userId },
+  };
+
+  if (dateRange?.from || dateRange?.to) {
+    whereClause.viewedAt = {};
+    if (dateRange.from) whereClause.viewedAt.gte = dateRange.from;
+    if (dateRange.to) whereClause.viewedAt.lte = dateRange.to;
+  }
+
+  // Get all views with UTM data
+  const views = await prisma.propertyView.findMany({
+    where: whereClause,
+    select: {
+      utmSource: true,
+      utmMedium: true,
+      utmCampaign: true,
+    },
+  });
+
+  // Count by UTM source
+  const sourceCounts: Record<string, number> = {};
+  const mediumCounts: Record<string, number> = {};
+  const campaignCounts: Record<string, number> = {};
+  
+  // Count source + medium combinations
+  const sourceMediaCombos: Record<string, number> = {};
+
+  views.forEach(view => {
+    if (view.utmSource) {
+      sourceCounts[view.utmSource] = (sourceCounts[view.utmSource] || 0) + 1;
+      
+      if (view.utmMedium) {
+        const combo = `${view.utmSource} / ${view.utmMedium}`;
+        sourceMediaCombos[combo] = (sourceMediaCombos[combo] || 0) + 1;
+      }
+    }
+    
+    if (view.utmMedium) {
+      mediumCounts[view.utmMedium] = (mediumCounts[view.utmMedium] || 0) + 1;
+    }
+    
+    if (view.utmCampaign) {
+      campaignCounts[view.utmCampaign] = (campaignCounts[view.utmCampaign] || 0) + 1;
+    }
+  });
+
+  // Sort and format results
+  const topSources = Object.entries(sourceCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([source, count]) => ({ source, count }));
+
+  const topMediums = Object.entries(mediumCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([medium, count]) => ({ medium, count }));
+
+  const topCampaigns = Object.entries(campaignCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([campaign, count]) => ({ campaign, count }));
+
+  const topSourceMediums = Object.entries(sourceMediaCombos)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([combo, count]) => ({ combo, count }));
+
+  // Count views with vs without UTM tracking
+  const trackedViews = views.filter(v => v.utmSource).length;
+  const untrackedViews = views.length - trackedViews;
+
+  // Icons for common sources
+  const sourceIcons: Record<string, string> = {
+    facebook: "📘",
+    instagram: "📸",
+    google: "🔍",
+    tiktok: "🎵",
+    youtube: "📺",
+    line: "💬",
+    whatsapp: "💚",
+    email: "📧",
+    partner: "🤝",
+  };
+
+  return {
+    summary: {
+      trackedViews,
+      untrackedViews,
+      trackingRate: views.length > 0 ? Math.round(trackedViews / views.length * 100) : 0,
+    },
+    sources: topSources.map(s => ({
+      ...s,
+      icon: sourceIcons[s.source] || "🔗",
+    })),
+    mediums: topMediums,
+    campaigns: topCampaigns,
+    sourceMediums: topSourceMediums,
   };
 }
 
@@ -1024,6 +1146,7 @@ export async function getDashboardAnalytics(dateRange?: DateRangeFilter) {
     trafficSources,
     peakTraffic,
     insights,
+    utmAnalytics,
   ] = await Promise.all([
     getPropertiesOverTime(),
     getPropertyStatusDistribution(),
@@ -1041,6 +1164,7 @@ export async function getDashboardAnalytics(dateRange?: DateRangeFilter) {
     getTrafficSources(dateRange),
     getPeakTrafficHours(dateRange),
     getAutoInsights(dateRange),
+    getUtmAnalytics(dateRange),
   ]);
 
   return {
@@ -1061,6 +1185,7 @@ export async function getDashboardAnalytics(dateRange?: DateRangeFilter) {
     trafficSources,
     peakTraffic,
     insights,
+    utmAnalytics,
   };
 }
 

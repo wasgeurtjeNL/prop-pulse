@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     }
 
     // Verify booking exists
-    const booking = await prisma.rentalBooking.findUnique({
+    const booking = await prisma.rental_booking.findUnique({
       where: { id: bookingId },
       select: {
         id: true,
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
         status: true,
         property: {
           select: {
-            tm30AccommodationId: true,
+            tm30_accommodation_id: true,
           },
         },
       },
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     }
 
     // Check if property has TM30 configured
-    if (!booking.property.tm30AccommodationId) {
+    if (!booking.property.tm30_accommodation_id) {
       return NextResponse.json(
         { error: "Property does not have TM30 configured" },
         { status: 400 }
@@ -101,6 +101,7 @@ export async function POST(request: Request) {
     );
   }
 }
+
 
 
 

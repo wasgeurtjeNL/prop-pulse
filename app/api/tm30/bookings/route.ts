@@ -23,7 +23,7 @@ export async function GET() {
     }
 
     // Get ALL bookings (confirmed/pending with recent or future check-in)
-    const bookings = await prisma.rentalBooking.findMany({
+    const bookings = await prisma.rental_booking.findMany({
       where: {
         status: {
           in: ["CONFIRMED", "PENDING"],
@@ -38,24 +38,24 @@ export async function GET() {
           select: {
             id: true,
             title: true,
-            tm30AccommodationId: true,
-            tm30AccommodationName: true,
+            tm30_accommodation_id: true,
+            tm30_accommodation_name: true,
           },
         },
-        guests: {
-          orderBy: { guestNumber: "asc" },
+        booking_guest: {
+          orderBy: { guest_number: "asc" },
           select: {
             id: true,
-            guestNumber: true,
-            guestType: true,
-            firstName: true,
-            lastName: true,
+            guest_number: true,
+            guest_type: true,
+            first_name: true,
+            last_name: true,
             nationality: true,
-            passportNumber: true,
-            tm30Status: true,
-            passportImageUrl: true,
-            ocrConfidence: true,
-            passportVerified: true,
+            passport_number: true,
+            tm30_status: true,
+            passport_image_url: true,
+            ocr_confidence: true,
+            passport_verified: true,
           },
         },
       },
@@ -73,12 +73,29 @@ export async function GET() {
         checkIn: b.checkIn,
         checkOut: b.checkOut,
         status: b.status,
-        tm30Status: b.tm30Status,
-        tm30Reference: b.tm30Reference,
-        passportsRequired: b.passportsRequired,
-        passportsReceived: b.passportsReceived,
-        property: b.property,
-        guests: b.guests,
+        tm30Status: b.tm30_status,
+        tm30Reference: b.tm30_reference,
+        passportsRequired: b.passports_required,
+        passportsReceived: b.passports_received,
+        property: {
+          id: b.property.id,
+          title: b.property.title,
+          tm30AccommodationId: b.property.tm30_accommodation_id,
+          tm30AccommodationName: b.property.tm30_accommodation_name,
+        },
+        guests: b.booking_guest.map((g) => ({
+          id: g.id,
+          guestNumber: g.guest_number,
+          guestType: g.guest_type,
+          firstName: g.first_name,
+          lastName: g.last_name,
+          nationality: g.nationality,
+          passportNumber: g.passport_number,
+          tm30Status: g.tm30_status,
+          passportImageUrl: g.passport_image_url,
+          ocrConfidence: g.ocr_confidence,
+          passportVerified: g.passport_verified,
+        })),
       })),
     });
   } catch (error: any) {

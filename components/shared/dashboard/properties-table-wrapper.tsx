@@ -1,7 +1,7 @@
 import { getAgentPropertiesPaginated, DashboardPropertyFilters } from "@/lib/actions/property.actions";
 import { AgentPropertiesTable } from "./agent-properties-table";
 import { PropertyPagination } from "./property-pagination";
-import { Status, PropertyType } from "@/lib/generated/prisma/client";
+import { Status, PropertyType } from "@prisma/client";
 
 interface PropertiesTableWrapperProps {
   searchParams?: {

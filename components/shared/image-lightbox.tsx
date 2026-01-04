@@ -115,7 +115,7 @@ export default function ImageLightbox({
           width={1920}
           height={1080}
           className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
-          unoptimized={true}
+          loading="eager"
         />
 
         {/* Image Counter */}
@@ -163,7 +163,7 @@ export default function ImageLightbox({
                 width={64}
                 height={64}
                 className="w-full h-full object-cover"
-                unoptimized={true}
+                loading="eager"
               />
             </button>
           ))}

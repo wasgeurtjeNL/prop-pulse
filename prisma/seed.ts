@@ -1,4 +1,4 @@
-import { PropertyType, Status } from "@/lib/generated/prisma/client";
+import { PropertyType, Status } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import bcrypt from "bcrypt";

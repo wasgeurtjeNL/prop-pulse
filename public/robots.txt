@@ -1,0 +1,24 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /dashboard/*
+Disallow: /dashboard
+Disallow: /api/*
+Disallow: /sign-in
+Disallow: /sign-up
+Disallow: /forgot-password
+
+# GPTBot
+User-agent: GPTBot
+Disallow: /
+
+# ChatGPT-User
+User-agent: ChatGPT-User
+Disallow: /
+
+# Host
+Host: https://www.psmphuket.com
+
+# Sitemaps
+Sitemap: https://www.psmphuket.com/sitemap.xml
+Sitemap: https://www.psmphuket.com/server-sitemap.xml

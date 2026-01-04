@@ -116,7 +116,7 @@ async function handleAccommodationsCallback(body: any) {
     try {
       const tm30Id = acc.id || `TM30-${acc.name.replace(/\s+/g, "-").substring(0, 20)}-${Date.now()}`;
 
-      const existing = await prisma.tm30Accommodation.findFirst({
+      const existing = await prisma.tm30_accommodation.findFirst({
         where: {
           OR: [
             { tm30Id },
@@ -126,7 +126,7 @@ async function handleAccommodationsCallback(body: any) {
       });
 
       if (existing) {
-        await prisma.tm30Accommodation.update({
+        await prisma.tm30_accommodation.update({
           where: { id: existing.id },
           data: {
             name: acc.name,
@@ -138,7 +138,7 @@ async function handleAccommodationsCallback(body: any) {
         });
         updated++;
       } else {
-        await prisma.tm30Accommodation.create({
+        await prisma.tm30_accommodation.create({
           data: {
             tm30Id,
             name: acc.name,
@@ -200,7 +200,7 @@ async function handleSubmissionCallback(body: any) {
   // Get booking details for WhatsApp notification
   let booking: any = null;
   try {
-    booking = await prisma.rentalBooking.findUnique({
+    booking = await prisma.rental_booking.findUnique({
       where: { id: bookingId },
       include: {
         property: {
@@ -211,13 +211,13 @@ async function handleSubmissionCallback(body: any) {
       },
     });
 
-    await prisma.rentalBooking.update({
+    await prisma.rental_booking.update({
       where: { id: bookingId },
       data: {
-        tm30Status: newStatus,
-        tm30SubmittedAt: success ? new Date() : undefined,
-        tm30Reference: referenceNumber || undefined,
-        tm30Error: error || (results?.find((r: any) => r.error)?.error) || undefined,
+        tm30_status: newStatus,
+        tm30_submitted_at: success ? new Date() : undefined,
+        tm30_reference: referenceNumber || undefined,
+        tm30_error: error || (results?.find((r: any) => r.error)?.error) || undefined,
       },
     });
 
@@ -230,12 +230,13 @@ async function handleSubmissionCallback(body: any) {
     for (const result of results) {
       if (result.guestId) {
         try {
-          await prisma.bookingGuest.update({
+          await prisma.booking_guest.update({
             where: { id: result.guestId },
             data: {
-              tm30Status: result.success ? "SUBMITTED" : "PENDING",
-              tm30SubmittedAt: result.success ? new Date() : undefined,
-              tm30Error: result.error || undefined,
+              tm30_status: result.success ? "SUBMITTED" : "PENDING",
+              tm30_submitted_at: result.success ? new Date() : undefined,
+              tm30_error: result.error || undefined,
+              updated_at: new Date(),
             },
           });
           console.log(`[TM30 Callback] Updated guest ${result.guestId} - success: ${result.success}`);
@@ -295,20 +296,20 @@ async function handleAddAccommodationCallback(body: any) {
 
   if (requestId) {
     try {
-      const request = await prisma.tm30AccommodationRequest.findUnique({
+      const request = await prisma.tm30_accommodationRequest.findUnique({
         where: { id: requestId },
       });
 
       if (request) {
         const newStatus = success ? "SUBMITTED" : "FAILED";
         
-        await prisma.tm30AccommodationRequest.update({
+        await prisma.tm30_accommodationRequest.update({
           where: { id: requestId },
           data: {
             status: newStatus as any,
-            tm30Id: tm30Id || undefined,
-            submittedAt: success ? new Date() : undefined,
-            errorMessage: error || undefined,
+            tm30_id: tm30Id || undefined,
+            submitted_at: success ? new Date() : undefined,
+            error_message: error || undefined,
           },
         });
         

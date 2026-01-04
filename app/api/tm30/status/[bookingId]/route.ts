@@ -40,7 +40,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     // Verify the user owns the booking or is admin
-    const booking = await prisma.rentalBooking.findUnique({
+    const booking = await prisma.rental_booking.findUnique({
       where: { id: bookingId },
       select: { userId: true },
     });
@@ -82,13 +82,13 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const body = await request.json();
     const { tm30Status, tm30Reference, tm30Error } = body;
 
-    const updated = await prisma.rentalBooking.update({
+    const updated = await prisma.rental_booking.update({
       where: { id: bookingId },
       data: {
-        tm30Status,
-        tm30Reference,
-        tm30Error,
-        tm30SubmittedAt: tm30Status === "SUBMITTED" ? new Date() : undefined,
+        tm30_status: tm30Status,
+        tm30_reference: tm30Reference,
+        tm30_error: tm30Error,
+        tm30_submitted_at: tm30Status === "SUBMITTED" ? new Date() : undefined,
       },
     });
 
@@ -96,8 +96,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       success: true,
       booking: {
         id: updated.id,
-        tm30Status: updated.tm30Status,
-        tm30Reference: updated.tm30Reference,
+        tm30Status: updated.tm30_status,
+        tm30Reference: updated.tm30_reference,
       },
     });
   } catch (error: any) {
@@ -108,6 +108,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     );
   }
 }
+
 
 
 

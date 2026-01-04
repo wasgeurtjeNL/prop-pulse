@@ -60,6 +60,15 @@ export interface PropertyFilterParams {
   shortStay?: string | boolean; // Filter for daily rental properties (< 30 days)
   includeUnavailable?: boolean; // Include SOLD/RENTED properties (for "Recently Sold" section)
   status?: string; // Filter by specific status (ACTIVE, SOLD, RENTED, etc.)
+  // New filters
+  minPrice?: string; // Minimum price in millions THB
+  maxPrice?: string; // Maximum price in millions THB
+  minArea?: string; // Minimum area in sqm
+  maxArea?: string; // Maximum area in sqm
+  hasSeaView?: string | boolean; // Sea view filter
+  allowPets?: string | boolean; // Pet friendly filter
+  ownershipType?: string; // FREEHOLD or LEASEHOLD
+  isResale?: string | boolean; // New development (false) or resale (true)
 }
 
 // Type for highlighted property with images
@@ -204,7 +213,12 @@ export async function getAllPropertySlugs(): Promise<{ slug: string; provinceSlu
 
 export async function getProperties(params: PropertyFilterParams) {
   try {
-    const { query, type, category, beds, baths, amenities, shortStay, includeUnavailable, status } = params;
+    const { 
+      query, type, category, beds, baths, amenities, shortStay, 
+      includeUnavailable, status,
+      // New filters
+      minPrice, maxPrice, minArea, maxArea, hasSeaView, allowPets, ownershipType, isResale
+    } = params;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
@@ -279,7 +293,51 @@ export async function getProperties(params: PropertyFilterParams) {
       }
     }
 
-    const properties = await withRetry(() =>
+    // Price filter - prices are stored as strings like "฿15,000,000" or "15000000"
+    // We need to filter based on numeric comparison
+    // For now, we'll use a raw query approach or filter in memory
+    // Since price is stored as string, we filter after fetching
+    const hasPriceFilter = minPrice || maxPrice;
+    const minPriceNum = minPrice ? parseInt(minPrice) * 1000000 : null; // Convert from millions
+    const maxPriceNum = maxPrice ? parseInt(maxPrice) * 1000000 : null;
+
+    // Area filter (sqft in database)
+    if (minArea) {
+      const minAreaNum = parseInt(minArea);
+      if (!isNaN(minAreaNum) && minAreaNum > 0) {
+        where.sqft = { ...where.sqft, gte: minAreaNum };
+      }
+    }
+    if (maxArea && parseInt(maxArea) < 1000) {
+      const maxAreaNum = parseInt(maxArea);
+      if (!isNaN(maxAreaNum)) {
+        where.sqft = { ...where.sqft, lte: maxAreaNum };
+      }
+    }
+
+    // Sea View filter
+    if (hasSeaView === true || hasSeaView === "true") {
+      where.hasSeaView = true;
+    }
+
+    // Pet Friendly filter
+    if (allowPets === true || allowPets === "true") {
+      where.allowPets = true;
+    }
+
+    // Ownership Type filter
+    if (ownershipType && ownershipType !== "all") {
+      where.ownershipType = ownershipType;
+    }
+
+    // New Development / Resale filter
+    if (isResale === "true") {
+      where.isResale = true;
+    } else if (isResale === "false") {
+      where.isResale = false;
+    }
+
+    const fetchedProperties = await withRetry(() =>
       prisma.property.findMany({
         where,
         include: {
@@ -289,9 +347,23 @@ export async function getProperties(params: PropertyFilterParams) {
         },
         orderBy: { createdAt: "desc" },
       })
-    );
+    ) as (Property & { images: PropertyImage[] })[];
 
-    return properties;
+    // Filter by price in memory (since price is stored as string)
+    if (hasPriceFilter && fetchedProperties.length > 0) {
+      return fetchedProperties.filter((property) => {
+        // Parse price string to number (remove currency symbols, commas, etc.)
+        const priceStr = property.price || "0";
+        const priceNum = parseInt(priceStr.replace(/[^0-9]/g, "")) || 0;
+        
+        if (minPriceNum && priceNum < minPriceNum) return false;
+        if (maxPriceNum && maxPriceNum < 100000000 && priceNum > maxPriceNum) return false;
+        
+        return true;
+      });
+    }
+
+    return fetchedProperties;
   } catch (error) {
     console.error("Database Error:", error);
     return [];

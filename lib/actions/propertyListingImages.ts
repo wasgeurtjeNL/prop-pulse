@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import prisma from "../prisma";
 import { getOptimizedImageUrl } from "../imagekit";
-import { PropertyImage } from "../generated/prisma/client";
+import { PropertyImage } from "@prisma/client";
 
 export async function ensurePropertyImages(): Promise<void> {
   const propertiesWithMissingImages = await prisma.property.findMany({

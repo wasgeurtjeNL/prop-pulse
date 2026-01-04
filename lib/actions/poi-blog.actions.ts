@@ -8,7 +8,7 @@
  */
 
 import prisma from '@/lib/prisma';
-import { PoiCategory, PropertyCategory } from '@/lib/generated/prisma';
+import { PoiCategory, PropertyCategory } from '@prisma/client';
 import { 
   POI_BLOG_TEMPLATES, 
   PoiBlogTemplate,

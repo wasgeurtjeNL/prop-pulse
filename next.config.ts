@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
     root: process.cwd(),
   },
   images: {
+    // Use default Next.js image loader (supports both local and remote images)
+    // ImageKit images will be optimized through Next.js proxy
+    // Define device sizes for responsive images (matches common breakpoints)
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    // Image sizes for srcset generation
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     qualities: [70, 75, 80],
     remotePatterns: [
       {

@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { transformPropertyOwner, transformOwnerDocument, transformPropertyWithRentalFields } from "@/lib/transforms";
 
 export async function GET(request: Request) {
   try {
@@ -27,73 +28,73 @@ export async function GET(request: Request) {
 
     // If specific phone lookup
     if (phone) {
-      const owner = await prisma.propertyOwner.findUnique({
+      const owner = await prisma.property_owner.findUnique({
         where: { phone },
         include: {
-          documents: {
-            orderBy: { createdAt: "desc" },
+          owner_document: {
+            orderBy: { created_at: "desc" },
           },
-          properties: {
+          property: {
             select: {
               id: true,
               title: true,
               location: true,
-              tm30AccommodationId: true,
-              tm30AccommodationName: true,
+              tm30_accommodation_id: true,
+              tm30_accommodation_name: true,
               bluebookUrl: true,
-              bluebookHouseId: true,
+              bluebook_house_id: true,
             },
           },
-          tm30Requests: {
-            orderBy: { createdAt: "desc" },
+          tm30_accommodation_request: {
+            orderBy: { created_at: "desc" },
             take: 5,
           },
         },
       });
 
-      return NextResponse.json({ owner });
+      return NextResponse.json({ owner: owner ? transformPropertyOwner(owner) : null });
     }
 
     // List all owners
-    const owners = await prisma.propertyOwner.findMany({
+    const owners = await prisma.property_owner.findMany({
       where: search
         ? {
             OR: [
-              { firstName: { contains: search, mode: "insensitive" } },
-              { lastName: { contains: search, mode: "insensitive" } },
+              { first_name: { contains: search, mode: "insensitive" } },
+              { last_name: { contains: search, mode: "insensitive" } },
               { phone: { contains: search } },
-              { thaiIdNumber: { contains: search } },
+              { thai_id_number: { contains: search } },
             ],
           }
         : undefined,
       include: {
-        documents: {
-          orderBy: { createdAt: "desc" },
+        owner_document: {
+          orderBy: { created_at: "desc" },
         },
-        properties: {
+        property: {
           select: {
             id: true,
             title: true,
             location: true,
-            tm30AccommodationId: true,
-            tm30AccommodationName: true,
+            tm30_accommodation_id: true,
+            tm30_accommodation_name: true,
             bluebookUrl: true,
-            bluebookHouseId: true,
+            bluebook_house_id: true,
           },
         },
         _count: {
           select: {
-            properties: true,
-            documents: true,
-            tm30Requests: true,
+            property: true,
+            owner_document: true,
+            tm30_accommodation_request: true,
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
 
     return NextResponse.json({
-      owners,
+      owners: owners.map(transformPropertyOwner),
       total: owners.length,
     });
   } catch (error: any) {
@@ -136,33 +137,35 @@ export async function POST(request: Request) {
     }
 
     // Check if owner already exists
-    const existing = await prisma.propertyOwner.findUnique({
+    const existing = await prisma.property_owner.findUnique({
       where: { phone },
     });
 
     if (existing) {
       return NextResponse.json(
-        { error: "Owner with this phone number already exists", owner: existing },
+        { error: "Owner with this phone number already exists", owner: transformPropertyOwner(existing) },
         { status: 409 }
       );
     }
 
-    const owner = await prisma.propertyOwner.create({
+    const owner = await prisma.property_owner.create({
       data: {
-        firstName,
-        lastName,
+        id: crypto.randomUUID(),
+        first_name: firstName,
+        last_name: lastName,
         phone,
         email,
         gender,
-        thaiIdNumber,
-        idCardUrl,
-        idCardPath,
-        idCardOcrData,
-        idCardUploadedAt: idCardUrl ? new Date() : undefined,
+        thai_id_number: thaiIdNumber,
+        id_card_url: idCardUrl,
+        id_card_path: idCardPath,
+        id_card_ocr_data: idCardOcrData,
+        id_card_uploaded_at: idCardUrl ? new Date() : undefined,
+        updated_at: new Date(),
       },
     });
 
-    return NextResponse.json({ owner }, { status: 201 });
+    return NextResponse.json({ owner: transformPropertyOwner(owner) }, { status: 201 });
   } catch (error: any) {
     console.error("[Owners API] Create error:", error);
     return NextResponse.json(
@@ -171,6 +174,7 @@ export async function POST(request: Request) {
     );
   }
 }
+
 
 
 

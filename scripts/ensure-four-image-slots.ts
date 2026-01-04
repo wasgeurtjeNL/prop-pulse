@@ -4,7 +4,7 @@
  * This makes it clear in the database which image slots are filled and which are empty
  */
 
-import { PrismaClient } from '../lib/generated/prisma';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -84,6 +84,8 @@ ensureFourImageSlots()
     console.error('\n💥 Script failed:', error);
     process.exit(1);
   });
+
+
 
 
 

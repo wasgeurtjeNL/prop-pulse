@@ -48,16 +48,16 @@ export async function POST(request: Request) {
     console.log(`[TM30 Cron] Looking for check-ins between ${todayStart.toISOString()} and ${todayEnd.toISOString()}`);
 
     // Find all bookings with check-in today that have all passports and haven't been submitted
-    const bookingsToSubmit = await prisma.rentalBooking.findMany({
+    const bookingsToSubmit = await prisma.rental_booking.findMany({
       where: {
         checkIn: {
           gte: todayStart,
           lte: todayEnd,
         },
-        tm30Status: 'PASSPORT_RECEIVED', // All passports received, ready to submit
+        tm30_status: 'PASSPORT_RECEIVED', // All passports received, ready to submit
         status: 'CONFIRMED', // Booking must be confirmed
         property: {
-          tm30AccommodationId: { not: null }, // Property must be linked to TM30
+          tm30_accommodation_id: { not: null }, // Property must be linked to TM30
         },
       },
       include: {
@@ -65,26 +65,26 @@ export async function POST(request: Request) {
           select: {
             id: true,
             title: true,
-            tm30AccommodationId: true,
-            tm30AccommodationName: true,
+            tm30_accommodation_id: true,
+            tm30_accommodation_name: true,
           },
         },
-        guests: {
+        booking_guest: {
           where: {
-            passportNumber: { not: null }, // Has passport data
-            tm30Status: { not: 'SUBMITTED' }, // Not already submitted
+            passport_number: { not: null }, // Has passport data
+            tm30_status: { not: 'SUBMITTED' }, // Not already submitted
           },
           select: {
             id: true,
-            guestType: true,
-            guestNumber: true,
-            firstName: true,
-            lastName: true,
-            passportNumber: true,
-            dateOfBirth: true,
+            guest_type: true,
+            guest_number: true,
+            first_name: true,
+            last_name: true,
+            passport_number: true,
+            date_of_birth: true,
             nationality: true,
             gender: true,
-            tm30Status: true,
+            tm30_status: true,
           },
         },
       },
@@ -104,30 +104,30 @@ export async function POST(request: Request) {
     const results: any[] = [];
 
     for (const booking of bookingsToSubmit) {
-      if (booking.guests.length === 0) {
+      if (booking.booking_guest.length === 0) {
         console.log(`[TM30 Cron] Booking ${booking.id} has no guests to submit, skipping`);
         continue;
       }
 
-      console.log(`[TM30 Cron] Processing booking ${booking.id} with ${booking.guests.length} guests`);
+      console.log(`[TM30 Cron] Processing booking ${booking.id} with ${booking.booking_guest.length} guests`);
 
       // Prepare submissions for each guest
-      const submissions = booking.guests.map((guest) => ({
+      const submissions = booking.booking_guest.map((guest) => ({
         guestId: guest.id,
         foreigner: {
-          passportNumber: guest.passportNumber,
+          passportNumber: guest.passport_number,
           nationality: guest.nationality || 'Unknown',
-          firstName: guest.firstName || 'Unknown',
-          lastName: guest.lastName || '',
-          dateOfBirth: guest.dateOfBirth 
-            ? formatDateForTM30(new Date(guest.dateOfBirth))
+          firstName: guest.first_name || 'Unknown',
+          lastName: guest.last_name || '',
+          dateOfBirth: guest.date_of_birth 
+            ? formatDateForTM30(new Date(guest.date_of_birth))
             : '',
           gender: guest.gender === 'F' || guest.gender === 'Female' ? 'F' : 'M',
           arrivalDate: formatDateForTM30(new Date(booking.checkIn)),
           stayUntil: formatDateForTM30(new Date(booking.checkOut)),
         },
         accommodation: {
-          name: booking.property.tm30AccommodationName || booking.property.tm30AccommodationId,
+          name: booking.property.tm30_accommodation_name || booking.property.tm30_accommodation_id,
         },
         checkInDate: formatDateForTM30(new Date(booking.checkIn)),
         checkOutDate: formatDateForTM30(new Date(booking.checkOut)),
@@ -135,15 +135,15 @@ export async function POST(request: Request) {
       }));
 
       // Update booking status to PROCESSING
-      await prisma.rentalBooking.update({
+      await prisma.rental_booking.update({
         where: { id: booking.id },
-        data: { tm30Status: 'PROCESSING' },
+        data: { tm30_status: 'PROCESSING' },
       });
 
       // Update guest statuses
-      await prisma.bookingGuest.updateMany({
-        where: { id: { in: booking.guests.map(g => g.id) } },
-        data: { tm30Status: 'PENDING' },
+      await prisma.booking_guest.updateMany({
+        where: { id: { in: booking.booking_guest.map(g => g.id) } },
+        data: { tm30_status: 'PENDING' },
       });
 
       // Trigger GitHub Actions workflow
@@ -176,7 +176,7 @@ export async function POST(request: Request) {
             results.push({
               bookingId: booking.id,
               property: booking.property.title,
-              guests: booking.guests.length,
+              guests: booking.booking_guest.length,
               status: 'triggered',
             });
           } else {
@@ -184,11 +184,11 @@ export async function POST(request: Request) {
             console.error(`[TM30 Cron] ❌ Failed to trigger workflow for booking ${booking.id}: ${errorText}`);
             
             // Revert status
-            await prisma.rentalBooking.update({
+            await prisma.rental_booking.update({
               where: { id: booking.id },
               data: { 
-                tm30Status: 'PASSPORT_RECEIVED',
-                tm30Error: `Cron trigger failed: ${errorText}`,
+                tm30_status: 'PASSPORT_RECEIVED',
+                tm30_error: `Cron trigger failed: ${errorText}`,
               },
             });
 
@@ -202,11 +202,11 @@ export async function POST(request: Request) {
         } catch (error: any) {
           console.error(`[TM30 Cron] ❌ Error triggering workflow for booking ${booking.id}:`, error);
           
-          await prisma.rentalBooking.update({
+          await prisma.rental_booking.update({
             where: { id: booking.id },
             data: { 
-              tm30Status: 'PASSPORT_RECEIVED',
-              tm30Error: error.message,
+              tm30_status: 'PASSPORT_RECEIVED',
+              tm30_error: error.message,
             },
           });
 
@@ -261,16 +261,16 @@ export async function GET(request: Request) {
   todayEnd.setHours(23, 59, 59, 999);
 
   // Count bookings that would be submitted today
-  const count = await prisma.rentalBooking.count({
+  const count = await prisma.rental_booking.count({
     where: {
       checkIn: {
         gte: todayStart,
         lte: todayEnd,
       },
-      tm30Status: 'PASSPORT_RECEIVED',
+      tm30_status: 'PASSPORT_RECEIVED',
       status: 'CONFIRMED',
       property: {
-        tm30AccommodationId: { not: null },
+        tm30_accommodation_id: { not: null },
       },
     },
   });
@@ -289,6 +289,7 @@ export async function GET(request: Request) {
       : 'No bookings to submit today',
   });
 }
+
 
 
 

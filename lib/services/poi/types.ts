@@ -2,7 +2,7 @@
  * POI Types - Type definitions for the POI system
  */
 
-import type { PoiCategory, PoiSource, NoiseLevel, TrafficLevel } from '@/lib/generated/prisma';
+import type { PoiCategory, PoiSource, NoiseLevel, TrafficLevel } from '@prisma/client';
 
 // Coordinate pair
 export interface Coordinates {

@@ -28,7 +28,11 @@ export async function POST(
 
     // Get request data
     const body = await request.json().catch(() => ({}));
+    // Prioritize visitorId (persistent localStorage) over sessionId (sessionStorage)
+    const visitorId = body.visitorId || null;
     const sessionId = body.sessionId || null;
+    // Use visitorId as the primary identifier, fall back to sessionId for backwards compatibility
+    const effectiveVisitorId = visitorId || sessionId || null;
     const referrer = request.headers.get("referer") || null;
     const userAgent = request.headers.get("user-agent") || null;
     
@@ -36,13 +40,20 @@ export async function POST(
     const country = request.headers.get("x-vercel-ip-country") || null;
     const city = request.headers.get("x-vercel-ip-city") || null;
     
+    // Extract UTM parameters from body (passed from client-side URL)
+    const utmSource = body.utm_source || null;
+    const utmMedium = body.utm_medium || null;
+    const utmCampaign = body.utm_campaign || null;
+    const utmTerm = body.utm_term || null;
+    const utmContent = body.utm_content || null;
+    
     // Hash IP for privacy
     const forwardedFor = request.headers.get("x-forwarded-for");
     const ip = forwardedFor?.split(",")[0]?.trim() || "unknown";
     const ipHash = createHash("sha256").update(ip).digest("hex").substring(0, 16);
 
-    // Rate limiting check
-    const cacheKey = `${propertyId}-${sessionId || ipHash}`;
+    // Rate limiting check - use visitorId as primary key for accurate deduplication
+    const cacheKey = `${propertyId}-${effectiveVisitorId || ipHash}`;
     const lastView = viewCache.get(cacheKey);
     const now = Date.now();
 
@@ -51,16 +62,22 @@ export async function POST(
       return NextResponse.json({ success: true, cached: true });
     }
 
-    // Record the view
+    // Record the view with UTM tracking
+    // Store visitorId in sessionId field (reusing existing schema field)
     await prisma.propertyView.create({
       data: {
         propertyId,
         userAgent,
         ipHash,
         referrer,
-        sessionId,
+        sessionId: effectiveVisitorId, // Store persistent visitorId here
         country,
         city,
+        utmSource,
+        utmMedium,
+        utmCampaign,
+        utmTerm,
+        utmContent,
       },
     });
 

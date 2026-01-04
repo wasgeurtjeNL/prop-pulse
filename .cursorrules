@@ -289,6 +289,70 @@ For Prisma errors like "Server has closed the connection" (P1017):
 DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/real_estate_pulse"
 ```
 
+### ⚠️ Model & Field Naming Convention - CRITICAL
+
+The Prisma schema uses **snake_case** for model names and some field names. ALWAYS check `schema.prisma` for the correct naming!
+
+```tsx
+// ❌ WRONG - camelCase model names don't exist
+await prisma.rentalBooking.findMany()
+await prisma.bookingGuest.update()
+await prisma.bookingMessage.create()
+
+// ✅ CORRECT - Use snake_case as defined in schema
+await prisma.rental_booking.findMany()
+await prisma.booking_guest.update()
+await prisma.booking_message.create()
+
+// ❌ WRONG - camelCase field names for snake_case schema fields
+data: {
+  passportImageUrl: url,
+  tm30Status: "PENDING",
+  guestNumber: 1,
+}
+
+// ✅ CORRECT - Use snake_case field names
+data: {
+  passport_image_url: url,
+  tm30_status: "PENDING",
+  guest_number: 1,
+}
+```
+
+**Models with snake_case names:**
+- `rental_booking` (NOT rentalBooking)
+- `booking_guest` (NOT bookingGuest)
+- `booking_message` (NOT bookingMessage)
+- `rental_pricing_config` (NOT rentalPricingConfig)
+- `property_blocked_date` (NOT propertyBlockedDate)
+
+**⚠️ Mixed naming in `rental_booking`:**
+The `rental_booking` model has BOTH camelCase AND snake_case fields!
+
+```tsx
+// camelCase fields (use as-is):
+checkIn, checkOut, guestName, guestEmail, guestPhone, 
+basePrice, totalPrice, nights, adults, children, babies, pets,
+status, userId, propertyId, createdAt, updatedAt,
+cancellationPolicy, cancelledAt, cancellationReason, internalNotes
+
+// snake_case fields (must use snake_case):
+check_in_time, check_out_time, property_address, property_instructions,
+wifi_name, wifi_password, access_code, emergency_contact, house_rules,
+confirmed_at, agent_id, passports_received, passports_required,
+tm30_status, tm30_error, tm30_reference, tm30_submitted_at
+```
+
+**When returning data to frontend:** Map snake_case back to camelCase for API responses:
+```tsx
+return NextResponse.json({
+  guest: {
+    firstName: dbGuest.first_name,  // Map for frontend
+    passportNumber: dbGuest.passport_number,
+  }
+});
+```
+
 ### Queries
 ```tsx
 // ✅ GOOD - Select only what you need

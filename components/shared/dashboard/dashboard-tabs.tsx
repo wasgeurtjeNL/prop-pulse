@@ -10,7 +10,8 @@ import {
   Calendar, 
   Key, 
   TrendingUp, 
-  DollarSign 
+  DollarSign,
+  Facebook
 } from "lucide-react";
 
 interface DashboardTabsProps {
@@ -20,6 +21,7 @@ interface DashboardTabsProps {
   pendingViewingRequestsCount?: number;
   pendingRentalLeadsCount?: number;
   pendingInvestorLeadsCount?: number;
+  pendingFbMarketplaceLeadsCount?: number;
 }
 
 export function DashboardTabs({ 
@@ -29,6 +31,7 @@ export function DashboardTabs({
   pendingViewingRequestsCount = 0,
   pendingRentalLeadsCount = 0,
   pendingInvestorLeadsCount = 0,
+  pendingFbMarketplaceLeadsCount = 0,
 }: DashboardTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,6 +75,12 @@ export function DashboardTabs({
       label: "Investor Leads", 
       icon: TrendingUp,
       count: pendingInvestorLeadsCount 
+    },
+    { 
+      value: "fb-marketplace-leads", 
+      label: "FB Marketplace", 
+      icon: Facebook,
+      count: pendingFbMarketplaceLeadsCount 
     },
     { 
       value: "bookings", 

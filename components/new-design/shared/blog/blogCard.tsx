@@ -15,7 +15,7 @@ const BlogCard: FC<{ blog: Blog }> = ({ blog }) => {
                     className="transition group-hover:scale-110 object-cover"
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    unoptimized={true}
+                    loading="lazy"
                 />
             </div>
             <div className="flex justify-between items-center">

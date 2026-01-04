@@ -1,7 +1,8 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { HeroDeviceType } from "@/lib/generated/prisma";
+import { HeroDeviceType } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 
 export interface HeroImageData {
   id: string;
@@ -23,17 +24,33 @@ export interface HeroImageData {
 }
 
 /**
+ * Cached fetch function for hero images
+ * This prevents duplicate database calls when both HeroImagePreloader
+ * and Hero component request the same data during the same render.
+ * 
+ * Cache duration: 1 hour (hero images don't change frequently)
+ */
+const getCachedHeroImages = unstable_cache(
+  async (page: string) => {
+    const heroImages = await prisma.heroImage.findMany({
+      where: { page, isActive: true },
+      orderBy: { deviceType: "asc" },
+    });
+    return heroImages;
+  },
+  ["hero-images"],
+  { revalidate: 3600, tags: ["hero-images"] }
+);
+
+/**
  * Get all hero images for a specific page
+ * Uses caching to avoid duplicate fetches during SSR
  */
 export async function getHeroImages(
   page: string = "home"
 ): Promise<{ success: boolean; data?: HeroImageData[]; error?: string }> {
   try {
-    const heroImages = await prisma.heroImage.findMany({
-      where: { page, isActive: true },
-      orderBy: { deviceType: "asc" },
-    });
-
+    const heroImages = await getCachedHeroImages(page);
     return { success: true, data: heroImages };
   } catch (error) {
     console.error("Error fetching hero images:", error);

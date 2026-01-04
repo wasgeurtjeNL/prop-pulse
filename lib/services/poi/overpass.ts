@@ -5,7 +5,7 @@
  * https://wiki.openstreetmap.org/wiki/Overpass_API
  */
 
-import { PoiCategory, NoiseLevel, TrafficLevel } from '@/lib/generated/prisma';
+import { PoiCategory, NoiseLevel, TrafficLevel } from '@prisma/client';
 import { OverpassElement, ProcessedPoi, PoiCategoryConfig, PHUKET_BBOX } from './types';
 
 // Overpass API endpoints (use multiple for redundancy)

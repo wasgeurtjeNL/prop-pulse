@@ -36,7 +36,7 @@ import { toast } from "sonner";
 import { uploadToImageKit } from "@/lib/actions/upload.actions";
 import { createProperty, updateProperty, togglePropertyHighlight } from "@/lib/actions/property.actions";
 import { propertySchema } from "@/lib/validations";
-import { Property, PropertyImage } from "@/lib/generated/prisma/client";
+import { Property, PropertyImage } from "@prisma/client";
 import { updateImagePositions } from "@/lib/actions/property.actions";
 import { GripVertical, Crown } from "lucide-react";
 import PropertyBlockedDates from "./property-blocked-dates";

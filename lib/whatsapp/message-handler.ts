@@ -11,6 +11,7 @@ import { sendTextMessage } from './api-client';
 import {
   WhatsAppMessage,
   WhatsAppListingSession,
+  WhatsAppSessionStatus,
   BotCommand,
   BotResponse,
   ParsedCommand,
@@ -48,6 +49,51 @@ import {
 } from './content-generator';
 import { generateListingNumber } from '@/lib/actions/property.actions';
 import { parseLocationToSlugs } from '@/lib/property-url';
+
+/**
+ * Determine area from GPS coordinates using geofencing
+ * Used as fallback when text-based detection fails
+ */
+function getAreaFromCoordinates(lat: number, lng: number): string {
+  const areaBounds = [
+    // Southern Phuket
+    { area: 'rawai', south: 7.76, north: 7.81, west: 98.31, east: 98.37 },
+    { area: 'nai-harn', south: 7.76, north: 7.79, west: 98.28, east: 98.32 },
+    { area: 'chalong', south: 7.81, north: 7.87, west: 98.32, east: 98.39 },
+    { area: 'kata', south: 7.80, north: 7.84, west: 98.28, east: 98.32 },
+    { area: 'karon', south: 7.83, north: 7.88, west: 98.27, east: 98.31 },
+    // Central West Coast
+    { area: 'patong', south: 7.87, north: 7.93, west: 98.27, east: 98.32 },
+    { area: 'kamala', south: 7.93, north: 7.98, west: 98.27, east: 98.31 },
+    { area: 'surin', south: 7.97, north: 8.01, west: 98.27, east: 98.30 },
+    { area: 'bang-tao', south: 7.99, north: 8.04, west: 98.28, east: 98.32 },
+    { area: 'laguna', south: 8.00, north: 8.04, west: 98.29, east: 98.33 },
+    { area: 'layan', south: 8.03, north: 8.08, west: 98.27, east: 98.31 },
+    // Northern Phuket
+    { area: 'nai-yang', south: 8.07, north: 8.12, west: 98.29, east: 98.33 },
+    { area: 'mai-khao', south: 8.11, north: 8.19, west: 98.29, east: 98.34 },
+    // Central/East
+    { area: 'kathu', south: 7.88, north: 7.95, west: 98.31, east: 98.37 },
+    { area: 'cherngtalay', south: 8.00, north: 8.06, west: 98.30, east: 98.36 },
+    { area: 'thalang', south: 8.00, north: 8.12, west: 98.33, east: 98.42 },
+    { area: 'phuket-town', south: 7.85, north: 7.92, west: 98.37, east: 98.42 },
+    { area: 'wichit', south: 7.84, north: 7.89, west: 98.35, east: 98.40 },
+    { area: 'mueang', south: 7.85, north: 7.92, west: 98.36, east: 98.41 },
+    // Eastern Phuket
+    { area: 'cape-panwa', south: 7.78, north: 7.84, west: 98.39, east: 98.43 },
+    { area: 'ao-po', south: 8.04, north: 8.12, west: 98.40, east: 98.46 },
+    { area: 'cape-yamu', south: 7.97, north: 8.04, west: 98.40, east: 98.44 },
+  ];
+  
+  for (const bounds of areaBounds) {
+    if (lat >= bounds.south && lat <= bounds.north && 
+        lng >= bounds.west && lng <= bounds.east) {
+      return bounds.area;
+    }
+  }
+  
+  return 'other';
+}
 import {
   handleTm30IdCardUpload,
   handleTm30IdCardConfirmation,
@@ -82,16 +128,16 @@ async function handlePossiblePassportPhoto(
     const normalizedPhone = phoneNumber.replace(/^0/, '').replace(/^\+/, '');
     
     // Find pending booking for this phone number that needs passports
-    const pendingBooking = await prisma.rentalBooking.findFirst({
+    const pendingBooking = await prisma.rental_booking.findFirst({
       where: {
         OR: [
           // Match with country code variations
           { guestPhone: { contains: normalizedPhone.slice(-9) } }, // Last 9 digits
         ],
         status: 'PENDING',
-        passportsReceived: { lt: prisma.rentalBooking.fields.passportsRequired },
+        passports_received: { lt: prisma.rental_booking.fields.passports_required },
         property: {
-          tm30AccommodationId: { not: null },
+          tm30_accommodation_id: { not: null },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -99,12 +145,12 @@ async function handlePossiblePassportPhoto(
         property: {
           select: {
             title: true,
-            tm30AccommodationId: true,
+            tm30_accommodation_id: true,
           },
         },
         guests: {
-          where: { passportImageUrl: null },
-          orderBy: { guestNumber: 'asc' },
+          where: { passport_image_url: null },
+          orderBy: { guest_number: 'asc' },
           take: 1,
         },
       },
@@ -116,7 +162,7 @@ async function handlePossiblePassportPhoto(
     }
 
     console.log(`[TM30] Found pending booking ${pendingBooking.id} for phone ${phoneNumber}`);
-    console.log(`[TM30] Passports: ${pendingBooking.passportsReceived}/${pendingBooking.passportsRequired}`);
+    console.log(`[TM30] Passports: ${pendingBooking.passports_received}/${pendingBooking.passports_required}`);
 
     // Download the image from Twilio/WhatsApp
     const imageUrl = await downloadPassportImage(photoId);
@@ -201,6 +247,32 @@ async function downloadPassportImage(mediaUrl: string): Promise<string | null> {
 }
 
 // ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Check if session is in a state where numeric input is expected as DATA
+ * (not as menu shortcuts)
+ * 
+ * In these states, numbers like 3, 4, 5, 6 should be treated as user input,
+ * not as menu navigation commands.
+ */
+function isNumericInputState(session: WhatsAppListingSession | null): boolean {
+  if (!session) return false;
+  
+  const numericInputStates: WhatsAppSessionStatus[] = [
+    'AWAITING_BEDROOMS',
+    'AWAITING_BATHROOMS',
+    'AWAITING_PRICE',
+    'UPDATE_PHOTOS_REPLACE_SELECT',  // Selecting photo position to replace
+    'OWNER_UPDATE_SELECT_PROPERTY',  // Selecting property by number
+    'UPDATE_PHOTOS_SELECT_PROPERTY', // Selecting property by number
+  ];
+  
+  return numericInputStates.includes(session.status);
+}
+
+// ============================================
 // MAIN MESSAGE HANDLER
 // ============================================
 
@@ -252,7 +324,8 @@ export async function handleIncomingMessage(
     }
     
     // Handle owner update command (works with or without session)
-    if (parsed.rawText === '3' || parsed.command === 'UPDATE_OWNER') {
+    // Only treat '3' as menu shortcut if NOT in a numeric input state
+    if (parsed.command === 'UPDATE_OWNER' || (parsed.rawText === '3' && !isNumericInputState(session))) {
       // Cancel any existing session and start owner update flow
       if (session) {
         await cancelSession(session.id);
@@ -263,7 +336,8 @@ export async function handleIncomingMessage(
     }
     
     // Handle search owner command (works with or without session)
-    if (parsed.rawText === '4' || parsed.command === 'SEARCH_OWNER') {
+    // Only treat '4' as menu shortcut if NOT in a numeric input state
+    if (parsed.command === 'SEARCH_OWNER' || (parsed.rawText === '4' && !isNumericInputState(session))) {
       // Cancel any existing session and start search flow
       if (session) {
         await cancelSession(session.id);
@@ -274,7 +348,8 @@ export async function handleIncomingMessage(
     }
     
     // Handle update photos command (works with or without session)
-    if (parsed.rawText === '5' || parsed.command === 'UPDATE_PHOTOS') {
+    // Only treat '5' as menu shortcut if NOT in a numeric input state
+    if (parsed.command === 'UPDATE_PHOTOS' || (parsed.rawText === '5' && !isNumericInputState(session))) {
       // Cancel any existing session and start photo update flow
       if (session) {
         await cancelSession(session.id);
@@ -285,7 +360,8 @@ export async function handleIncomingMessage(
     }
     
     // Handle TM30 accommodation command (works with or without session)
-    if (parsed.rawText === '6' || parsed.command === 'TM30_ACCOM') {
+    // Only treat '6' as menu shortcut if NOT in a numeric input state
+    if (parsed.command === 'TM30_ACCOM' || (parsed.rawText === '6' && !isNumericInputState(session))) {
       // Cancel any existing session and start TM30 flow
       if (session) {
         await cancelSession(session.id);
@@ -844,10 +920,9 @@ async function handleConfirmation(
       // Update session with property ID
       await setPropertyId(session.id, property.id);
       
-      // Build full property URL
-      const propertyUrl = property.provinceSlug && property.areaSlug
-        ? `${WEBSITE_URL}/properties/${property.provinceSlug}/${property.areaSlug}/${property.slug}`
-        : `${WEBSITE_URL}/properties/${property.slug}`;
+      // Build full SEO-optimized property URL for WhatsApp
+      // Format: /properties/[province]/[area]/[slug] as per .cursorrules
+      const propertyUrl = `${WEBSITE_URL}/properties/${property.provinceSlug || 'phuket'}/${property.areaSlug || 'other'}/${property.slug}`;
       
       return {
         text: BOT_MESSAGES.LISTING_CREATED(
@@ -1466,7 +1541,11 @@ async function handleSearchOwnerQuery(
       baths: true,
       location: true,
       slug: true,
-      images: true,
+      images: {
+        select: { url: true },
+        take: 1,
+        orderBy: { position: 'asc' },
+      },
       ownerName: true,
       ownerCompany: true,
       ownerPhone: true,
@@ -1554,7 +1633,11 @@ async function handleSearchOwnerResults(
       baths: true,
       location: true,
       slug: true,
-      images: true,
+      images: {
+        select: { url: true },
+        take: 1,
+        orderBy: { position: 'asc' },
+      },
       ownerName: true,
       ownerCompany: true,
       ownerPhone: true,
@@ -1594,7 +1677,7 @@ async function formatSearchResults(
     baths: number;
     location: string;
     slug: string;
-    images: string[];
+    images: Array<{ url: string | null }>;
     ownerName: string | null;
     ownerCompany: string | null;
     ownerPhone: string | null;
@@ -1644,8 +1727,8 @@ async function formatSearchResults(
 📍 ${property.location}
 🔗 ${propertyUrl}`;
     
-    // Use first image if available
-    const imageUrl = property.images?.[0] || null;
+    // Use first image URL if available
+    const imageUrl = property.images?.[0]?.url || null;
     
     if (imageUrl) {
       messages.push({
@@ -2603,19 +2686,46 @@ async function createPropertyFromSession(
   const listingNumber = await generateListingNumber();
   console.log(`[WhatsApp] Generated listing number: ${listingNumber}`);
   
-  // Generate SEO-friendly slug
+  // Generate SEO-friendly slug (shorter for better WhatsApp clickability)
   const baseSlug = data.generated_title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
-    .slice(0, 60);
+    .slice(0, 40);
   
   const randomSuffix = Math.random().toString(36).substring(2, 6);
   const slug = `${baseSlug}-${randomSuffix}`;
   
   // Parse location to get URL slugs for hierarchical URLs
   const location = data.address || `${data.district}, Phuket`;
-  const { provinceSlug, areaSlug } = parseLocationToSlugs(location);
+  let { provinceSlug, areaSlug } = parseLocationToSlugs(location);
+  
+  // If area is still 'other', try to extract from generated title
+  // (AI often correctly identifies the area in the title, e.g., "Villa in Rawai")
+  if (areaSlug === 'other' && data.generated_title) {
+    const titleSlugs = parseLocationToSlugs(data.generated_title);
+    if (titleSlugs.areaSlug !== 'other') {
+      areaSlug = titleSlugs.areaSlug;
+    }
+  }
+  
+  // Also try district directly if still 'other'
+  if (areaSlug === 'other' && data.district) {
+    const districtSlugs = parseLocationToSlugs(data.district);
+    if (districtSlugs.areaSlug !== 'other') {
+      areaSlug = districtSlugs.areaSlug;
+    }
+  }
+  
+  // Final fallback: determine area from GPS coordinates (geofencing)
+  if (areaSlug === 'other' && data.latitude && data.longitude) {
+    const coordArea = getAreaFromCoordinates(data.latitude, data.longitude);
+    if (coordArea !== 'other') {
+      areaSlug = coordArea;
+      console.log(`[WhatsApp] Determined area from GPS coordinates: ${areaSlug}`);
+    }
+  }
+  
   console.log(`[WhatsApp] URL slugs: /${provinceSlug}/${areaSlug}/${slug}`);
   
   // Get admin user for ownership

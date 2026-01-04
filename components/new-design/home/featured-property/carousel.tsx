@@ -13,10 +13,24 @@ interface FeaturedPropertyCarouselProps {
   images: CarouselImage[];
 }
 
+// Limit images to prevent loading 50+ images at once
+const MAX_CAROUSEL_IMAGES = 15;
+// Preload first N images eagerly, rest lazy load
+const EAGER_LOAD_COUNT = 3;
+
 const FeaturedPropertyCarousel: React.FC<FeaturedPropertyCarouselProps> = ({ images }) => {
   const [api, setApi] = React.useState<CarouselApi | undefined>(undefined);
   const [current, setCurrent] = React.useState(0);
   const [count, setCount] = React.useState(0);
+  const [loadedIndices, setLoadedIndices] = React.useState<Set<number>>(
+    new Set([0, 1, 2]) // Pre-load first 3
+  );
+
+  // Limit images to prevent massive DOM
+  const limitedImages = React.useMemo(
+    () => images.slice(0, MAX_CAROUSEL_IMAGES),
+    [images]
+  );
 
   React.useEffect(() => {
     if (!api) {
@@ -26,9 +40,20 @@ const FeaturedPropertyCarousel: React.FC<FeaturedPropertyCarouselProps> = ({ ima
     setCurrent(api.selectedScrollSnap() + 1);
 
     api.on("select", () => {
-      setCurrent(api.selectedScrollSnap() + 1);
+      const newIndex = api.selectedScrollSnap();
+      setCurrent(newIndex + 1);
+      
+      // Preload adjacent slides for smooth navigation
+      setLoadedIndices(prev => {
+        const next = new Set(prev);
+        // Load current, previous, and next slides
+        next.add(newIndex);
+        next.add((newIndex - 1 + limitedImages.length) % limitedImages.length);
+        next.add((newIndex + 1) % limitedImages.length);
+        return next;
+      });
     });
-  }, [api]);
+  }, [api, limitedImages.length]);
 
   const handleDotClick = (index: number) => {
     if (api) {
@@ -45,18 +70,34 @@ const FeaturedPropertyCarousel: React.FC<FeaturedPropertyCarouselProps> = ({ ima
         }}
       >
         <CarouselContent>
-          {images.map((image, index) => (
-            <CarouselItem key={index}>
-              <Image
-                src={image.src}
-                alt={image.alt}
-                width={680}
-                height={530}
-                className="rounded-2xl w-full h-auto max-h-[540px] object-cover"
-                unoptimized={true}
-              />
-            </CarouselItem>
-          ))}
+          {limitedImages.map((image, index) => {
+            const shouldLoad = loadedIndices.has(index);
+            const isEager = index < EAGER_LOAD_COUNT;
+            
+            return (
+              <CarouselItem key={index}>
+                {shouldLoad || isEager ? (
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    width={680}
+                    height={510}
+                    sizes="(max-width: 640px) 95vw, (max-width: 1024px) 680px, 680px"
+                    priority={index === 0}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "auto"}
+                    className="rounded-2xl w-full h-auto max-h-[540px] object-cover"
+                  />
+                ) : (
+                  // Placeholder for unloaded slides
+                  <div 
+                    className="rounded-2xl w-full bg-slate-200 dark:bg-slate-700 animate-pulse"
+                    style={{ aspectRatio: '4/3', maxHeight: '540px' }}
+                  />
+                )}
+              </CarouselItem>
+            );
+          })}
         </CarouselContent>
       </Carousel>
       

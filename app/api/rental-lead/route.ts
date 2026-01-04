@@ -18,6 +18,12 @@ const rentalLeadSchema = z.object({
   message: z.string().optional(),
   newsletter: z.boolean().default(true),
   source: z.string().optional(),
+  // UTM tracking parameters
+  utm_source: z.string().optional(),
+  utm_medium: z.string().optional(),
+  utm_campaign: z.string().optional(),
+  utm_term: z.string().optional(),
+  utm_content: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -52,6 +58,12 @@ export async function POST(request: NextRequest) {
         ipAddress,
         userAgent,
         status: 'NEW',
+        // UTM tracking for attribution
+        utmSource: validatedData.utm_source,
+        utmMedium: validatedData.utm_medium,
+        utmCampaign: validatedData.utm_campaign,
+        utmTerm: validatedData.utm_term,
+        utmContent: validatedData.utm_content,
       },
     });
 
@@ -130,6 +142,7 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
 
 
 

@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { transformPropertyOwner } from "@/lib/transforms";
 
 export async function GET(
   request: Request,
@@ -26,13 +27,13 @@ export async function GET(
 
     const { ownerId } = await params;
 
-    const owner = await prisma.propertyOwner.findUnique({
+    const owner = await prisma.property_owner.findUnique({
       where: { id: ownerId },
       include: {
-        documents: {
-          orderBy: { createdAt: "desc" },
+        owner_document: {
+          orderBy: { created_at: "desc" },
         },
-        properties: {
+        property: {
           include: {
             images: {
               where: { position: 1 },
@@ -40,8 +41,8 @@ export async function GET(
             },
           },
         },
-        tm30Requests: {
-          orderBy: { createdAt: "desc" },
+        tm30_accommodation_request: {
+          orderBy: { created_at: "desc" },
         },
       },
     });
@@ -50,7 +51,7 @@ export async function GET(
       return NextResponse.json({ error: "Owner not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ owner });
+    return NextResponse.json({ owner: transformPropertyOwner(owner) });
   } catch (error: any) {
     console.error("[Owner API] Get error:", error);
     return NextResponse.json(
@@ -75,16 +76,30 @@ export async function PATCH(
 
     const { ownerId } = await params;
     const body = await request.json();
+    
+    // Transform camelCase input to snake_case for Prisma
+    const updateData: any = {
+      updated_at: new Date(),
+    };
+    if (body.firstName !== undefined) updateData.first_name = body.firstName;
+    if (body.lastName !== undefined) updateData.last_name = body.lastName;
+    if (body.phone !== undefined) updateData.phone = body.phone;
+    if (body.email !== undefined) updateData.email = body.email;
+    if (body.gender !== undefined) updateData.gender = body.gender;
+    if (body.thaiIdNumber !== undefined) updateData.thai_id_number = body.thaiIdNumber;
+    if (body.idCardUrl !== undefined) updateData.id_card_url = body.idCardUrl;
+    if (body.idCardPath !== undefined) updateData.id_card_path = body.idCardPath;
+    if (body.idCardOcrData !== undefined) updateData.id_card_ocr_data = body.idCardOcrData;
+    if (body.idCardVerified !== undefined) updateData.id_card_verified = body.idCardVerified;
+    if (body.isActive !== undefined) updateData.is_active = body.isActive;
+    if (body.isVerified !== undefined) updateData.is_verified = body.isVerified;
 
-    const owner = await prisma.propertyOwner.update({
+    const owner = await prisma.property_owner.update({
       where: { id: ownerId },
-      data: {
-        ...body,
-        updatedAt: new Date(),
-      },
+      data: updateData,
     });
 
-    return NextResponse.json({ owner });
+    return NextResponse.json({ owner: transformPropertyOwner(owner) });
   } catch (error: any) {
     console.error("[Owner API] Update error:", error);
     return NextResponse.json(
@@ -109,7 +124,7 @@ export async function DELETE(
 
     const { ownerId } = await params;
 
-    await prisma.propertyOwner.delete({
+    await prisma.property_owner.delete({
       where: { id: ownerId },
     });
 
@@ -122,6 +137,7 @@ export async function DELETE(
     );
   }
 }
+
 
 
 

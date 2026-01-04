@@ -107,7 +107,7 @@ export default function RentalExpert() {
           alt="background pattern"
           width={700}
           height={1039}
-          unoptimized={true}
+          loading="lazy"
         />
       </div>
 
@@ -140,7 +140,7 @@ export default function RentalExpert() {
                       width={120}
                       height={120}
                       className="rounded-full border-4 border-primary shadow-lg"
-                      unoptimized={true}
+                      loading="lazy"
                     />
                     <div className="absolute -bottom-2 -right-2 bg-primary text-white rounded-full p-2">
                       <Icon icon="ph:key-bold" width={20} height={20} />

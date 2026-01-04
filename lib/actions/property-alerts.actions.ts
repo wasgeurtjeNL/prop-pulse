@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import type { Property, PropertyType, PropertyCategory } from "@/lib/generated/prisma/client";
+import type { Property, PropertyType, PropertyCategory } from "@prisma/client";
 
 interface PropertyData {
   id: string;

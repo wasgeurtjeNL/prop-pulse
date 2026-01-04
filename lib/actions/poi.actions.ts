@@ -11,7 +11,7 @@
  */
 
 import prisma from '@/lib/prisma';
-import { PoiCategory } from '@/lib/generated/prisma';
+import { PoiCategory } from '@prisma/client';
 import { 
   geocodePropertyLocation, 
   isWithinPhuket 

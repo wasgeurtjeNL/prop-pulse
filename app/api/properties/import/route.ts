@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { imagekit } from "@/lib/imagekit";
 import { slugify } from "@/lib/utils";
-import { PropertyType, PropertyCategory, Status } from "@/lib/generated/prisma/client";
+import { PropertyType, PropertyCategory, Status } from "@prisma/client";
 import { z } from "zod";
 import sharp from "sharp";
 import { notifyMatchingAlerts } from "@/lib/actions/property-alerts.actions";

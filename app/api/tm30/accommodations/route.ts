@@ -16,10 +16,10 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import type { Tm30Accommodation, Property } from "@/lib/generated/prisma";
+import type { tm30_accommodation, Property } from "@prisma/client";
 
 // Type for accommodation with property relation
-type TM30AccommodationWithProperty = Tm30Accommodation & {
+type TM30AccommodationWithProperty = tm30_accommodation & {
   property: Pick<Property, "id" | "title"> | null;
 };
 
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
       whereClause.status = statusFilter;
     }
 
-    const accommodations: TM30AccommodationWithProperty[] = await prisma.tm30Accommodation.findMany({
+    const accommodations: TM30AccommodationWithProperty[] = await prisma.tm30_accommodation.findMany({
       where: whereClause,
       orderBy: { name: "asc" },
       include: {
@@ -69,17 +69,17 @@ export async function GET(request: Request) {
       },
     });
 
-    // Get linked count
-    const linkedCount = accommodations.filter((a: TM30AccommodationWithProperty) => a.propertyId !== null).length;
+    // Get linked count - use property_id (snake_case from database schema)
+    const linkedCount = accommodations.filter((a: TM30AccommodationWithProperty) => a.property_id !== null).length;
 
     return NextResponse.json({
       accommodations: accommodations.map((a: TM30AccommodationWithProperty) => ({
         id: a.id,
-        tm30Id: a.tm30Id,
+        tm30Id: a.tm30_id,
         name: a.name,
         address: a.address,
         status: a.status,
-        isLinked: a.propertyId !== null,
+        isLinked: a.property_id !== null,
         linkedProperty: a.property ? {
           id: a.property.id,
           title: a.property.title,
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
       })),
       total: accommodations.length,
       linkedCount,
-      lastUpdated: accommodations[0]?.updatedAt || null,
+      lastUpdated: accommodations[0]?.updated_at || null,
     });
 
   } catch (error: any) {
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
     }
 
     // Find accommodation in database
-    const accommodation = await prisma.tm30Accommodation.findUnique({
+    const accommodation = await prisma.tm30_accommodation.findUnique({
       where: { id: tm30AccommodationId },
     });
 
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
     }
 
     // Check if already linked to another property
-    if (accommodation.propertyId && accommodation.propertyId !== propertyId) {
+    if (accommodation.property_id && accommodation.property_id !== propertyId) {
       return NextResponse.json(
         { error: "This TM30 accommodation is already linked to another property" },
         { status: 400 }
@@ -145,15 +145,15 @@ export async function POST(request: Request) {
 
     // Update both the accommodation and the property
     const [updatedAccommodation, updatedProperty] = await prisma.$transaction([
-      prisma.tm30Accommodation.update({
+      prisma.tm30_accommodation.update({
         where: { id: tm30AccommodationId },
-        data: { propertyId },
+        data: { property_id: propertyId },
       }),
       prisma.property.update({
         where: { id: propertyId },
         data: {
-          tm30AccommodationId: accommodation.tm30Id || accommodation.id,
-          tm30AccommodationName: accommodation.name,
+          tm30_accommodation_id: accommodation.tm30_id || accommodation.id,
+          tm30_accommodation_name: accommodation.name,
         },
       }),
     ]);
@@ -163,8 +163,8 @@ export async function POST(request: Request) {
       property: {
         id: updatedProperty.id,
         title: updatedProperty.title,
-        tm30AccommodationId: updatedProperty.tm30AccommodationId,
-        tm30AccommodationName: updatedProperty.tm30AccommodationName,
+        tm30AccommodationId: updatedProperty.tm30_accommodation_id,
+        tm30AccommodationName: updatedProperty.tm30_accommodation_name,
       },
       message: `Property "${updatedProperty.title}" linked to TM30 accommodation "${accommodation.name}"`,
     });
@@ -203,25 +203,25 @@ export async function DELETE(request: Request) {
     }
 
     // Find the linked accommodation
-    const accommodation = await prisma.tm30Accommodation.findFirst({
-      where: { propertyId },
+    const accommodation = await prisma.tm30_accommodation.findFirst({
+      where: { property_id: propertyId },
     });
 
     // Update both
     const results = await prisma.$transaction([
       // Remove link from accommodation
       ...(accommodation ? [
-        prisma.tm30Accommodation.update({
+        prisma.tm30_accommodation.update({
           where: { id: accommodation.id },
-          data: { propertyId: null },
+          data: { property_id: null },
         }),
       ] : []),
       // Remove TM30 data from property
       prisma.property.update({
         where: { id: propertyId },
         data: {
-          tm30AccommodationId: null,
-          tm30AccommodationName: null,
+          tm30_accommodation_id: null,
+          tm30_accommodation_name: null,
         },
       }),
     ]);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { transformBookingMessage } from "@/lib/transforms";
 
 // GET - Fetch messages for a booking
 export async function GET(
@@ -24,7 +25,7 @@ export async function GET(
     const isAdmin = session.user.role === "ADMIN" || session.user.role === "AGENT";
 
     // Verify booking access
-    const booking = await prisma.rentalBooking.findUnique({
+    const booking = await prisma.rental_booking.findUnique({
       where: { id: bookingId },
       select: { userId: true },
     });
@@ -44,23 +45,23 @@ export async function GET(
     }
 
     // Get messages
-    const messages = await prisma.bookingMessage.findMany({
-      where: { bookingId },
-      orderBy: { createdAt: "asc" },
+    const messages = await prisma.booking_message.findMany({
+      where: { booking_id: bookingId },
+      orderBy: { created_at: "asc" },
     });
 
     // Mark messages as read for the viewer
-    const senderRole = isAdmin ? "customer" : "agent";
-    await prisma.bookingMessage.updateMany({
+    const senderRoleToMark = isAdmin ? "customer" : "agent";
+    await prisma.booking_message.updateMany({
       where: {
-        bookingId,
-        senderRole,
-        isRead: false,
+        booking_id: bookingId,
+        sender_role: senderRoleToMark,
+        is_read: false,
       },
-      data: { isRead: true },
+      data: { is_read: true },
     });
 
-    return NextResponse.json({ messages });
+    return NextResponse.json({ messages: messages.map(transformBookingMessage) });
   } catch (error) {
     console.error("Error fetching messages:", error);
     return NextResponse.json(
@@ -101,7 +102,7 @@ export async function POST(
     const isAdmin = session.user.role === "ADMIN" || session.user.role === "AGENT";
 
     // Verify booking access
-    const booking = await prisma.rentalBooking.findUnique({
+    const booking = await prisma.rental_booking.findUnique({
       where: { id: bookingId },
       select: { userId: true },
     });
@@ -132,17 +133,19 @@ export async function POST(
     }
 
     // Create message
-    const newMessage = await prisma.bookingMessage.create({
+    const newMessage = await prisma.booking_message.create({
       data: {
-        bookingId,
-        senderId: session.user.id,
-        senderRole,
+        id: crypto.randomUUID(),
+        booking_id: bookingId,
+        sender_id: session.user.id,
+        sender_role: senderRole,
         message: message.trim(),
-        isRead: false,
+        is_read: false,
+        updated_at: new Date(),
       },
     });
 
-    return NextResponse.json({ message: newMessage });
+    return NextResponse.json({ message: transformBookingMessage(newMessage) });
   } catch (error) {
     console.error("Error sending message:", error);
     return NextResponse.json(

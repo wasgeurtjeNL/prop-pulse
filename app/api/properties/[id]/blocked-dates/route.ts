@@ -14,14 +14,14 @@ export async function GET(request: Request, context: RouteContext) {
     console.log("[blocked-dates] Fetching for property:", propertyId);
 
     // Get manually blocked dates
-    const blockedDates = await prisma.propertyBlockedDate.findMany({
-      where: { propertyId },
-      orderBy: { startDate: "asc" },
+    const blockedDates = await prisma.property_blocked_date.findMany({
+      where: { property_id: propertyId },
+      orderBy: { start_date: "asc" },
     });
     console.log("[blocked-dates] Manual blocks found:", blockedDates.length);
 
     // Get confirmed bookings (these dates are also blocked)
-    const confirmedBookings = await prisma.rentalBooking.findMany({
+    const confirmedBookings = await prisma.rental_booking.findMany({
       where: {
         propertyId,
         status: {
@@ -44,8 +44,8 @@ export async function GET(request: Request, context: RouteContext) {
       // Manually blocked dates
       ...blockedDates.map((bd) => ({
         id: bd.id,
-        startDate: bd.startDate,
-        endDate: bd.endDate,
+        startDate: bd.start_date,
+        endDate: bd.end_date,
         reason: bd.reason || "Blocked",
         type: "manual" as const,
       })),
@@ -64,7 +64,13 @@ export async function GET(request: Request, context: RouteContext) {
 
     return NextResponse.json({ 
       blockedDates: allBlockedDates,
-      manualBlocks: blockedDates,
+      manualBlocks: blockedDates.map(bd => ({
+        id: bd.id,
+        propertyId: bd.property_id,
+        startDate: bd.start_date,
+        endDate: bd.end_date,
+        reason: bd.reason,
+      })),
       bookings: confirmedBookings,
     });
   } catch (error) {
@@ -115,7 +121,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     // Check for overlapping bookings
-    const overlappingBookings = await prisma.rentalBooking.findMany({
+    const overlappingBookings = await prisma.rental_booking.findMany({
       where: {
         propertyId,
         status: { in: ["CONFIRMED", "PENDING"] },
@@ -133,17 +139,27 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     // Create the blocked date
-    const blockedDate = await prisma.propertyBlockedDate.create({
+    const blockedDate = await prisma.property_blocked_date.create({
       data: {
-        propertyId,
-        startDate: start,
-        endDate: end,
+        id: crypto.randomUUID(),
+        property_id: propertyId,
+        start_date: start,
+        end_date: end,
         reason: reason || null,
-        blockedBy: session.user.id,
+        blocked_by: session.user.id,
+        updated_at: new Date(),
       },
     });
 
-    return NextResponse.json({ blockedDate });
+    return NextResponse.json({ 
+      blockedDate: {
+        id: blockedDate.id,
+        propertyId: blockedDate.property_id,
+        startDate: blockedDate.start_date,
+        endDate: blockedDate.end_date,
+        reason: blockedDate.reason,
+      }
+    });
   } catch (error) {
     console.error("Error creating blocked date:", error);
     return NextResponse.json(
@@ -179,7 +195,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       );
     }
 
-    await prisma.propertyBlockedDate.delete({
+    await prisma.property_blocked_date.delete({
       where: { id: blockedDateId },
     });
 

@@ -13,6 +13,14 @@ import { calculateReadTime, formatReadTime } from "@/lib/utils";
 import Breadcrumb from "@/components/new-design/breadcrumb";
 import AdminEditButton from "@/components/shared/admin-edit-button";
 
+// Helper to safely convert Date or string to ISO string
+function toISOString(date: Date | string | null | undefined): string | undefined {
+    if (!date) return undefined;
+    if (typeof date === 'string') return date.includes('T') ? date : new Date(date).toISOString();
+    if (date instanceof Date && !isNaN(date.getTime())) return date.toISOString();
+    return undefined;
+}
+
 // Allow dynamic rendering for slugs not generated at build time
 export const dynamicParams = true;
 
@@ -44,8 +52,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 title: blog.metaTitle || blog.title,
                 description: blog.metaDescription || blog.excerpt,
                 type: "article",
-                publishedTime: blog.publishedAt?.toISOString(),
-                modifiedTime: blog.updatedAt?.toISOString(),
+                publishedTime: toISOString(blog.publishedAt),
+                modifiedTime: toISOString(blog.updatedAt),
                 authors: [blog.author.name || "Real Estate Pulse"],
                 images: blog.coverImage ? [{ 
                     url: blog.coverImage,

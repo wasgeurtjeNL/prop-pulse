@@ -107,3 +107,4 @@ CREATE TRIGGER whatsapp_session_updated_at
 
 
 
+

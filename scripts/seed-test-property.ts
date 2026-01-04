@@ -4,7 +4,7 @@
  */
 
 import prisma from '../lib/prisma';
-import { PropertyCategory, PropertyType, Status } from '../lib/generated/prisma/client';
+import { PropertyCategory, PropertyType, Status } from '@prisma/client';
 
 async function seedTestProperty() {
   console.log('🌱 Seeding test property with new schema...\n');
@@ -154,6 +154,7 @@ seedTestProperty()
     console.error(error);
     process.exit(1);
   });
+
 
 
 

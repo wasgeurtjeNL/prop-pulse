@@ -131,11 +131,13 @@ export async function reverseGeocode(
 ): Promise<{ address: string; district?: string }> {
   try {
     // Use OpenStreetMap Nominatim for reverse geocoding
+    // Request English language to get "Rawai" instead of "ราไวย์"
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
+      `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&accept-language=en`,
       {
         headers: {
           'User-Agent': 'PSMPhuket/1.0 (contact@psmphuket.com)',
+          'Accept-Language': 'en',
         },
       }
     );
@@ -412,6 +414,7 @@ function extractDistrictFromAddress(address: string): string | undefined {
   
   return undefined;
 }
+
 
 
 

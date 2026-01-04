@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { transformRentalBooking } from "@/lib/transforms";
 
 // GET - Fetch a single booking
 export async function GET(
@@ -23,7 +24,7 @@ export async function GET(
     const { id } = await params;
     const isAdmin = session.user.role === "ADMIN" || session.user.role === "AGENT";
 
-    const booking = await prisma.rentalBooking.findUnique({
+    const booking = await prisma.rental_booking.findUnique({
       where: { id },
       include: {
         property: {
@@ -42,7 +43,7 @@ export async function GET(
             },
           },
         },
-        user: {
+        user_rental_booking_userIdTouser: {
           select: {
             id: true,
             name: true,
@@ -67,7 +68,8 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ booking });
+    // Transform snake_case to camelCase for frontend compatibility using central utility
+    return NextResponse.json({ booking: transformRentalBooking(booking) });
   } catch (error) {
     console.error("Error fetching booking:", error);
     return NextResponse.json(
@@ -119,33 +121,33 @@ export async function PATCH(
       internalNotes,
     } = body;
 
-    // Build update data
+    // Build update data (using snake_case for Prisma)
     const updateData: any = {};
 
     if (status) {
       updateData.status = status;
       if (status === "CONFIRMED") {
-        updateData.confirmedAt = new Date();
-        updateData.agentId = session.user.id;
+        updateData.confirmed_at = new Date();
+        updateData.agent_id = session.user.id;
       } else if (status === "CANCELLED") {
         updateData.cancelledAt = new Date();
         updateData.cancellationReason = body.cancellationReason || "Rejected by admin";
       }
     }
 
-    // Property access details
-    if (checkInTime !== undefined) updateData.checkInTime = checkInTime;
-    if (checkOutTime !== undefined) updateData.checkOutTime = checkOutTime;
-    if (propertyAddress !== undefined) updateData.propertyAddress = propertyAddress;
-    if (propertyInstructions !== undefined) updateData.propertyInstructions = propertyInstructions;
-    if (wifiName !== undefined) updateData.wifiName = wifiName;
-    if (wifiPassword !== undefined) updateData.wifiPassword = wifiPassword;
-    if (accessCode !== undefined) updateData.accessCode = accessCode;
-    if (emergencyContact !== undefined) updateData.emergencyContact = emergencyContact;
-    if (houseRules !== undefined) updateData.houseRules = houseRules;
+    // Property access details (snake_case fields)
+    if (checkInTime !== undefined) updateData.check_in_time = checkInTime;
+    if (checkOutTime !== undefined) updateData.check_out_time = checkOutTime;
+    if (propertyAddress !== undefined) updateData.property_address = propertyAddress;
+    if (propertyInstructions !== undefined) updateData.property_instructions = propertyInstructions;
+    if (wifiName !== undefined) updateData.wifi_name = wifiName;
+    if (wifiPassword !== undefined) updateData.wifi_password = wifiPassword;
+    if (accessCode !== undefined) updateData.access_code = accessCode;
+    if (emergencyContact !== undefined) updateData.emergency_contact = emergencyContact;
+    if (houseRules !== undefined) updateData.house_rules = houseRules;
     if (internalNotes !== undefined) updateData.internalNotes = internalNotes;
 
-    const booking = await prisma.rentalBooking.update({
+    const booking = await prisma.rental_booking.update({
       where: { id },
       data: updateData,
       include: {
@@ -157,7 +159,7 @@ export async function PATCH(
             slug: true,
           },
         },
-        user: {
+        user_rental_booking_userIdTouser: {
           select: {
             id: true,
             name: true,
@@ -167,7 +169,8 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ booking });
+    // Transform snake_case to camelCase for frontend compatibility using central utility
+    return NextResponse.json({ booking: transformRentalBooking(booking) });
   } catch (error) {
     console.error("Error updating booking:", error);
     return NextResponse.json(
@@ -176,6 +179,7 @@ export async function PATCH(
     );
   }
 }
+
 
 
 

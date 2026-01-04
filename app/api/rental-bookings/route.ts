@@ -4,6 +4,7 @@ import { calculateBookingPrice, getDefaultPricingConfig } from "@/lib/services/r
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { sendPassportRequest } from "@/lib/services/tm30-whatsapp";
+import { transformRentalBooking } from "@/lib/transforms";
 
 // POST - Create a new rental booking
 export async function POST(request: Request) {
@@ -54,19 +55,19 @@ export async function POST(request: Request) {
         monthlyRentalPrice: true,
         title: true,
         location: true,
-        // Property access defaults
-        defaultCheckInTime: true,
-        defaultCheckOutTime: true,
-        defaultPropertyAddress: true,
-        defaultWifiName: true,
-        defaultWifiPassword: true,
-        defaultAccessCode: true,
-        defaultEmergencyContact: true,
-        defaultPropertyInstructions: true,
-        defaultHouseRules: true,
+        // Property access defaults (snake_case as per Prisma schema)
+        default_check_in_time: true,
+        default_check_out_time: true,
+        default_property_address: true,
+        default_wifi_name: true,
+        default_wifi_password: true,
+        default_access_code: true,
+        default_emergency_contact: true,
+        default_property_instructions: true,
+        default_house_rules: true,
         // TM30 Immigration
-        tm30AccommodationId: true,
-        tm30AccommodationName: true,
+        tm30_accommodation_id: true,
+        tm30_accommodation_name: true,
       },
     });
 
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
     // Get pricing config directly from database (not via API call to avoid localhost issues on Vercel)
     let pricingConfig = getDefaultPricingConfig();
     try {
-      const dbConfig = await prisma.rentalPricingConfig.findUnique({
+      const dbConfig = await prisma.rental_pricing_config.findUnique({
         where: { id: "default" },
       });
 
@@ -126,8 +127,9 @@ export async function POST(request: Request) {
     const passportsRequired = (adults || 1) + (children || 0);
 
     // Create booking with user association and property access defaults
-    const booking = await prisma.rentalBooking.create({
+    const booking = await prisma.rental_booking.create({
       data: {
+        id: crypto.randomUUID(), // Generate unique ID (required - no default in schema)
         propertyId,
         userId, // Link booking to authenticated user
         checkIn: checkInDate,
@@ -148,48 +150,53 @@ export async function POST(request: Request) {
         guestMessage: guestMessage || null,
         status: "PENDING",
         // Pre-fill property access details from property defaults
-        checkInTime: property.defaultCheckInTime || "14:00",
-        checkOutTime: property.defaultCheckOutTime || "11:00",
-        propertyAddress: property.defaultPropertyAddress,
-        wifiName: property.defaultWifiName,
-        wifiPassword: property.defaultWifiPassword,
-        accessCode: property.defaultAccessCode,
-        emergencyContact: property.defaultEmergencyContact,
-        propertyInstructions: property.defaultPropertyInstructions,
-        houseRules: property.defaultHouseRules,
+        check_in_time: property.default_check_in_time || "14:00",
+        check_out_time: property.default_check_out_time || "11:00",
+        property_address: property.default_property_address,
+        wifi_name: property.default_wifi_name,
+        wifi_password: property.default_wifi_password,
+        access_code: property.default_access_code,
+        emergency_contact: property.default_emergency_contact,
+        property_instructions: property.default_property_instructions,
+        house_rules: property.default_house_rules,
         // TM30 Immigration fields
-        passportsRequired,
-        passportsReceived: 0,
-        tm30Status: "PENDING",
+        passports_required: passportsRequired,
+        passports_received: 0,
+        tm30_status: "PENDING",
+        updatedAt: new Date(),
       },
     });
 
     // Create BookingGuest records for each guest (for TM30 passport management)
-    const guestsToCreate = [];
+    const guestsToCreate: any[] = [];
     for (let i = 0; i < (adults || 1); i++) {
       guestsToCreate.push({
-        bookingId: booking.id,
-        guestType: "adult",
-        guestNumber: i + 1,
+        id: crypto.randomUUID(),
+        booking_id: booking.id,
+        guest_type: "adult",
+        guest_number: i + 1,
+        updated_at: new Date(),
       });
     }
     for (let i = 0; i < (children || 0); i++) {
       guestsToCreate.push({
-        bookingId: booking.id,
-        guestType: "child",
-        guestNumber: (adults || 1) + i + 1,
+        id: crypto.randomUUID(),
+        booking_id: booking.id,
+        guest_type: "child",
+        guest_number: (adults || 1) + i + 1,
+        updated_at: new Date(),
       });
     }
     
     if (guestsToCreate.length > 0) {
-      await prisma.bookingGuest.createMany({
+      await prisma.booking_guest.createMany({
         data: guestsToCreate,
       });
       console.log(`[Booking] Created ${guestsToCreate.length} guest records for TM30`);
     }
 
     // Send WhatsApp passport request if property has TM30 enabled
-    if (property.tm30AccommodationId) {
+    if (property.tm30_accommodation_id) {
       try {
         console.log("[Booking] Property has TM30 enabled, sending passport request...");
         await sendPassportRequest(booking.id);
@@ -212,10 +219,20 @@ export async function POST(request: Request) {
         nights: booking.nights,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating booking:", error);
+    console.error("Error name:", error?.name);
+    console.error("Error message:", error?.message);
+    console.error("Error code:", error?.code);
+    console.error("Error meta:", JSON.stringify(error?.meta, null, 2));
+    
+    // Return more detailed error for debugging
     return NextResponse.json(
-      { error: "Failed to create booking" },
+      { 
+        error: "Failed to create booking",
+        details: error?.message || "Unknown error",
+        code: error?.code || null,
+      },
       { status: 500 }
     );
   }
@@ -252,7 +269,7 @@ export async function GET(request: Request) {
     if (propertyId) where.propertyId = propertyId;
     if (status) where.status = status;
 
-    const bookings = await prisma.rentalBooking.findMany({
+    const bookings = await prisma.rental_booking.findMany({
       where,
       include: {
         property: {
@@ -272,7 +289,7 @@ export async function GET(request: Request) {
           },
         },
         ...(isAdmin && {
-          user: {
+          user_rental_booking_userIdTouser: {
             select: {
               id: true,
               name: true,
@@ -286,8 +303,9 @@ export async function GET(request: Request) {
       },
     });
 
+    // Transform snake_case to camelCase for frontend compatibility using central utility
     return NextResponse.json(
-      { bookings },
+      { bookings: bookings.map(transformRentalBooking) },
       {
         headers: {
           // Private cache for authenticated user, 30s fresh, 60s stale-while-revalidate

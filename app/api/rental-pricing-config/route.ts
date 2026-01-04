@@ -9,7 +9,7 @@ import type { PricingConfig } from "@/lib/services/rental-pricing";
 export async function GET() {
   try {
     // Get the singleton config (id = "default")
-    let config = await prisma.rentalPricingConfig.findUnique({
+    let config = await prisma.rental_pricing_config.findUnique({
       where: { id: "default" },
     });
 
@@ -33,7 +33,7 @@ export async function GET() {
         maximumStayDays: 30,
       };
 
-      config = await prisma.rentalPricingConfig.create({
+      config = await prisma.rental_pricing_config.create({
         data: {
           id: "default",
           peakSeasonMonths: defaultConfig.peakSeasonMonths,
@@ -88,7 +88,7 @@ export async function PATCH(request: Request) {
     const config: PricingConfig = body;
 
     // Upsert the singleton config
-    const updatedConfig = await prisma.rentalPricingConfig.upsert({
+    const updatedConfig = await prisma.rental_pricing_config.upsert({
       where: { id: "default" },
       update: {
         peakSeasonMonths: config.peakSeasonMonths,

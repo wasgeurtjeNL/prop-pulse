@@ -16,10 +16,10 @@ const Header = async () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?updatedAt=1765040666333"
+            src="https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?tr=w-100,q-90,f-auto"
             alt="PSM Phuket Logo"
-            width={200}
-            height={70}
+            width={100}
+            height={35}
             className="h-8 w-auto"
             priority
           />

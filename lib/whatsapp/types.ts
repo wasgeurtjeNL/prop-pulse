@@ -511,6 +511,7 @@ Reply *"cancel"* to discard`,
     `🎉 *Listing successfully created!*
 
 📋 Listing number: *${listingNumber}*
+
 🔗 Link: ${propertyUrl}
 
 The listing is now live on the website!

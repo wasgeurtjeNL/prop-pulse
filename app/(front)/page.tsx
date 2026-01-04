@@ -45,32 +45,34 @@ const FAQ = dynamic(() => import('@/components/new-design/home/faqs'), {
 });
 
 export const metadata: Metadata = {
-  title: 'Home',
-  description: 'Discover premium properties and professional real estate services. Find your dream home from our curated collection of luxury villas, modern apartments, and investment properties. Expert guidance for buyers, sellers, and investors.',
+  title: 'Luxury Phuket Real Estate | Villas & Condos | PSM Phuket',
+  description:
+    'Buy or rent luxury villas and condos in Phuket & Pattaya with PSM Phuket. Local experts, bespoke viewings, negotiations, and full property management for investors, buyers, and renters.',
   openGraph: {
-    title: 'Real Estate Pulse - Premium Properties & Real Estate Services',
-    description: 'Discover premium properties and professional real estate services. Find your dream home from our curated collection of luxury villas, modern apartments, and investment properties.',
+    title: 'PSM Phuket | Luxury Villas & Condos in Phuket & Pattaya',
+    description:
+      'Explore beachfront villas, ocean-view condos, and investment properties in Phuket & Pattaya. End-to-end support: sourcing, viewings, negotiation, and property management.',
   },
 }
 
 export default async function HomePage() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://realestatepulse.com';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.psmphuket.com';
   
   // Fetch properties data server-side for instant rendering (no waterfall)
   const properties = await getProperties({});
-  const propertyHomes = transformPropertiesToTemplate(properties);
+  const propertyHomes = transformPropertiesToTemplate(properties as any[]);
   
   // Organization structured data for homepage
   const organizationSchema = generateOrganizationSchema({
-    name: 'Real Estate Pulse',
+    name: 'PSM Phuket',
     url: baseUrl,
     logo: `${baseUrl}/images/header/logo.svg`,
-    description: 'Premium real estate services specializing in luxury properties, investment opportunities, and rental management.',
+    description: 'Luxury real estate services in Phuket & Pattaya, specializing in beachfront villas, ocean-view condos, investment properties, and full property management.',
     sameAs: [
       // Add your social media profiles when available
-      // 'https://www.facebook.com/realestatepulse',
-      // 'https://www.instagram.com/realestatepulse',
-      // 'https://www.linkedin.com/company/realestatepulse',
+      // 'https://www.facebook.com/psmphuket',
+      // 'https://www.instagram.com/psmphuket',
+      // 'https://www.linkedin.com/company/psmphuket',
     ],
   });
 
@@ -86,20 +88,66 @@ export default async function HomePage() {
       <main>
         {/* Above-the-fold - critical for LCP */}
         <Hero />
+        
+        {/* SEO Section - H1 + internal links for crawlability */}
+        <section className="py-8 sm:py-10 lg:py-12 bg-white dark:bg-black">
+          <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+            <h1 className="text-3xl sm:text-4xl font-semibold text-dark dark:text-white">
+              Luxury Phuket Real Estate: Villas & Condos by PSM Phuket
+            </h1>
+            <p className="text-sm sm:text-base text-black/70 dark:text-white/70">
+              Find beachfront villas, ocean-view condos, and investment-ready properties across Phuket and Pattaya.
+              PSM Phuket arranges bespoke viewings, handles negotiations, and provides full property management for
+              buyers, sellers, and investors.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3 text-sm sm:text-base">
+              <a className="text-primary hover:underline" href="/properties">View properties</a>
+              <span className="text-black/30 dark:text-white/30">•</span>
+              <a className="text-primary hover:underline" href="/rental-services">Rental services</a>
+              <span className="text-black/30 dark:text-white/30">•</span>
+              <a className="text-primary hover:underline" href="/list-your-property">List your property</a>
+              <span className="text-black/30 dark:text-white/30">•</span>
+              <a className="text-primary hover:underline" href="/about">About PSM Phuket</a>
+              <span className="text-black/30 dark:text-white/30">•</span>
+              <a className="text-primary hover:underline" href="/faq">FAQ</a>
+              <span className="text-black/30 dark:text-white/30">•</span>
+              <a className="text-primary hover:underline" href="/guides/phuket">Phuket guide</a>
+              <span className="text-black/30 dark:text-white/30">•</span>
+              <a className="text-primary hover:underline" href="/contactus">Contact us</a>
+            </div>
+          </div>
+        </section>
+
         <Services />
         
         {/* Properties - server-side data for instant image loading */}
         <Properties initialProperties={propertyHomes} />
         
-        {/* Below-the-fold - lazy loaded for faster initial load */}
-        <FeaturedProperty />
-        <Testimonial />
-        <WhyChooseUs />
-        <InvestorStrategy />
-        <RentalExpert />
-        <BlogSmall />
-        <GetInTouch />
-        <FAQ />
+        {/* Below-the-fold - lazy loaded with content-visibility for better LCP */}
+        <div className="lazy-section">
+          <FeaturedProperty />
+        </div>
+        <div className="lazy-section">
+          <Testimonial />
+        </div>
+        <div className="lazy-section">
+          <WhyChooseUs />
+        </div>
+        <div className="lazy-section">
+          <InvestorStrategy />
+        </div>
+        <div className="lazy-section">
+          <RentalExpert />
+        </div>
+        <div className="lazy-section">
+          <BlogSmall />
+        </div>
+        <div className="lazy-section">
+          <GetInTouch />
+        </div>
+        <div className="lazy-section">
+          <FAQ />
+        </div>
       </main>
     </>
   )

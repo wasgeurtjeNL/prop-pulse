@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { Status } from "@/lib/generated/prisma";
+import { Status } from "@prisma/client";
 
 export async function GET(request: Request) {
   try {
@@ -43,9 +43,9 @@ export async function GET(request: Request) {
 
     // Filter by TM30 link status
     if (filter === "linked") {
-      whereClause.tm30AccommodationId = { not: null };
+      whereClause.tm30_accommodation_id = { not: null };
     } else if (filter === "unlinked") {
-      whereClause.tm30AccommodationId = null;
+      whereClause.tm30_accommodation_id = null;
     }
 
     const properties = await prisma.property.findMany({
@@ -56,13 +56,13 @@ export async function GET(request: Request) {
         location: true,
         enableDailyRental: true,
         monthlyRentalPrice: true,
-        tm30AccommodationId: true,
-        tm30AccommodationName: true,
+        tm30_accommodation_id: true,
+        tm30_accommodation_name: true,
         image: true,
         createdAt: true,
       },
       orderBy: [
-        { tm30AccommodationId: "asc" }, // Unlinked first (nulls first)
+        { tm30_accommodation_id: "asc" }, // Unlinked first (nulls first)
         { title: "asc" },
       ],
     });
@@ -76,7 +76,7 @@ export async function GET(request: Request) {
       where: { 
         status: Status.ACTIVE, 
         enableDailyRental: true,
-        tm30AccommodationId: { not: null },
+        tm30_accommodation_id: { not: null },
       },
     });
 
@@ -89,10 +89,10 @@ export async function GET(request: Request) {
         address: p.location, // Map location to address for frontend
         enableDailyRental: p.enableDailyRental,
         monthlyRentalPrice: p.monthlyRentalPrice,
-        tm30AccommodationId: p.tm30AccommodationId,
-        tm30AccommodationName: p.tm30AccommodationName,
-        isLinked: p.tm30AccommodationId !== null,
-        canBeRented: p.tm30AccommodationId !== null, // Property can only be rented if linked
+        tm30AccommodationId: p.tm30_accommodation_id,
+        tm30AccommodationName: p.tm30_accommodation_name,
+        isLinked: p.tm30_accommodation_id !== null,
+        canBeRented: p.tm30_accommodation_id !== null, // Property can only be rented if linked
         thumbnail: p.image || null,
       })),
       total: properties.length,

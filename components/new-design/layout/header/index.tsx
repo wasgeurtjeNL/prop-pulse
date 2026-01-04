@@ -1,7 +1,7 @@
 'use client'
 import { Icon } from '@iconify/react'
 import Link from 'next/link'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react'
 import { useTheme } from 'next-themes'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
@@ -10,14 +10,34 @@ import { authClient } from '@/lib/auth-client'
 import LanguageToggle from '../language-toggle'
 import { cn } from '@/lib/utils'
 import { useLayoutData } from '@/lib/contexts/layout-data-context'
+// Static icons for critical path - no API calls needed
+import {
+  EnvelopeIcon,
+  PhoneIcon,
+  PhoneBoldIcon,
+  CaretDownBoldIcon,
+  ArrowRightBoldIcon,
+  TagBoldIcon,
+  ListIcon,
+  XIcon,
+  MapPinIcon,
+  FacebookFillIcon,
+  InstagramLineIcon,
+  LinkedinFillIcon,
+  YoutubeFillIcon,
+  LineFillIcon,
+  WhatsappFillIcon,
+  SunBoldIcon,
+  MoonBoldIcon,
+} from '@/components/icons/StaticIcons'
 
-// Social media links
+// Social media links with static SVG components (no Iconify API calls)
 const socialLinks = [
-  { icon: 'ri:facebook-fill', href: 'https://facebook.com/psmphuket', label: 'Facebook' },
-  { icon: 'ri:instagram-line', href: 'https://instagram.com/psmphuket', label: 'Instagram' },
-  { icon: 'ri:linkedin-fill', href: 'https://linkedin.com/company/psmphuket', label: 'LinkedIn' },
-  { icon: 'ri:youtube-fill', href: 'https://youtube.com/@psmphuket', label: 'YouTube' },
-  { icon: 'ri:line-fill', href: 'https://line.me/ti/p/psmphuket', label: 'Line' },
+  { Icon: FacebookFillIcon, href: 'https://facebook.com/psmphuket', label: 'Facebook' },
+  { Icon: InstagramLineIcon, href: 'https://instagram.com/psmphuket', label: 'Instagram' },
+  { Icon: LinkedinFillIcon, href: 'https://linkedin.com/company/psmphuket', label: 'LinkedIn' },
+  { Icon: YoutubeFillIcon, href: 'https://youtube.com/@psmphuket', label: 'YouTube' },
+  { Icon: LineFillIcon, href: 'https://line.me/ti/p/psmphuket', label: 'Line' },
 ]
 
 const Header: React.FC = () => {
@@ -125,7 +145,7 @@ const Header: React.FC = () => {
                 prefetch={false}
                 className="flex items-center gap-2 hover:text-primary transition-colors"
               >
-                <Icon icon="ph:envelope" className="w-4 h-4" />
+                <EnvelopeIcon className="w-4 h-4" />
                 info@psmphuket.com
               </Link>
               <Link 
@@ -133,7 +153,7 @@ const Header: React.FC = () => {
                 prefetch={false}
                 className="flex items-center gap-2 hover:text-primary transition-colors"
               >
-                <Icon icon="ph:phone" className="w-4 h-4" />
+                <PhoneIcon className="w-4 h-4" />
                 +66 (0)98 626 1646
               </Link>
             </div>
@@ -148,7 +168,7 @@ const Header: React.FC = () => {
                   aria-label={social.label}
                   className="hover:text-primary transition-colors"
                 >
-                  <Icon icon={social.icon} className="w-4 h-4" />
+                  <social.Icon className="w-4 h-4" />
                 </Link>
               ))}
             </div>
@@ -167,11 +187,11 @@ const Header: React.FC = () => {
         <div className="flex items-center gap-5 lg:gap-6">
           <Link href='/' prefetch={false} className="transition-transform duration-300 hover:scale-105">
             <Image
-              src='https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?updatedAt=1765040666333'
+              src='https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?tr=w-80,q-90,f-auto'
               alt='PSM Phuket Real Estate Logo'
               width={80}
               height={36}
-              unoptimized={true}
+              priority={true}
               className={cn(
                 "transition-all duration-300",
                 sticky 
@@ -225,7 +245,7 @@ const Header: React.FC = () => {
                       aria-haspopup="menu"
                     >
                       <span>{item.label}</span>
-                      <Icon icon="ph:caret-down-bold" className="w-3.5 h-3.5 opacity-70" />
+                      <CaretDownBoldIcon className="w-3.5 h-3.5 opacity-70" />
                     </Link>
 
                     <div className={cn(
@@ -263,7 +283,7 @@ const Header: React.FC = () => {
                             className="inline-flex items-center gap-2 text-xs font-semibold text-white/70 hover:text-primary transition-colors px-2 py-1"
                           >
                             View all {item.label}
-                            <Icon icon="ph:arrow-right-bold" className="w-3.5 h-3.5" />
+                            <ArrowRightBoldIcon className="w-3.5 h-3.5" />
                           </Link>
                         </div>
                       </div>
@@ -302,7 +322,7 @@ const Header: React.FC = () => {
               "bg-[#25D366] text-white hover:bg-[#128C7E] hover:scale-105 shadow-lg shadow-[#25D366]/25"
             )}
           >
-            <Icon icon="ri:whatsapp-fill" className="w-5 h-5" />
+            <WhatsappFillIcon className="w-5 h-5" />
             <span>WhatsApp</span>
           </Link>
 
@@ -315,7 +335,7 @@ const Header: React.FC = () => {
               "bg-primary text-white hover:bg-primary/90 hover:scale-105 shadow-lg shadow-primary/25"
             )}
           >
-            <Icon icon="ph:tag-bold" className="w-4 h-4" />
+            <TagBoldIcon className="w-4 h-4" />
             <span>List Property</span>
           </Link>
 
@@ -330,14 +350,8 @@ const Header: React.FC = () => {
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             aria-label="Toggle theme"
           >
-            <Icon
-              icon="solar:sun-bold"
-              className="w-5 h-5 dark:hidden block"
-            />
-            <Icon
-              icon="solar:moon-bold"
-              className="w-5 h-5 dark:block hidden"
-            />
+            <SunBoldIcon className="w-5 h-5 dark:hidden block" />
+            <MoonBoldIcon className="w-5 h-5 dark:block hidden" />
           </button>
 
           {/* Language Toggle */}
@@ -370,7 +384,7 @@ const Header: React.FC = () => {
                 : "text-dark dark:text-white hover:text-primary"
             )}
           >
-            <Icon icon="ph:phone-bold" className="w-5 h-5" />
+            <PhoneBoldIcon className="w-5 h-5" />
           </Link>
 
           {/* Menu Button */}
@@ -386,10 +400,11 @@ const Header: React.FC = () => {
             )}
             aria-label="Toggle navigation menu"
           >
-            <Icon 
-              icon={navbarOpen ? "ph:x" : "ph:list"} 
-              className="w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300" 
-            />
+            {navbarOpen ? (
+              <XIcon className="w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300" />
+            ) : (
+              <ListIcon className="w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300" />
+            )}
             <span className="hidden xs:block text-sm sm:text-base">Menu</span>
           </button>
         </div>
@@ -408,7 +423,7 @@ const Header: React.FC = () => {
       <div
         ref={sideMenuRef}
         className={cn(
-          "fixed top-0 right-0 h-full w-full sm:w-[400px] md:w-[420px] lg:w-[440px] bg-gradient-to-b from-dark via-dark to-dark/95 shadow-2xl transition-all duration-500 ease-out z-50 overflow-hidden",
+          "fixed top-0 right-0 h-screen w-full sm:w-[400px] md:w-[420px] lg:w-[440px] bg-gradient-to-b from-dark via-dark to-dark/95 shadow-2xl transition-all duration-500 ease-out z-50 flex flex-col",
           navbarOpen 
             ? "translate-x-0 opacity-100 visible" 
             : "translate-x-full opacity-0 invisible pointer-events-none"
@@ -420,99 +435,97 @@ const Header: React.FC = () => {
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative flex flex-col h-full overflow-y-auto no-scrollbar">
-          {/* Header - Compact */}
-          <div className="sticky top-0 z-10 flex items-center justify-between p-4 sm:p-5 bg-gradient-to-b from-dark via-dark to-transparent">
-            <Link href="/" prefetch={false} onClick={() => setNavbarOpen(false)}>
-              <Image
-                src='https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?updatedAt=1765040666333'
-                alt='PSM Phuket Real Estate Logo'
-                width={60}
-                height={27}
-                unoptimized={true}
-                className="w-[40px] h-auto brightness-0 invert"
+        {/* Header - Fixed at top */}
+        <div className="relative z-10 flex-shrink-0 flex items-center justify-between p-4 sm:p-5 bg-dark">
+          <Link href="/" prefetch={false} onClick={() => setNavbarOpen(false)}>
+            <Image
+              src='https://ik.imagekit.io/slydc8kod/logo_psm_300.webp?tr=w-60,q-90,f-auto'
+              alt='PSM Phuket Real Estate Logo'
+              width={60}
+              height={27}
+              className="w-[40px] h-auto brightness-0 invert"
+            />
+          </Link>
+          <button
+            onClick={() => setNavbarOpen(false)}
+            aria-label="Close navigation menu"
+            className="p-2 rounded-full bg-white/10 hover:bg-white hover:text-dark text-white transition-all duration-300 hover:scale-110"
+          >
+            <XIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Navigation Links - Scrollable middle section */}
+        <nav className="relative z-10 flex-1 overflow-y-auto px-4 sm:px-5 py-2">
+          <ul className="space-y-0.5">
+            {navLinks && navLinks?.map((item: any, index: number) => (
+              <NavLink 
+                key={index} 
+                item={item} 
+                onClick={() => setNavbarOpen(false)} 
               />
-            </Link>
-            <button
-              onClick={() => setNavbarOpen(false)}
-              aria-label="Close navigation menu"
-              className="p-2 rounded-full bg-white/10 hover:bg-white hover:text-dark text-white transition-all duration-300 hover:scale-110"
-            >
-              <Icon icon="ph:x" className="w-5 h-5" />
-            </button>
-          </div>
+            ))}
+          </ul>
 
-          {/* Navigation Links - Compact */}
-          <nav className="flex-1 px-4 sm:px-5 py-2">
-            <ul className="space-y-0.5">
-              {navLinks && navLinks?.map((item: any, index: number) => (
-                <NavLink 
-                  key={index} 
-                  item={item} 
-                  onClick={() => setNavbarOpen(false)} 
-                />
-              ))}
-            </ul>
-
-            {/* Auth Buttons - Compact */}
-            <div className="mt-4 pt-4 border-t border-white/10">
-              {session?.user ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
-                    <Image 
-                      src={session?.user?.image || "https://ik.imagekit.io/slydc8kod/Jum%20(3).png"} 
-                      alt={`${session?.user?.name || 'User'} avatar`}
-                      width={40}
-                      height={40}
-                      className="rounded-full ring-2 ring-primary"
-                    />
-                    <div>
-                      <p className="text-white font-semibold text-sm">{session?.user?.name}</p>
-                      <p className="text-white/50 text-xs">{session?.user?.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Link 
-                      href="/dashboard" 
-                      prefetch={false}
-                      onClick={() => setNavbarOpen(false)}
-                      className="flex-1 py-2.5 px-4 bg-primary text-white text-center rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors"
-                    >
-                      Dashboard
-                    </Link>
-                    <button 
-                      onClick={handleSignOut}
-                      className="py-2.5 px-4 bg-white/10 text-white rounded-full text-sm font-semibold hover:bg-white hover:text-dark transition-all duration-300"
-                    >
-                      Sign Out
-                    </button>
+          {/* Auth Buttons - Compact */}
+          <div className="mt-4 pt-4 border-t border-white/10">
+            {session?.user ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                  <Image 
+                    src={session?.user?.image || "https://ik.imagekit.io/slydc8kod/Jum%20(3).png"} 
+                    alt={`${session?.user?.name || 'User'} avatar`}
+                    width={40}
+                    height={40}
+                    className="rounded-full ring-2 ring-primary"
+                  />
+                  <div>
+                    <p className="text-white font-semibold text-sm">{session?.user?.name}</p>
+                    <p className="text-white/50 text-xs">{session?.user?.email}</p>
                   </div>
                 </div>
-              ) : (
                 <div className="flex gap-2">
                   <Link 
-                    onClick={() => setNavbarOpen(false)} 
-                    href="/sign-in" 
+                    href="/dashboard" 
                     prefetch={false}
-                    className="flex-1 py-2.5 px-6 bg-primary text-white text-center rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors"
+                    onClick={() => setNavbarOpen(false)}
+                    className="flex-1 py-2.5 px-4 bg-primary text-white text-center rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors"
                   >
-                    Sign In
+                    Dashboard
                   </Link>
-                  <Link 
-                    onClick={() => setNavbarOpen(false)} 
-                    href="/sign-up" 
-                    prefetch={false}
-                    className="flex-1 py-2.5 px-6 bg-white/10 text-white text-center rounded-full text-sm font-semibold hover:bg-white hover:text-dark transition-all duration-300"
+                  <button 
+                    onClick={handleSignOut}
+                    className="py-2.5 px-4 bg-white/10 text-white rounded-full text-sm font-semibold hover:bg-white hover:text-dark transition-all duration-300"
                   >
-                    Create Account
-                  </Link>
+                    Sign Out
+                  </button>
                 </div>
-              )}
-            </div>
-          </nav>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Link 
+                  onClick={() => setNavbarOpen(false)} 
+                  href="/sign-in" 
+                  prefetch={false}
+                  className="flex-1 py-2.5 px-6 bg-primary text-white text-center rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link 
+                  onClick={() => setNavbarOpen(false)} 
+                  href="/sign-up" 
+                  prefetch={false}
+                  className="flex-1 py-2.5 px-6 bg-white/10 text-white text-center rounded-full text-sm font-semibold hover:bg-white hover:text-dark transition-all duration-300"
+                >
+                  Create Account
+                </Link>
+              </div>
+            )}
+          </div>
+        </nav>
 
-          {/* Footer Section - Compact */}
-          <div className="sticky bottom-0 px-4 sm:px-5 py-4 bg-gradient-to-t from-dark via-dark to-transparent">
+        {/* Footer Section - Fixed at bottom */}
+        <div className="relative z-10 flex-shrink-0 px-4 sm:px-5 py-4 bg-dark border-t border-white/10">
             {/* Quick Contact Actions */}
             <div className="flex gap-2 mb-4">
               <Link
@@ -522,7 +535,7 @@ const Header: React.FC = () => {
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-[#25D366] text-white text-sm font-semibold hover:bg-[#128C7E] transition-colors"
               >
-                <Icon icon="ri:whatsapp-fill" className="w-4 h-4" />
+                <WhatsappFillIcon className="w-4 h-4" />
                 WhatsApp
               </Link>
               <Link
@@ -530,7 +543,7 @@ const Header: React.FC = () => {
                 prefetch={false}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white hover:text-dark transition-all duration-300"
               >
-                <Icon icon="ph:phone-bold" className="w-4 h-4" />
+                <PhoneBoldIcon className="w-4 h-4" />
                 Call Now
               </Link>
             </div>
@@ -546,7 +559,7 @@ const Header: React.FC = () => {
                   prefetch={false}
                   className="text-white/80 hover:text-primary transition-colors text-xs flex items-center gap-1.5"
                 >
-                  <Icon icon="ph:envelope" className="w-3.5 h-3.5 text-primary" />
+                  <EnvelopeIcon className="w-3.5 h-3.5 text-primary" />
                   info@psmphuket.com
                 </Link>
                 <Link 
@@ -554,11 +567,11 @@ const Header: React.FC = () => {
                   prefetch={false}
                   className="text-white/80 hover:text-primary transition-colors text-xs flex items-center gap-1.5"
                 >
-                  <Icon icon="ph:phone" className="w-3.5 h-3.5 text-primary" />
+                  <PhoneIcon className="w-3.5 h-3.5 text-primary" />
                   +66 (0)98 626 1646
                 </Link>
                 <p className="text-white/50 text-xs flex items-center gap-1.5">
-                  <Icon icon="ph:map-pin" className="w-3.5 h-3.5 text-primary" />
+                  <MapPinIcon className="w-3.5 h-3.5 text-primary" />
                   Phuket, Thailand
                 </p>
               </div>
@@ -576,16 +589,15 @@ const Header: React.FC = () => {
                   aria-label={social.label}
                   className="p-2 rounded-full bg-white/5 text-white/70 hover:bg-primary hover:text-white transition-all duration-300"
                 >
-                  <Icon icon={social.icon} className="w-4 h-4" />
+                  <social.Icon className="w-4 h-4" />
                 </Link>
               ))}
             </div>
 
-            {/* Copyright */}
-            <p className="text-white/30 text-[10px] mt-3">
-              © {new Date().getFullYear()} PSM Phuket. All rights reserved.
-            </p>
-          </div>
+          {/* Copyright */}
+          <p className="text-white/30 text-[10px] mt-3">
+            © {new Date().getFullYear()} PSM Phuket. All rights reserved.
+          </p>
         </div>
       </div>
     </header>

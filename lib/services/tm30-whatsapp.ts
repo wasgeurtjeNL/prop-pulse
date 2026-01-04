@@ -249,16 +249,16 @@ export async function sendWhatsAppMessage(
  */
 export async function sendPassportRequest(bookingId: string): Promise<boolean> {
   try {
-    const booking = await prisma.rentalBooking.findUnique({
+    const booking = await prisma.rental_booking.findUnique({
       where: { id: bookingId },
       include: {
         property: {
           select: {
             title: true,
-            tm30AccommodationId: true,
+            tm30_accommodation_id: true,
           },
         },
-        user: {
+        user_rental_booking_userIdTouser: {
           select: {
             name: true,
             email: true,
@@ -273,36 +273,40 @@ export async function sendPassportRequest(bookingId: string): Promise<boolean> {
     }
 
     // Create guest slots if not already created
-    const existingGuests = await prisma.bookingGuest.count({
-      where: { bookingId },
+    const existingGuests = await prisma.booking_guest.count({
+      where: { booking_id: bookingId },
     });
 
     if (existingGuests === 0) {
-      const guestsToCreate = [];
+      const guestsToCreate: any[] = [];
 
       for (let i = 0; i < booking.adults; i++) {
         guestsToCreate.push({
-          bookingId,
-          guestType: "adult",
-          guestNumber: i + 1,
+          id: crypto.randomUUID(),
+          booking_id: bookingId,
+          guest_type: "adult",
+          guest_number: i + 1,
+          updated_at: new Date(),
         });
       }
 
       for (let i = 0; i < booking.children; i++) {
         guestsToCreate.push({
-          bookingId,
-          guestType: "child",
-          guestNumber: booking.adults + i + 1,
+          id: crypto.randomUUID(),
+          booking_id: bookingId,
+          guest_type: "child",
+          guest_number: booking.adults + i + 1,
+          updated_at: new Date(),
         });
       }
 
-      await prisma.bookingGuest.createMany({ data: guestsToCreate });
+      await prisma.booking_guest.createMany({ data: guestsToCreate });
 
       // Update booking with passports required
-      await prisma.rentalBooking.update({
+      await prisma.rental_booking.update({
         where: { id: bookingId },
         data: {
-          passportsRequired: booking.adults + booking.children,
+          passports_required: booking.adults + booking.children,
         },
       });
     }
@@ -340,12 +344,12 @@ export async function processPassportPhoto(
 }> {
   try {
     // Find the next guest without a passport
-    const nextGuest = await prisma.bookingGuest.findFirst({
+    const nextGuest = await prisma.booking_guest.findFirst({
       where: {
-        bookingId,
-        passportImageUrl: null,
+        booking_id: bookingId,
+        passport_image_url: null,
       },
-      orderBy: { guestNumber: "asc" },
+      orderBy: { guest_number: "asc" },
     });
 
     if (!nextGuest) {
@@ -356,10 +360,10 @@ export async function processPassportPhoto(
     }
 
     // Get booking for context
-    const booking = await prisma.rentalBooking.findUnique({
+    const booking = await prisma.rental_booking.findUnique({
       where: { id: bookingId },
       include: {
-        guests: true,
+        booking_guest: true,
       },
     });
 
@@ -398,60 +402,61 @@ export async function processPassportPhoto(
       : `/tm30-passports/${Date.now()}.jpg`;
 
     // Update guest with passport data
-    const updatedGuest = await prisma.bookingGuest.update({
+    const updatedGuest = await prisma.booking_guest.update({
       where: { id: nextGuest.id },
       data: {
-        passportImageUrl: imageUrl,
-        passportImagePath: imagekitPath,
-        ocrConfidence: ocrResult.confidence,
-        ocrRawData: { raw: ocrResult.rawResponse },
-        ocrProcessedAt: new Date(),
-        tm30Status: "SCANNED",
-        firstName: ocrResult.data.firstName,
-        lastName: ocrResult.data.lastName,
-        fullName: ocrResult.data.fullName,
-        dateOfBirth: ocrResult.data.dateOfBirth
+        passport_image_url: imageUrl,
+        passport_image_path: imagekitPath,
+        ocr_confidence: ocrResult.confidence,
+        ocr_raw_data: { raw: ocrResult.rawResponse },
+        ocr_processed_at: new Date(),
+        tm30_status: "SCANNED",
+        first_name: ocrResult.data.firstName,
+        last_name: ocrResult.data.lastName,
+        full_name: ocrResult.data.fullName,
+        date_of_birth: ocrResult.data.dateOfBirth
           ? new Date(ocrResult.data.dateOfBirth)
           : null,
         nationality: ocrResult.data.nationality,
         gender: ocrResult.data.gender,
-        passportNumber: ocrResult.data.passportNumber,
-        passportExpiry: ocrResult.data.passportExpiry
+        passport_number: ocrResult.data.passportNumber,
+        passport_expiry: ocrResult.data.passportExpiry
           ? new Date(ocrResult.data.passportExpiry)
           : null,
-        passportCountry: ocrResult.data.passportCountry,
-        whatsappMessageId,
-        whatsappReceivedAt: new Date(),
+        passport_country: ocrResult.data.passportCountry,
+        whatsapp_message_id: whatsappMessageId,
+        whatsapp_received_at: new Date(),
+        updated_at: new Date(),
       },
     });
 
     // Count received passports
-    const passportsReceived = await prisma.bookingGuest.count({
+    const passportsReceived = await prisma.booking_guest.count({
       where: {
-        bookingId,
-        passportImageUrl: { not: null },
+        booking_id: bookingId,
+        passport_image_url: { not: null },
       },
     });
 
     // Check if all passports received
-    const allPassportsReceived = passportsReceived === booking.passportsRequired;
+    const allPassportsReceived = passportsReceived === booking.passports_required;
 
     // Update booking - AUTO CONFIRM when all passports received!
-    await prisma.rentalBooking.update({
+    await prisma.rental_booking.update({
       where: { id: bookingId },
       data: {
-        passportsReceived,
-        tm30Status: allPassportsReceived ? "PASSPORT_RECEIVED" : "PENDING",
+        passports_received: passportsReceived,
+        tm30_status: allPassportsReceived ? "PASSPORT_RECEIVED" : "PENDING",
         // AUTO CONFIRM the booking when all passports are received!
         status: allPassportsReceived ? "CONFIRMED" : undefined,
-        confirmedAt: allPassportsReceived ? new Date() : undefined,
+        confirmed_at: allPassportsReceived ? new Date() : undefined,
       },
     });
 
     // Generate response message
     const responseMessage = TM30_MESSAGES.PASSPORT_RECEIVED({
-      guestNumber: nextGuest.guestNumber,
-      totalGuests: booking.passportsRequired,
+      guestNumber: nextGuest.guest_number,
+      totalGuests: booking.passports_required,
       name: ocrResult.data.fullName,
       nationality: ocrResult.data.nationality,
       passportNumber: ocrResult.data.passportNumber,
@@ -460,7 +465,7 @@ export async function processPassportPhoto(
     // Check if all passports received - send confirmation message
     if (allPassportsReceived) {
       // Get property details for the confirmation message
-      const bookingWithProperty = await prisma.rentalBooking.findUnique({
+      const bookingWithProperty = await prisma.rental_booking.findUnique({
         where: { id: bookingId },
         include: {
           property: {
@@ -506,30 +511,30 @@ export async function processPassportPhoto(
  * Get TM30 status for a booking
  */
 export async function getTM30Status(bookingId: string) {
-  const booking = await prisma.rentalBooking.findUnique({
+  const booking = await prisma.rental_booking.findUnique({
     where: { id: bookingId },
     include: {
-      guests: {
-        orderBy: { guestNumber: "asc" },
+      booking_guest: {
+        orderBy: { guest_number: "asc" },
         select: {
           id: true,
-          guestNumber: true,
-          guestType: true,
-          firstName: true,
-          lastName: true,
+          guest_number: true,
+          guest_type: true,
+          first_name: true,
+          last_name: true,
           nationality: true,
-          passportNumber: true,
-          tm30Status: true,
-          passportImageUrl: true,
-          ocrConfidence: true,
-          passportVerified: true,
+          passport_number: true,
+          tm30_status: true,
+          passport_image_url: true,
+          ocr_confidence: true,
+          passport_verified: true,
         },
       },
       property: {
         select: {
           title: true,
-          tm30AccommodationId: true,
-          tm30AccommodationName: true,
+          tm30_accommodation_id: true,
+          tm30_accommodation_name: true,
         },
       },
     },
@@ -541,12 +546,28 @@ export async function getTM30Status(bookingId: string) {
     bookingId: booking.id,
     checkIn: booking.checkIn,
     checkOut: booking.checkOut,
-    tm30Status: booking.tm30Status,
-    tm30Reference: booking.tm30Reference,
-    passportsRequired: booking.passportsRequired,
-    passportsReceived: booking.passportsReceived,
-    property: booking.property,
-    guests: booking.guests,
+    tm30Status: booking.tm30_status,
+    tm30Reference: booking.tm30_reference,
+    passportsRequired: booking.passports_required,
+    passportsReceived: booking.passports_received,
+    property: {
+      title: booking.property.title,
+      tm30AccommodationId: booking.property.tm30_accommodation_id,
+      tm30AccommodationName: booking.property.tm30_accommodation_name,
+    },
+    guests: booking.booking_guest.map(g => ({
+      id: g.id,
+      guestNumber: g.guest_number,
+      guestType: g.guest_type,
+      firstName: g.first_name,
+      lastName: g.last_name,
+      nationality: g.nationality,
+      passportNumber: g.passport_number,
+      tm30Status: g.tm30_status,
+      passportImageUrl: g.passport_image_url,
+      ocrConfidence: g.ocr_confidence,
+      passportVerified: g.passport_verified,
+    })),
   };
 }
 

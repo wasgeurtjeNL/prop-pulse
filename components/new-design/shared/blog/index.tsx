@@ -4,6 +4,14 @@ import Link from 'next/link';
 import { getPublishedBlogs } from '@/lib/actions/blog.actions';
 import BlogCard from './blogCard';
 
+// Helper to safely convert Date or string to ISO string
+function toISOString(date: Date | string | null | undefined): string {
+    if (!date) return new Date().toISOString();
+    if (typeof date === 'string') return date.includes('T') ? date : new Date(date).toISOString();
+    if (date instanceof Date && !isNaN(date.getTime())) return date.toISOString();
+    return new Date().toISOString();
+}
+
 interface Blog {
     title: string;
     date: string;
@@ -22,7 +30,7 @@ const BlogSmall: React.FC = async () => {
     // Map database blogs to the expected format and take first 3
     const posts: Blog[] = blogs.slice(0, 3).map(blog => ({
         title: blog.title,
-        date: blog.publishedAt?.toISOString() || blog.createdAt.toISOString(),
+        date: toISOString(blog.publishedAt || blog.createdAt),
         excerpt: blog.excerpt,
         coverImage: blog.coverImage || '/images/blog/blog-1.jpg',
         coverImageAlt: blog.coverImageAlt || undefined,

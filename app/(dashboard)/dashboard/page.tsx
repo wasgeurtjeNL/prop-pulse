@@ -24,6 +24,8 @@ import RentalLeadsTable from "@/components/shared/dashboard/rental-leads-table";
 import StatsRentalLeads from "@/components/shared/dashboard/stats-rental-leads";
 import InvestorLeadsTable from "@/components/shared/dashboard/investor-leads-table";
 import StatsInvestorLeads from "@/components/shared/dashboard/stats-investor-leads";
+import FbMarketplaceLeadsTable from "@/components/shared/dashboard/fb-marketplace-leads-table";
+import StatsFbMarketplaceLeads from "@/components/shared/dashboard/stats-fb-marketplace-leads";
 import RentalPricingContent from "@/components/shared/dashboard/rental-pricing-content";
 import prisma from "@/lib/prisma";
 
@@ -40,7 +42,7 @@ interface DashboardPageProps {
 const getPendingBookingsCount = unstable_cache(
   async () => {
     try {
-      return await prisma.rentalBooking.count({
+      return await prisma.rental_booking.count({
         where: { status: "PENDING" },
       });
     } catch {
@@ -111,6 +113,21 @@ const getPendingInvestorLeadsCount = unstable_cache(
   { revalidate: 30, tags: ["investor-leads"] }
 );
 
+// Cached pending FB Marketplace leads count
+const getPendingFbMarketplaceLeadsCount = unstable_cache(
+  async () => {
+    try {
+      return await prisma.fbMarketplaceLead.count({
+        where: { status: "NEW" },
+      });
+    } catch {
+      return 0;
+    }
+  },
+  ["pending-fb-marketplace-leads-count"],
+  { revalidate: 30, tags: ["fb-marketplace-leads"] }
+);
+
 // Get submissions data
 async function getSubmissions() {
   const submissions = await prisma.propertySubmission.findMany({
@@ -130,6 +147,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     pendingViewingRequestsCount,
     pendingRentalLeadsCount,
     pendingInvestorLeadsCount,
+    pendingFbMarketplaceLeadsCount,
   ] = await Promise.all([
     getMissingContactsCount(),
     getPendingBookingsCount(),
@@ -137,6 +155,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     getPendingViewingRequestsCount(),
     getPendingRentalLeadsCount(),
     getPendingInvestorLeadsCount(),
+    getPendingFbMarketplaceLeadsCount(),
   ]);
 
   // Fetch submissions data if on submissions tab
@@ -173,6 +192,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         pendingViewingRequestsCount={pendingViewingRequestsCount}
         pendingRentalLeadsCount={pendingRentalLeadsCount}
         pendingInvestorLeadsCount={pendingInvestorLeadsCount}
+        pendingFbMarketplaceLeadsCount={pendingFbMarketplaceLeadsCount}
       />
 
       {/* Tab Content */}
@@ -260,6 +280,23 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </CardHeader>
             <CardContent>
               <InvestorLeadsTable />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {currentTab === "fb-marketplace-leads" && (
+        <div className="space-y-6">
+          <StatsFbMarketplaceLeads />
+          <Card>
+            <CardHeader>
+              <CardTitle>Facebook Marketplace Leads</CardTitle>
+              <CardDescription>
+                Property owners selling on Facebook Marketplace - potential listing opportunities.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FbMarketplaceLeadsTable />
             </CardContent>
           </Card>
         </div>

@@ -8,7 +8,7 @@
  */
 
 import prisma from '@/lib/prisma';
-import { PoiCategory, PoiSource } from '@/lib/generated/prisma';
+import { PoiCategory, PoiSource } from '@prisma/client';
 import { 
   ProcessedPoi, 
   PoiSyncOptions, 

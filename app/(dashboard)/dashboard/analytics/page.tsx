@@ -1,12 +1,18 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowLeft, BarChart3, Users } from "lucide-react";
+import { ArrowLeft, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DashboardChartsWrapper } from "@/components/shared/dashboard/dashboard-charts-wrapper";
 import { DashboardChartsLoading } from "@/components/shared/dashboard/dashboard-charts";
 import { LiveVisitors } from "@/components/shared/dashboard/live-visitors";
+import { TrafficSourcesAnalytics } from "@/components/shared/dashboard/traffic-sources-analytics";
+import { LeadsAnalytics } from "@/components/shared/dashboard/leads-analytics";
 import { AnalyticsTabs } from "@/components/shared/dashboard/analytics-tabs";
 import { AnalyticsDateFilter } from "@/components/shared/dashboard/analytics-with-date-filter";
+import { AnalyticsPropertyFilter } from "@/components/shared/dashboard/analytics-property-filter";
+import { AnalyticsExportButton } from "@/components/shared/dashboard/analytics-export-button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export const metadata = {
   title: "Analytics | Dashboard",
@@ -18,7 +24,36 @@ interface AnalyticsPageProps {
     tab?: string;
     from?: string;
     to?: string;
+    property?: string;
   }>;
+}
+
+// Loading fallback for client components
+function TabLoadingFallback() {
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-4 w-24" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-16" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-5 w-32" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-64" />
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps) {
@@ -35,6 +70,28 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       dateRange = { from, to };
     }
   }
+
+  // Tab titles for dynamic header
+  const tabTitles: Record<string, { title: string; description: string }> = {
+    analytics: {
+      title: "Analytics Overview",
+      description: "Property performance, views, and insights",
+    },
+    traffic: {
+      title: "Traffic Sources",
+      description: "Where your visitors come from and campaign performance",
+    },
+    leads: {
+      title: "Leads Analytics",
+      description: "Lead generation, attribution, and conversion insights",
+    },
+    visitors: {
+      title: "Live Visitors",
+      description: "Real-time visitor activity on your properties",
+    },
+  };
+
+  const currentTitle = tabTitles[currentTab] || tabTitles.analytics;
 
   return (
     <div className="space-y-6">
@@ -55,16 +112,23 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
             <BarChart3 className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Analytics</h2>
+            <h2 className="text-2xl font-bold tracking-tight">{currentTitle.title}</h2>
             <p className="text-muted-foreground">
-              Property performance, views, and lead insights
+              {currentTitle.description}
             </p>
           </div>
         </div>
         
-        {/* Date Range Picker */}
-        {currentTab === "analytics" && (
-          <AnalyticsDateFilter />
+      </div>
+
+      {/* Filters Row */}
+      <div className="flex flex-wrap items-center gap-4 p-4 rounded-lg border bg-muted/30">
+        <AnalyticsPropertyFilter />
+        {currentTab !== "visitors" && (
+          <div className="flex items-center gap-2 ml-auto">
+            <AnalyticsDateFilter />
+            <AnalyticsExportButton />
+          </div>
         )}
       </div>
 
@@ -75,6 +139,18 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       {currentTab === "analytics" && (
         <Suspense fallback={<DashboardChartsLoading />}>
           <DashboardChartsWrapper dateRange={dateRange} />
+        </Suspense>
+      )}
+
+      {currentTab === "traffic" && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <TrafficSourcesAnalytics />
+        </Suspense>
+      )}
+
+      {currentTab === "leads" && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <LeadsAnalytics />
         </Suspense>
       )}
 

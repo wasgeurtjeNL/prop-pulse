@@ -24,7 +24,7 @@ export async function POST(request: Request, context: RouteContext) {
     const { id: bookingId } = await context.params;
 
     // Verify booking exists
-    const booking = await prisma.rentalBooking.findUnique({
+    const booking = await prisma.rental_booking.findUnique({
       where: { id: bookingId },
     });
 
@@ -36,30 +36,31 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     // Check if user is admin/agent
-    const isAdmin = session.user.role === "ADMIN" || session.user.role === "AGENT";
+    const userRole = (session.user as { role?: string })?.role;
+    const isAdmin = userRole === "ADMIN" || userRole === "AGENT";
 
     // Mark all customer messages as read (for agent view)
     if (isAdmin) {
-      await prisma.bookingMessage.updateMany({
+      await prisma.booking_message.updateMany({
         where: {
-          bookingId,
-          senderRole: "customer",
-          isRead: false,
+          booking_id: bookingId,
+          sender_role: "customer",
+          is_read: false,
         },
         data: {
-          isRead: true,
+          is_read: true,
         },
       });
     } else {
       // Mark all agent messages as read (for customer view)
-      await prisma.bookingMessage.updateMany({
+      await prisma.booking_message.updateMany({
         where: {
-          bookingId,
-          senderRole: "agent",
-          isRead: false,
+          booking_id: bookingId,
+          sender_role: "agent",
+          is_read: false,
         },
         data: {
-          isRead: true,
+          is_read: true,
         },
       });
     }
@@ -73,6 +74,7 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 }
+
 
 
 

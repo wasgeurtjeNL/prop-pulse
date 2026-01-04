@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { transformBookingGuest } from "@/lib/transforms";
 
 // GET - Get all guests for a booking
 export async function GET(request: Request) {
@@ -21,12 +22,12 @@ export async function GET(request: Request) {
       );
     }
 
-    const guests = await prisma.bookingGuest.findMany({
-      where: { bookingId },
-      orderBy: { guestNumber: "asc" },
+    const guests = await prisma.booking_guest.findMany({
+      where: { booking_id: bookingId },
+      orderBy: { guest_number: "asc" },
     });
 
-    return NextResponse.json({ guests });
+    return NextResponse.json({ guests: guests.map(transformBookingGuest) });
   } catch (error) {
     console.error("Error fetching guests:", error);
     return NextResponse.json(
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
     }
 
     // Verify booking exists and user has access
-    const booking = await prisma.rentalBooking.findUnique({
+    const booking = await prisma.rental_booking.findUnique({
       where: { id: bookingId },
       select: {
         id: true,
@@ -91,14 +92,16 @@ export async function POST(request: Request) {
     if (guests && Array.isArray(guests)) {
       const createdGuests = await prisma.$transaction(
         guests.map((guest: any, index: number) =>
-          prisma.bookingGuest.create({
+          prisma.booking_guest.create({
             data: {
-              bookingId,
-              guestType: guest.guestType || "adult",
-              guestNumber: index + 1,
-              firstName: guest.firstName,
-              lastName: guest.lastName,
-              fullName: guest.fullName,
+              id: crypto.randomUUID(),
+              booking_id: bookingId,
+              guest_type: guest.guestType || "adult",
+              guest_number: index + 1,
+              first_name: guest.firstName,
+              last_name: guest.lastName,
+              full_name: guest.fullName,
+              updated_at: new Date(),
             },
           })
         )
@@ -106,39 +109,43 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        guests: createdGuests,
+        guests: createdGuests.map(transformBookingGuest),
       });
     }
 
     // Otherwise, create empty guest slots based on booking
     const totalGuests = booking.adults + booking.children;
-    const guestsToCreate = [];
+    const guestsToCreate: any[] = [];
 
     for (let i = 0; i < booking.adults; i++) {
       guestsToCreate.push({
-        bookingId,
-        guestType: "adult",
-        guestNumber: i + 1,
+        id: crypto.randomUUID(),
+        booking_id: bookingId,
+        guest_type: "adult",
+        guest_number: i + 1,
+        updated_at: new Date(),
       });
     }
 
     for (let i = 0; i < booking.children; i++) {
       guestsToCreate.push({
-        bookingId,
-        guestType: "child",
-        guestNumber: booking.adults + i + 1,
+        id: crypto.randomUUID(),
+        booking_id: bookingId,
+        guest_type: "child",
+        guest_number: booking.adults + i + 1,
+        updated_at: new Date(),
       });
     }
 
-    const createdGuests = await prisma.bookingGuest.createMany({
+    const createdGuests = await prisma.booking_guest.createMany({
       data: guestsToCreate,
     });
 
     // Update booking with passports required count
-    await prisma.rentalBooking.update({
+    await prisma.rental_booking.update({
       where: { id: bookingId },
       data: {
-        passportsRequired: totalGuests,
+        passports_required: totalGuests,
       },
     });
 
@@ -154,6 +161,7 @@ export async function POST(request: Request) {
     );
   }
 }
+
 
 
 
