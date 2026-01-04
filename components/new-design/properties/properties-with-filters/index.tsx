@@ -285,7 +285,7 @@ const PropertiesWithFilters: React.FC = () => {
                 </div>
               ) : groupedProperties.showGrouped ? (
                 /* Grouped view: Sale first, then Rent */
-                <div className="space-y-12">
+                <div className="space-y-8">
                   {/* For Sale Section */}
                   {groupedProperties.sale.length > 0 && (
                     <div>
@@ -301,12 +301,12 @@ const PropertiesWithFilters: React.FC = () => {
                   
                   {/* Divider between sections */}
                   {groupedProperties.sale.length > 0 && groupedProperties.rent.length > 0 && (
-                    <div className="relative py-4">
+                    <div className="relative py-2">
                       <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-slate-200 dark:border-slate-700" />
                       </div>
                       <div className="relative flex justify-center">
-                        <span className="bg-background px-4 text-sm text-muted-foreground">
+                        <span className="bg-background px-3 text-xs text-muted-foreground">
                           or explore rentals
                         </span>
                       </div>
