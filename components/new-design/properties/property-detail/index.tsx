@@ -57,6 +57,11 @@ const PropertyNavigationBar = dynamic(
   { ssr: false }
 );
 
+const FavoriteButton = dynamic(
+  () => import('@/components/shared/FavoriteButton'),
+  { ssr: false }
+);
+
 // Skeleton component for image placeholders with fixed aspect ratio to prevent CLS
 const ImageSkeleton = ({ className = "", aspectRatio = "4/3" }: { className?: string; aspectRatio?: string }) => (
   <div 
@@ -329,6 +334,13 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                     <Icon icon="ph:repeat-bold" width={12} height={12} />
                                     Re-sale
                                 </span>
+                            )}
+                            {/* Favorite Button */}
+                            {item?.slug && (
+                                <FavoriteButton 
+                                    propertyId={item.slug} 
+                                    variant="badge"
+                                />
                             )}
                         </div>
                         <h1 className='text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-52 font-semibold text-dark dark:text-white leading-tight'>{sanitizeText(item?.name)}</h1>

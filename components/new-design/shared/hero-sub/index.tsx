@@ -1,4 +1,6 @@
-import React, { FC } from "react";
+"use client";
+
+import React, { useState } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import Breadcrumb, { BreadcrumbItem } from "@/components/new-design/breadcrumb";
 
@@ -24,7 +26,7 @@ interface HeroSubProps {
     onClearFilters?: () => void;
 }
 
-const HeroSub: FC<HeroSubProps> = ({ 
+const HeroSub: React.FC<HeroSubProps> = ({ 
     title, 
     description, 
     badge, 
@@ -34,6 +36,7 @@ const HeroSub: FC<HeroSubProps> = ({
     activeFilters = [],
     onClearFilters 
 }) => {
+    const [filtersExpanded, setFiltersExpanded] = useState(true);
     const hasFilters = activeFilters.length > 0;
 
     return (
@@ -73,34 +76,55 @@ const HeroSub: FC<HeroSubProps> = ({
                     
                     {/* Right: Stats + Active Filters */}
                     <div className="flex flex-col items-start lg:items-end gap-3 lg:flex-shrink-0">
-                        {/* Property Count */}
-                        {propertyCount !== undefined && (
-                            <div className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-white/5 rounded-2xl shadow-sm border border-slate-100 dark:border-white/10">
-                                <div className="p-2 bg-primary/10 rounded-xl">
-                                    <Icon icon={'ph:house-line-fill'} width={20} height={20} className="text-primary" />
-                                </div>
-                                <div>
-                                    {isLoading ? (
-                                        <div className="h-6 w-12 bg-slate-200 dark:bg-white/10 rounded animate-pulse" />
-                                    ) : (
-                                        <p className="text-xl sm:text-2xl font-bold text-dark dark:text-white">
-                                            {propertyCount}
+                        {/* Property Count + Collapsed Filter Badge */}
+                        <div className="flex items-center gap-3">
+                            {/* Property Count */}
+                            {propertyCount !== undefined && (
+                                <div className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-white/5 rounded-2xl shadow-sm border border-slate-100 dark:border-white/10">
+                                    <div className="p-2 bg-primary/10 rounded-xl">
+                                        <Icon icon={'ph:house-line-fill'} width={20} height={20} className="text-primary" />
+                                    </div>
+                                    <div>
+                                        {isLoading ? (
+                                            <div className="h-6 w-12 bg-slate-200 dark:bg-white/10 rounded animate-pulse" />
+                                        ) : (
+                                            <p className="text-xl sm:text-2xl font-bold text-dark dark:text-white">
+                                                {propertyCount}
+                                            </p>
+                                        )}
+                                        <p className="text-xs text-dark/50 dark:text-white/50">
+                                            {hasFilters ? 'Filtered Results' : (propertyCount === 1 ? 'Property' : 'Properties')}
                                         </p>
-                                    )}
-                                    <p className="text-xs text-dark/50 dark:text-white/50">
-                                        {hasFilters ? 'Filtered Results' : (propertyCount === 1 ? 'Property' : 'Properties')}
-                                    </p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                            
+                            {/* Collapsed Filter Badge - Show when filters are collapsed */}
+                            {hasFilters && !filtersExpanded && (
+                                <button
+                                    onClick={() => setFiltersExpanded(true)}
+                                    className="flex items-center gap-2 px-4 py-3 bg-primary/10 dark:bg-primary/20 hover:bg-primary/20 dark:hover:bg-primary/30 rounded-2xl transition-colors border border-primary/20"
+                                >
+                                    <Icon icon="ph:funnel-fill" className="w-5 h-5 text-primary" />
+                                    <span className="text-sm font-semibold text-primary">{activeFilters.length}</span>
+                                    <span className="text-xs text-primary/70">filters</span>
+                                    <Icon icon="ph:caret-down" className="w-4 h-4 text-primary" />
+                                </button>
+                            )}
+                        </div>
                         
-                        {/* Active Filters Display */}
-                        {hasFilters && (
-                            <div className="flex flex-wrap items-center gap-2 max-w-md">
+                        {/* Expanded Filters Display */}
+                        {hasFilters && filtersExpanded && (
+                            <div 
+                                className="flex flex-wrap items-center gap-2 max-w-lg animate-in slide-in-from-top-2 duration-200"
+                            >
+                                {/* Filter Label */}
                                 <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                                     <Icon icon="ph:funnel-fill" className="w-3.5 h-3.5 text-primary" />
                                     <span className="font-medium">Filters:</span>
                                 </div>
+                                
+                                {/* Filter Pills */}
                                 {activeFilters.slice(0, 4).map((filter, idx) => (
                                     <span 
                                         key={idx}
@@ -118,11 +142,15 @@ const HeroSub: FC<HeroSubProps> = ({
                                         )}
                                     </span>
                                 ))}
+                                
+                                {/* More filters indicator */}
                                 {activeFilters.length > 4 && (
                                     <span className="text-xs text-slate-500 dark:text-slate-400">
                                         +{activeFilters.length - 4} more
                                     </span>
                                 )}
+                                
+                                {/* Clear all button */}
                                 {onClearFilters && (
                                     <button
                                         onClick={onClearFilters}
@@ -131,6 +159,16 @@ const HeroSub: FC<HeroSubProps> = ({
                                         Clear all
                                     </button>
                                 )}
+                                
+                                {/* Collapse/Hide button */}
+                                <button
+                                    onClick={() => setFiltersExpanded(false)}
+                                    className="flex items-center gap-1 px-2 py-1 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                                    aria-label="Hide filters"
+                                >
+                                    <Icon icon="ph:minus" className="w-3 h-3" />
+                                    <span>Hide</span>
+                                </button>
                             </div>
                         )}
                     </div>

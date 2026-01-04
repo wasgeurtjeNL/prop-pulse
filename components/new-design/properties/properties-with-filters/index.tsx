@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Filter, X, SlidersHorizontal, Home, Key } from "lucide-react";
+import { Filter, X, SlidersHorizontal, Home, Key, Heart } from "lucide-react";
 import PropertyCard from "../../home/properties/card/Card";
 import HeroSub from "../../shared/hero-sub";
 import PropertyFilters from "@/components/shared/properties/property-filters";
@@ -16,6 +16,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { usePropertyNavigation } from "@/lib/contexts/PropertyNavigationContext";
+import { useFavorites } from "@/lib/contexts/FavoritesContext";
 
 // Section Header Component
 function SectionHeader({ 
@@ -54,10 +55,12 @@ const PropertiesWithFilters: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { saveNavigationState } = usePropertyNavigation();
+  const { favorites, favoritesCount } = useFavorites();
 
   const categoryParam = searchParams.get("category");
   const shortStayParam = searchParams.get("shortStay");
   const typeParam = searchParams.get("type");
+  const favoritesParam = searchParams.get("favorites");
 
   // Build active filters for HeroSub display
   const activeFiltersForHero = useMemo(() => {
@@ -149,6 +152,11 @@ const PropertiesWithFilters: React.FC = () => {
       filters.push({ label: 'Pets Allowed', value: 'allowPets', onRemove: () => removeFilter('allowPets') });
     }
 
+    // Favorites
+    if (searchParams.get('favorites') === 'true') {
+      filters.push({ label: '❤️ Favorites Only', value: 'favorites', onRemove: () => removeFilter('favorites') });
+    }
+
     return filters;
   }, [searchParams, router]);
 
@@ -179,7 +187,7 @@ const PropertiesWithFilters: React.FC = () => {
     const filterKeys = [
       'query', 'type', 'category', 'beds', 'baths', 'amenities',
       'minPrice', 'maxPrice', 'minArea', 'maxArea',
-      'hasSeaView', 'allowPets', 'ownershipType', 'isResale', 'area', 'shortStay'
+      'hasSeaView', 'allowPets', 'ownershipType', 'isResale', 'area', 'shortStay', 'favorites'
     ];
     return filterKeys.some(key => {
       const value = searchParams.get(key);
@@ -187,21 +195,29 @@ const PropertiesWithFilters: React.FC = () => {
     });
   }, [searchParams]);
 
+  // Filter properties by favorites if favorites=true is set
+  const displayProperties = useMemo(() => {
+    if (favoritesParam === 'true' && favorites.length > 0) {
+      return propertyHomes.filter(p => favorites.includes(p.slug));
+    }
+    return propertyHomes;
+  }, [propertyHomes, favoritesParam, favorites]);
+
   // Group properties by type when no filters are active
   const groupedProperties = useMemo(() => {
     if (hasActiveFilters) {
       return { sale: [], rent: [], showGrouped: false };
     }
     
-    const saleProperties = propertyHomes.filter(p => p.type === 'FOR_SALE');
-    const rentProperties = propertyHomes.filter(p => p.type === 'FOR_RENT');
+    const saleProperties = displayProperties.filter(p => p.type === 'FOR_SALE');
+    const rentProperties = displayProperties.filter(p => p.type === 'FOR_RENT');
     
     return {
       sale: saleProperties,
       rent: rentProperties,
       showGrouped: true
     };
-  }, [propertyHomes, hasActiveFilters]);
+  }, [displayProperties, hasActiveFilters]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -255,6 +271,14 @@ const PropertiesWithFilters: React.FC = () => {
   const breadcrumbs: BreadcrumbItem[] = [
     { name: 'Properties', href: '/properties' },
   ];
+
+  // Add Favorites to breadcrumbs if filtered
+  if (favoritesParam === "true") {
+    breadcrumbs.push({ 
+      name: '❤️ My Favorites', 
+      href: '/properties?favorites=true' 
+    });
+  }
   
   // Add Short Stay to breadcrumbs if filtered
   if (shortStayParam === "true") {
@@ -274,6 +298,9 @@ const PropertiesWithFilters: React.FC = () => {
 
   // Determine page title
   const getPageTitle = () => {
+    if (favoritesParam === "true") {
+      return "My Favorite Properties";
+    }
     if (shortStayParam === "true") {
       return "Short Stay Rentals";
     }
@@ -291,6 +318,11 @@ const PropertiesWithFilters: React.FC = () => {
 
   // Determine page description
   const getPageDescription = () => {
+    if (favoritesParam === "true") {
+      return favoritesCount > 0 
+        ? `You have ${favoritesCount} saved properties. Click the heart to add or remove favorites.`
+        : "You haven't saved any favorites yet. Browse properties and click the heart to save your favorites.";
+    }
     if (shortStayParam === "true") {
       return "Daily and weekly vacation rentals. Perfect for holidays and short-term stays under 30 days.";
     }
@@ -302,12 +334,12 @@ const PropertiesWithFilters: React.FC = () => {
 
   // Create property list for navigation context
   const propertyListForNavigation = useMemo(() => {
-    return propertyHomes.map((p: any) => ({
+    return displayProperties.map((p: any) => ({
       slug: p.slug,
       provinceSlug: p.provinceSlug || 'phuket',
       areaSlug: p.areaSlug || 'other',
     }));
-  }, [propertyHomes]);
+  }, [displayProperties]);
 
   // Handler for saving navigation context when clicking a property
   const handlePropertyClick = useCallback((index: number) => {
@@ -322,7 +354,7 @@ const PropertiesWithFilters: React.FC = () => {
       <div className='md:hidden -mx-5 px-5'>
         <div className='flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4'>
           {items.map((item: any, index: number) => {
-            const globalIndex = propertyHomes.findIndex((p: any) => p.slug === item.slug);
+            const globalIndex = displayProperties.findIndex((p: any) => p.slug === item.slug);
             return (
               <div 
                 key={item?.slug ?? index} 
@@ -339,7 +371,7 @@ const PropertiesWithFilters: React.FC = () => {
       {/* Tablet & Desktop Grid */}
       <div className='hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-6'>
         {items.map((item: any, index: number) => {
-          const globalIndex = propertyHomes.findIndex((p: any) => p.slug === item.slug);
+          const globalIndex = displayProperties.findIndex((p: any) => p.slug === item.slug);
           return (
             <div 
               key={item?.slug ?? index}
@@ -358,9 +390,9 @@ const PropertiesWithFilters: React.FC = () => {
       <HeroSub
         title={getPageTitle()}
         description={getPageDescription()}
-        badge={shortStayParam === "true" ? "Short Stay" : "Properties"}
+        badge={favoritesParam === "true" ? "❤️ Favorites" : (shortStayParam === "true" ? "Short Stay" : "Properties")}
         breadcrumbs={breadcrumbs}
-        propertyCount={propertyHomes.length}
+        propertyCount={displayProperties.length}
         isLoading={isLoading}
         activeFilters={activeFiltersForHero}
         onClearFilters={activeFiltersForHero.length > 0 ? handleClearFilters : undefined}
@@ -368,8 +400,25 @@ const PropertiesWithFilters: React.FC = () => {
       
       <section className='pb-6 sm:pb-8'>
         <div className='container max-w-8xl mx-auto px-5 2xl:px-0'>
-          {/* Desktop: Filter Toggle Button */}
-          <div className='hidden lg:flex items-center justify-end mb-4'>
+          {/* Desktop: Filter Toggle Button + Favorites Button */}
+          <div className='hidden lg:flex items-center justify-end gap-3 mb-4'>
+            {/* Favorites Button */}
+            {favoritesCount > 0 && (
+              <Button
+                onClick={() => router.push(favoritesParam === 'true' ? '/properties' : '/properties?favorites=true')}
+                variant={favoritesParam === 'true' ? "default" : "outline"}
+                size="sm"
+                className={`flex items-center gap-2 rounded-full ${
+                  favoritesParam === 'true' 
+                    ? 'bg-red-500 hover:bg-red-600 text-white' 
+                    : 'border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600'
+                }`}
+              >
+                <Heart className={`h-4 w-4 ${favoritesParam === 'true' ? 'fill-white' : 'fill-red-500'}`} />
+                <span>{favoritesParam === 'true' ? 'Show All' : `${favoritesCount} Favorites`}</span>
+              </Button>
+            )}
+            
             <Button
               onClick={() => setShowFilters(!showFilters)}
               variant="outline"
@@ -407,11 +456,24 @@ const PropertiesWithFilters: React.FC = () => {
                     <p className="mt-4 text-muted-foreground">Loading properties...</p>
                   </div>
                 </div>
-              ) : propertyHomes.length === 0 ? (
+              ) : displayProperties.length === 0 ? (
                 <div className="flex justify-center items-center min-h-[400px]">
                   <div className="text-center">
-                    <h3 className="text-2xl font-semibold mb-2">No properties found</h3>
-                    <p className="text-muted-foreground">Try adjusting your filters</p>
+                    {favoritesParam === "true" ? (
+                      <>
+                        <Heart className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                        <h3 className="text-2xl font-semibold mb-2">No favorites yet</h3>
+                        <p className="text-muted-foreground mb-4">Browse properties and click the heart to save your favorites</p>
+                        <Button onClick={() => router.push('/properties')} variant="default">
+                          Browse Properties
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-2xl font-semibold mb-2">No properties found</h3>
+                        <p className="text-muted-foreground">Try adjusting your filters</p>
+                      </>
+                    )}
                   </div>
                 </div>
               ) : groupedProperties.showGrouped ? (
@@ -459,7 +521,7 @@ const PropertiesWithFilters: React.FC = () => {
                 </div>
               ) : (
                 /* Filtered view: Show all results normally */
-                renderPropertyGrid(propertyHomes)
+                renderPropertyGrid(displayProperties)
               )}
               
               {/* Property Alert CTA - Show after properties */}
@@ -476,8 +538,25 @@ const PropertiesWithFilters: React.FC = () => {
         </div>
       </section>
 
-      {/* Mobile: Floating Filter Button */}
-      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+      {/* Mobile: Floating Buttons */}
+      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3">
+        {/* Favorites Button - Mobile */}
+        {favoritesCount > 0 && (
+          <Button
+            onClick={() => router.push(favoritesParam === 'true' ? '/properties' : '/properties?favorites=true')}
+            size="lg"
+            className={`rounded-full shadow-lg px-4 gap-2 ${
+              favoritesParam === 'true' 
+                ? 'bg-red-500 hover:bg-red-600' 
+                : 'bg-white text-red-500 hover:bg-red-50 border border-red-200'
+            }`}
+          >
+            <Heart className={`h-5 w-5 ${favoritesParam === 'true' ? 'fill-white text-white' : 'fill-red-500'}`} />
+            <span className={favoritesParam === 'true' ? 'text-white' : ''}>{favoritesCount}</span>
+          </Button>
+        )}
+        
+        {/* Filter Button */}
         <Button
           onClick={() => setMobileFiltersOpen(true)}
           size="lg"
@@ -532,7 +611,7 @@ const PropertiesWithFilters: React.FC = () => {
               className="w-full rounded-full"
               size="lg"
             >
-              Show {propertyHomes.length} properties
+              Show {displayProperties.length} properties
             </Button>
           </div>
         </DialogContent>

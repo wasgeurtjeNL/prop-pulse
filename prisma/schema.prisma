@@ -917,6 +917,17 @@ model rental_pricing_config {
   peakSeasonSurcharges Json     @default("[{\"maxDays\": 7, \"minDays\": 1, \"surchargePercent\": 30}, {\"maxDays\": 14, \"minDays\": 8, \"surchargePercent\": 20}, {\"maxDays\": 19, \"minDays\": 15, \"surchargePercent\": 15}, {\"maxDays\": 30, \"minDays\": 20, \"surchargePercent\": 0}]")
 }
 
+model property_favorites {
+  id          String   @id @default(uuid())
+  user_id     String
+  property_id String
+  created_at  DateTime @default(now())
+
+  @@unique([user_id, property_id])
+  @@index([user_id])
+  @@index([property_id])
+}
+
 model scheduled_blog {
   id                  String              @id
   topicId             String?

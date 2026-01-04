@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import ImageLightbox from '@/components/shared/image-lightbox'
 import { formatPrice } from '@/lib/utils'
+import FavoriteButton from '@/components/shared/FavoriteButton'
 
 interface PropertyCardItem extends PropertyHomes {
   type?: 'FOR_SALE' | 'FOR_RENT';
@@ -158,20 +159,29 @@ const PropertyCard: React.FC<{ item: PropertyCardItem; priority?: boolean }> = (
               {isRental ? 'For Rent' : 'For Sale'}
             </div>
             
-            {/* View Image Button - Always visible, positioned top right */}
-            <button
-              onClick={handleViewImage}
-              className='absolute top-4 right-4 p-2.5 bg-white/90 hover:bg-white rounded-full shadow-md transition-all duration-200 hover:scale-110 z-10'
-              aria-label="View property images"
-              title="View images"
-            >
-              <Icon
-                icon={'solar:gallery-bold'}
-                width={18}
-                height={18}
-                className='text-black'
+            {/* Top Right Actions: Favorite + Gallery */}
+            <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+              {/* Favorite Button */}
+              <FavoriteButton 
+                propertyId={slug} 
+                size="sm"
               />
-            </button>
+              
+              {/* View Image Button */}
+              <button
+                onClick={handleViewImage}
+                className='p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-all duration-200 hover:scale-110'
+                aria-label="View property images"
+                title="View images"
+              >
+                <Icon
+                  icon={'solar:gallery-bold'}
+                  width={16}
+                  height={16}
+                  className='text-black'
+                />
+              </button>
+            </div>
             
             {/* Image Navigation Arrows - shows on hover when multiple images */}
             {hasMultipleImages && (
