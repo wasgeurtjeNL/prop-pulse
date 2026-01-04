@@ -295,11 +295,12 @@ export async function getProperties(params: PropertyFilterParams) {
 
     // Price filter - prices are stored as strings like "฿15,000,000" or "15000000"
     // We need to filter based on numeric comparison
-    // For now, we'll use a raw query approach or filter in memory
-    // Since price is stored as string, we filter after fetching
+    // For rentals: prices are in thousands (per month), for sales: in millions
     const hasPriceFilter = minPrice || maxPrice;
-    const minPriceNum = minPrice ? parseInt(minPrice) * 1000000 : null; // Convert from millions
-    const maxPriceNum = maxPrice ? parseInt(maxPrice) * 1000000 : null;
+    const isRentalFilter = type === "rent" || type === "FOR_RENT";
+    // Convert price based on listing type: rentals use thousands, sales use millions
+    const minPriceNum = minPrice ? parseInt(minPrice) * (isRentalFilter ? 1000 : 1000000) : null;
+    const maxPriceNum = maxPrice ? parseInt(maxPrice) * (isRentalFilter ? 1000 : 1000000) : null;
 
     // Area filter (sqft in database)
     if (minArea) {
@@ -351,13 +352,16 @@ export async function getProperties(params: PropertyFilterParams) {
 
     // Filter by price in memory (since price is stored as string)
     if (hasPriceFilter && fetchedProperties.length > 0) {
+      // Max threshold depends on listing type
+      const maxThreshold = isRentalFilter ? 500000 : 100000000; // 500K for rentals, 100M for sales
+      
       return fetchedProperties.filter((property) => {
         // Parse price string to number (remove currency symbols, commas, etc.)
         const priceStr = property.price || "0";
         const priceNum = parseInt(priceStr.replace(/[^0-9]/g, "")) || 0;
         
         if (minPriceNum && priceNum < minPriceNum) return false;
-        if (maxPriceNum && maxPriceNum < 100000000 && priceNum > maxPriceNum) return false;
+        if (maxPriceNum && maxPriceNum < maxThreshold && priceNum > maxPriceNum) return false;
         
         return true;
       });
