@@ -7,6 +7,7 @@ import { headers } from "next/headers";
 import { slugify } from "../utils";
 import { blogSchema, type BlogFormData } from "../validations/blog";
 import { withRetry } from "../db-utils";
+import { submitUrlForIndexing, generateBlogUrl } from "../services/google-indexing";
 
 // Get all published blogs for the frontend
 export async function getPublishedBlogs() {
@@ -55,7 +56,7 @@ export async function getPublishedBlogBySlug(slug: string) {
 }
 
 // Get all blogs for dashboard (including drafts)
-export async function getAllBlogs() {
+export async function getAllBlogs(page: number = 1, limit: number = 10) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -64,18 +65,37 @@ export async function getAllBlogs() {
     throw new Error("Unauthorized");
   }
 
-  const blogs = await prisma.blog.findMany({
-    orderBy: {
-      updatedAt: "desc",
-    },
-    include: {
-      author: {
-        select: { name: true, image: true },
-      },
-    },
-  });
+  const skip = (page - 1) * limit;
 
-  return blogs;
+  const [blogs, total] = await Promise.all([
+    prisma.blog.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        updatedAt: "desc",
+      },
+      include: {
+        author: {
+          select: { name: true, image: true },
+        },
+      },
+    }),
+    prisma.blog.count(),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    blogs,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    },
+  };
 }
 
 // Get blogs for the current user (agent)
@@ -201,6 +221,20 @@ export async function createBlog(data: BlogFormData) {
 
     revalidatePath("/dashboard/blogs");
     revalidatePath("/blogs");
+
+    // Submit to Google Indexing API if published
+    if (validatedData.published) {
+      const blogUrl = generateBlogUrl(blog.slug);
+      submitUrlForIndexing(blogUrl, 'URL_UPDATED')
+        .then(result => {
+          if (result.success) {
+            console.log(`[Blog] Submitted to Google Indexing: ${blogUrl}`);
+          } else {
+            console.warn(`[Blog] Failed to submit to Google Indexing: ${result.error}`);
+          }
+        })
+        .catch(err => console.warn('[Blog] Google Indexing error:', err.message));
+    }
 
     return { success: true, blog };
   } catch (error) {
@@ -336,6 +370,20 @@ export async function updateBlog(id: string, data: BlogFormData) {
     revalidatePath("/blogs");
     revalidatePath(`/blogs/${blog.slug}`);
 
+    // Submit to Google Indexing API if being published for the first time
+    if (validatedData.published && !existingBlog.published) {
+      const blogUrl = generateBlogUrl(blog.slug);
+      submitUrlForIndexing(blogUrl, 'URL_UPDATED')
+        .then(result => {
+          if (result.success) {
+            console.log(`[Blog] Submitted to Google Indexing: ${blogUrl}`);
+          } else {
+            console.warn(`[Blog] Failed to submit to Google Indexing: ${result.error}`);
+          }
+        })
+        .catch(err => console.warn('[Blog] Google Indexing error:', err.message));
+    }
+
     return { success: true, blog };
   } catch (error) {
     console.error("Database Error:", error);
@@ -438,6 +486,20 @@ export async function toggleBlogPublished(id: string) {
     revalidatePath("/dashboard/blogs");
     revalidatePath("/blogs");
     revalidatePath(`/blogs/${blog.slug}`);
+
+    // Submit to Google Indexing API when published
+    if (newPublishedState) {
+      const blogUrl = generateBlogUrl(blog.slug);
+      submitUrlForIndexing(blogUrl, 'URL_UPDATED')
+        .then(result => {
+          if (result.success) {
+            console.log(`[Blog] Submitted to Google Indexing: ${blogUrl}`);
+          } else {
+            console.warn(`[Blog] Failed to submit to Google Indexing: ${result.error}`);
+          }
+        })
+        .catch(err => console.warn('[Blog] Google Indexing error:', err.message));
+    }
 
     return { success: true, published: newPublishedState };
   } catch (error) {

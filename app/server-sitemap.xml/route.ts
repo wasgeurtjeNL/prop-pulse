@@ -1,6 +1,7 @@
 import { getServerSideSitemap, ISitemapField } from 'next-sitemap';
 import { getProperties } from '@/lib/actions/property.actions';
 import { getPublishedBlogs } from '@/lib/actions/blog.actions';
+import prisma from '@/lib/prisma';
 
 /**
  * Safely convert a date to ISO string, handling both Date objects and strings
@@ -24,7 +25,8 @@ function toISOString(date: Date | string | null | undefined): string {
 }
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://prop-pulse-nine.vercel.app';
+  // Always use the production URL for sitemap
+  const baseUrl = 'https://www.psmphuket.com';
   
   const fields: ISitemapField[] = [];
   
@@ -61,6 +63,34 @@ export async function GET() {
     }
   } catch (error) {
     console.error('Error fetching blogs for server sitemap:', error);
+  }
+  
+  // Fetch published landing pages
+  try {
+    const landingPages = await prisma.landingPage.findMany({
+      where: { 
+        published: true,
+        slug: { not: null }
+      },
+      select: {
+        slug: true,
+        updatedAt: true,
+        createdAt: true,
+      }
+    });
+    
+    for (const page of landingPages) {
+      if (page.slug) {
+        fields.push({
+          loc: `${baseUrl}/${page.slug}`,
+          lastmod: toISOString(page.updatedAt || page.createdAt),
+          changefreq: 'weekly',
+          priority: 0.7,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching landing pages for server sitemap:', error);
   }
   
   return getServerSideSitemap(fields);

@@ -60,6 +60,7 @@
     "dompurify": "^3.3.0",
     "embla-carousel-react": "^8.5.2",
     "framer-motion": "^12.23.26",
+    "googleapis": "^148.0.0",
     "gray-matter": "^4.0.3",
     "imagekit": "^6.0.0",
     "leaflet": "^1.9.4",

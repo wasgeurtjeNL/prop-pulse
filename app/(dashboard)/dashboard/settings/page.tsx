@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, Server, Bell, Send, Loader2, CheckCircle, XCircle, Sparkles, Building2, Users, MessageSquare, Tag, Ban, Database } from "lucide-react";
+import { Mail, Server, Bell, Send, Loader2, CheckCircle, XCircle, Sparkles, Building2, Users, MessageSquare, Tag, Ban, Database, Globe, Scan } from "lucide-react";
 import CacheManager from "@/components/shared/dashboard/cache-manager";
 
 interface Settings {
@@ -73,6 +73,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testEmail, setTestEmail] = useState("");
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -104,14 +105,63 @@ export default function SettingsPage() {
       if (response.ok) {
         const data = await response.json();
         setSettings(data.settings);
-        toast.success("Instellingen opgeslagen!");
+        toast.success("Settings saved!");
       } else {
-        toast.error("Opslaan mislukt");
+        toast.error("Failed to save settings");
       }
     } catch (error) {
-      toast.error("Opslaan mislukt");
+      toast.error("Failed to save settings");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Scan website to auto-fill company profile
+  const handleScanWebsite = async () => {
+    setScanning(true);
+    try {
+      // Use the live website URL
+      const websiteUrl = "https://www.psmphuket.com";
+      
+      toast.info("Scanning website... This may take a moment.");
+      
+      const response = await fetch("/api/smart-blog/analyze-website", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ websiteUrl }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // API returns data under 'analysis', not 'profile'
+        const profile = data.analysis || data.profile;
+        
+        if (profile) {
+          // Update settings with scanned data
+          setSettings(prev => ({
+            ...prev,
+            companyDescription: profile.description || prev.companyDescription,
+            companyTone: profile.tone || prev.companyTone,
+            targetAudience: profile.targetAudience || prev.targetAudience,
+            companyUSPs: Array.isArray(profile.usps) ? profile.usps.join("\n") : (profile.usps || prev.companyUSPs),
+            brandKeywords: Array.isArray(profile.brandKeywords) ? profile.brandKeywords.join(", ") : (profile.brandKeywords || prev.brandKeywords),
+            avoidTopics: Array.isArray(profile.avoidTopics) ? profile.avoidTopics.join("\n") : (profile.avoidTopics || prev.avoidTopics),
+          }));
+          
+          toast.success(`Website scanned! ${data.pagesAnalyzed || 0} pages analyzed. Don't forget to save!`);
+        } else {
+          toast.warning("Scan completed but no profile data found");
+        }
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Failed to scan website");
+      }
+    } catch (error) {
+      console.error("Scan error:", error);
+      toast.error("Failed to scan website");
+    } finally {
+      setScanning(false);
     }
   };
 
@@ -157,10 +207,10 @@ export default function SettingsPage() {
     <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Instellingen
+          Settings
         </h1>
         <p className="text-slate-600 dark:text-slate-400">
-          Configureer email en site instellingen
+          Configure email and site settings
         </p>
       </div>
 
@@ -172,7 +222,7 @@ export default function SettingsPage() {
             <CardTitle>SMTP Email Configuratie</CardTitle>
           </div>
           <CardDescription>
-            Configureer je SMTP server om automatische emails te versturen naar klanten
+            Configure your SMTP server to send automated emails to clients
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -200,7 +250,7 @@ export default function SettingsPage() {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="smtpUser">Gebruikersnaam / Email</Label>
+              <Label htmlFor="smtpUser">Username / Email</Label>
               <Input
                 id="smtpUser"
                 type="email"
@@ -211,15 +261,15 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="smtpPassword">
-                Wachtwoord / App Password
+                Password / App Password
                 {settings.hasSmtpPassword && (
-                  <span className="ml-2 text-green-600 text-xs">(opgeslagen)</span>
+                  <span className="ml-2 text-green-600 text-xs">(saved)</span>
                 )}
               </Label>
               <Input
                 id="smtpPassword"
                 type="password"
-                placeholder={settings.hasSmtpPassword ? "••••••••" : "Je wachtwoord"}
+                placeholder={settings.hasSmtpPassword ? "••••••••" : "Your password"}
                 value={settings.smtpPassword || ""}
                 onChange={(e) => updateField("smtpPassword", e.target.value)}
               />
@@ -233,15 +283,15 @@ export default function SettingsPage() {
               onCheckedChange={(checked) => updateField("smtpSecure", checked as boolean)}
             />
             <Label htmlFor="smtpSecure" className="text-sm">
-              Gebruik SSL/TLS (aan voor port 465, uit voor port 587)
+              Use SSL/TLS (on for port 465, off for port 587)
             </Label>
           </div>
 
           <div className="border-t pt-4 mt-4">
-            <Label className="text-sm font-medium mb-3 block">Afzender Instellingen</Label>
+            <Label className="text-sm font-medium mb-3 block">Sender Settings</Label>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="smtpFromName">Afzender Naam</Label>
+                <Label htmlFor="smtpFromName">Sender Name</Label>
                 <Input
                   id="smtpFromName"
                   placeholder="Real Estate Pulse"
@@ -250,7 +300,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="smtpFromEmail">Afzender Email</Label>
+                <Label htmlFor="smtpFromEmail">Sender Email</Label>
                 <Input
                   id="smtpFromEmail"
                   type="email"
@@ -264,7 +314,7 @@ export default function SettingsPage() {
 
           {/* Test SMTP */}
           <div className="border-t pt-4 mt-4">
-            <Label className="text-sm font-medium mb-3 block">Test SMTP Verbinding</Label>
+            <Label className="text-sm font-medium mb-3 block">Test SMTP Connection</Label>
             <div className="flex flex-col sm:flex-row gap-3">
               <Input
                 placeholder="test@example.com (optioneel)"
@@ -282,11 +332,11 @@ export default function SettingsPage() {
                 ) : (
                   <Send className="w-4 h-4 mr-2" />
                 )}
-                Test Verbinding
+                Test Connection
               </Button>
             </div>
             <p className="text-xs text-slate-500 mt-2">
-              Laat het email veld leeg om alleen de verbinding te testen, of vul een email in om een test email te ontvangen
+              Leave the email field empty to only test the connection, or enter an email to receive a test email
             </p>
           </div>
         </CardContent>
@@ -297,15 +347,15 @@ export default function SettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-primary" />
-            <CardTitle>Notificatie Instellingen</CardTitle>
+            <CardTitle>Notification Settings</CardTitle>
           </div>
           <CardDescription>
-            Stel in wanneer je notificaties wilt ontvangen
+            Configure when you want to receive notifications
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="adminNotifyEmail">Admin Notificatie Email</Label>
+            <Label htmlFor="adminNotifyEmail">Admin Notification Email</Label>
             <Input
               id="adminNotifyEmail"
               type="email"
@@ -314,7 +364,7 @@ export default function SettingsPage() {
               onChange={(e) => updateField("adminNotifyEmail", e.target.value)}
             />
             <p className="text-xs text-slate-500">
-              Ontvang notificaties wanneer er nieuwe property submissions binnenkomen
+              Receive notifications when new property submissions come in
             </p>
           </div>
 
@@ -326,7 +376,7 @@ export default function SettingsPage() {
                 onCheckedChange={(checked) => updateField("notifyOnSubmission", checked as boolean)}
               />
               <Label htmlFor="notifyOnSubmission" className="text-sm">
-                Notificatie bij nieuwe property aanvraag
+                Notification for new property request
               </Label>
             </div>
             <div className="flex items-center space-x-2">
@@ -336,7 +386,7 @@ export default function SettingsPage() {
                 onCheckedChange={(checked) => updateField("notifyOnImageUpload", checked as boolean)}
               />
               <Label htmlFor="notifyOnImageUpload" className="text-sm">
-                Notificatie wanneer klant foto&apos;s uploadt
+                Notification when client uploads photos
               </Label>
             </div>
           </div>
@@ -348,13 +398,13 @@ export default function SettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Mail className="w-5 h-5 text-primary" />
-            <CardTitle>Algemene Instellingen</CardTitle>
+            <CardTitle>General Settings</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="siteName">Site Naam</Label>
+              <Label htmlFor="siteName">Site Name</Label>
               <Input
                 id="siteName"
                 placeholder="Real Estate Pulse"
@@ -379,12 +429,34 @@ export default function SettingsPage() {
       {/* AI Content Settings */}
       <Card className="border-purple-200 dark:border-purple-800">
         <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 rounded-t-lg">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-600" />
-            <CardTitle className="text-purple-900 dark:text-purple-100">AI Content Instellingen</CardTitle>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              <CardTitle className="text-purple-900 dark:text-purple-100">AI Content Settings</CardTitle>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleScanWebsite}
+              disabled={scanning}
+              className="border-purple-300 hover:bg-purple-50 dark:border-purple-700 dark:hover:bg-purple-900/30"
+            >
+              {scanning ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Scanning...
+                </>
+              ) : (
+                <>
+                  <Globe className="w-4 h-4 mr-2" />
+                  Scan Website
+                </>
+              )}
+            </Button>
           </div>
           <CardDescription>
-            Configureer hoe de AI blog generator content schrijft voor jouw bedrijf
+            Configure how the AI content generator writes content for your business. 
+            Click &quot;Scan Website&quot; to automatically analyze psmphuket.com and fill in the profile.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
@@ -392,20 +464,20 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label htmlFor="companyDescription" className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-muted-foreground" />
-              Bedrijfsomschrijving
+              Company Description
             </Label>
             <Textarea
               id="companyDescription"
-              placeholder="Beschrijf je bedrijf, diensten, en wat jullie uniek maakt. Dit helpt de AI om content te schrijven die past bij jullie identiteit.
+              placeholder="Describe your company, services, and what makes you unique. This helps the AI write content that matches your brand identity.
 
-Voorbeeld: 'PSM Phuket is een premium vastgoedkantoor gespecialiseerd in luxe villa's en investeringspanden in Phuket, Thailand. Wij helpen internationale investeerders en expats bij het vinden van hun droomwoning of rendabele investering.'"
+Example: 'PSM Phuket is a premium real estate agency specializing in luxury villas and investment properties in Phuket, Thailand. We help international investors and expats find their dream home or profitable investment.'"
               value={settings.companyDescription || ""}
               onChange={(e) => updateField("companyDescription", e.target.value)}
               rows={5}
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              Hoe gedetailleerder, hoe beter de AI je bedrijf begrijpt.
+              The more detailed, the better the AI understands your business.
             </p>
           </div>
 
@@ -413,44 +485,44 @@ Voorbeeld: 'PSM Phuket is een premium vastgoedkantoor gespecialiseerd in luxe vi
           <div className="space-y-2">
             <Label htmlFor="companyTone" className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-muted-foreground" />
-              Schrijfstijl / Tone of Voice
+              Tone of Voice / Writing Style
             </Label>
             <Select 
               value={settings.companyTone || "professional"} 
               onValueChange={(value) => updateField("companyTone", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecteer een schrijfstijl" />
+                <SelectValue placeholder="Select a writing style" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="professional">
                   <div className="flex flex-col">
-                    <span>Professioneel</span>
-                    <span className="text-xs text-muted-foreground">Zakelijk, betrouwbaar, deskundig</span>
+                    <span>Professional</span>
+                    <span className="text-xs text-muted-foreground">Business-like, trustworthy, expert</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="friendly">
                   <div className="flex flex-col">
-                    <span>Vriendelijk</span>
-                    <span className="text-xs text-muted-foreground">Warm, toegankelijk, persoonlijk</span>
+                    <span>Friendly</span>
+                    <span className="text-xs text-muted-foreground">Warm, approachable, personal</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="luxury">
                   <div className="flex flex-col">
-                    <span>Luxe / Premium</span>
-                    <span className="text-xs text-muted-foreground">Exclusief, verfijnd, high-end</span>
+                    <span>Luxury / Premium</span>
+                    <span className="text-xs text-muted-foreground">Exclusive, refined, high-end</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="casual">
                   <div className="flex flex-col">
-                    <span>Casual / Informeel</span>
-                    <span className="text-xs text-muted-foreground">Relaxed, conversationeel</span>
+                    <span>Casual / Informal</span>
+                    <span className="text-xs text-muted-foreground">Relaxed, conversational</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="educational">
                   <div className="flex flex-col">
-                    <span>Educatief</span>
-                    <span className="text-xs text-muted-foreground">Informatief, uitleggen, leren</span>
+                    <span>Educational</span>
+                    <span className="text-xs text-muted-foreground">Informative, explanatory, teaching</span>
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -461,13 +533,13 @@ Voorbeeld: 'PSM Phuket is een premium vastgoedkantoor gespecialiseerd in luxe vi
           <div className="space-y-2">
             <Label htmlFor="targetAudience" className="flex items-center gap-2">
               <Users className="w-4 h-4 text-muted-foreground" />
-              Doelgroep
+              Target Audience
             </Label>
             <Textarea
               id="targetAudience"
-              placeholder="Beschrijf je ideale klant/lezer.
+              placeholder="Describe your ideal customer/reader.
 
-Voorbeeld: 'Internationale investeerders (40-65 jaar) die op zoek zijn naar rendabele vastgoedinvesteringen in Thailand. Ook expats die van plan zijn om naar Phuket te verhuizen en een woning willen kopen of huren.'"
+Example: 'International investors (40-65 years) looking for profitable real estate investments in Thailand. Also expats planning to relocate to Phuket and wanting to buy or rent a property.'"
               value={settings.targetAudience || ""}
               onChange={(e) => updateField("targetAudience", e.target.value)}
               rows={3}
@@ -483,20 +555,20 @@ Voorbeeld: 'Internationale investeerders (40-65 jaar) die op zoek zijn naar rend
             </Label>
             <Textarea
               id="companyUSPs"
-              placeholder="Wat maakt jullie uniek? Eén USP per regel.
+              placeholder="What makes you unique? One USP per line.
 
-Voorbeeld:
-15+ jaar ervaring in Phuket vastgoed
-Meertalig team (EN, DE, RU, TH)
+Example:
+15+ years experience in Phuket real estate
+Multilingual team (EN, DE, RU, TH)
 Complete property management services
-Bewezen ROI van 8-12% per jaar"
+Proven ROI of 8-12% per year"
               value={settings.companyUSPs || ""}
               onChange={(e) => updateField("companyUSPs", e.target.value)}
               rows={4}
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              De AI zal deze punten natuurlijk verwerken in de content waar relevant.
+              The AI will naturally incorporate these points in content where relevant.
             </p>
           </div>
 
@@ -513,7 +585,7 @@ Bewezen ROI van 8-12% per jaar"
               onChange={(e) => updateField("brandKeywords", e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Keywords die vaak in je content moeten voorkomen (komma-gescheiden).
+              Keywords that should frequently appear in your content (comma-separated).
             </p>
           </div>
 
@@ -521,16 +593,16 @@ Bewezen ROI van 8-12% per jaar"
           <div className="space-y-2">
             <Label htmlFor="avoidTopics" className="flex items-center gap-2">
               <Ban className="w-4 h-4 text-muted-foreground" />
-              Vermijd deze onderwerpen
+              Topics to Avoid
             </Label>
             <Textarea
               id="avoidTopics"
-              placeholder="Onderwerpen die de AI NIET mag benoemen.
+              placeholder="Topics the AI should NEVER mention.
 
-Voorbeeld:
-Concurrerende bedrijven
-Negatief nieuws over Thailand
-Politieke onderwerpen"
+Example:
+Competing businesses
+Negative news about Thailand
+Political topics"
               value={settings.avoidTopics || ""}
               onChange={(e) => updateField("avoidTopics", e.target.value)}
               rows={3}
@@ -548,7 +620,7 @@ Politieke onderwerpen"
           ) : (
             <CheckCircle className="w-4 h-4 mr-2" />
           )}
-          Instellingen Opslaan
+          Save Settings
         </Button>
       </div>
 

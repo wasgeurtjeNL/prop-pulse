@@ -1,14 +1,57 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { createBlog, getPublishedBlogs } from "@/lib/actions/blog.actions";
+import { createBlog, getPublishedBlogs, getBlogStats } from "@/lib/actions/blog.actions";
 import { BlogFormData } from "@/lib/validations/blog";
+import prisma from "@/lib/prisma";
 
-// GET: List all published blogs
-export async function GET() {
+// GET: List all blogs with pagination (for dashboard)
+export async function GET(request: NextRequest) {
   try {
-    const blogs = await getPublishedBlogs();
-    return NextResponse.json({ blogs });
+    const headersList = await headers();
+    const session = await auth.api.getSession({ headers: headersList });
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
+
+    const [blogs, total, stats] = await Promise.all([
+      prisma.blog.findMany({
+        skip,
+        take: limit,
+        orderBy: {
+          updatedAt: "desc",
+        },
+        include: {
+          author: {
+            select: { name: true, image: true },
+          },
+        },
+      }),
+      prisma.blog.count(),
+      getBlogStats(),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      success: true,
+      data: blogs,
+      stats,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    });
   } catch (error: any) {
     console.error("Error fetching blogs:", error);
     return NextResponse.json(

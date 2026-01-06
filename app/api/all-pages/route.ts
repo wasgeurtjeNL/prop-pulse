@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -63,7 +63,7 @@ function getSeoStatus(page: {
   return "good";
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -73,10 +73,25 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Pagination params
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const offset = (page - 1) * limit;
+
     const allPages: any[] = [];
 
-    // 1. Add static pages
+    // Fetch custom SEO settings for static pages
+    const staticPageSeoRecords = await prisma.staticPageSeo.findMany();
+    const staticPageSeoMap = new Map(
+      staticPageSeoRecords.map(seo => [seo.url, seo])
+    );
+
+    // 1. Add static pages with custom SEO if available
     for (const page of STATIC_PAGES) {
+      const customSeo = staticPageSeoMap.get(page.url);
+      const hasCustomSeo = customSeo && (customSeo.metaTitle || customSeo.metaDescription);
+      
       allPages.push({
         id: `static-${page.url.replace(/\//g, "-")}`,
         url: page.url,
@@ -84,12 +99,12 @@ export async function GET() {
         category: page.category,
         type: "static",
         source: "nextjs",
-        metaTitle: null, // Static pages have metadata in code
-        metaDescription: null,
-        seoStatus: "code", // SEO is in the code
+        metaTitle: customSeo?.metaTitle || null,
+        metaDescription: customSeo?.metaDescription || null,
+        seoStatus: hasCustomSeo ? getSeoStatus(customSeo) : "code",
         published: true,
-        updatedAt: null,
-        canEdit: false, // Can't edit static pages via dashboard
+        updatedAt: customSeo?.updatedAt || null,
+        canEdit: true, // Static pages can now be edited via dashboard
       });
     }
 
@@ -212,15 +227,27 @@ export async function GET() {
     };
 
     // Count by category
-    for (const page of allPages) {
-      stats.byCategory[page.category] = (stats.byCategory[page.category] || 0) + 1;
-      stats.bySource[page.source] = (stats.bySource[page.source] || 0) + 1;
+    for (const pageItem of allPages) {
+      stats.byCategory[pageItem.category] = (stats.byCategory[pageItem.category] || 0) + 1;
+      stats.bySource[pageItem.source] = (stats.bySource[pageItem.source] || 0) + 1;
     }
+
+    // Apply pagination
+    const totalPages = Math.ceil(allPages.length / limit);
+    const paginatedData = allPages.slice(offset, offset + limit);
 
     return NextResponse.json({
       success: true,
-      data: allPages,
+      data: paginatedData,
       stats,
+      pagination: {
+        page,
+        limit,
+        total: allPages.length,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
     });
   } catch (error) {
     console.error("Failed to fetch all pages:", error);

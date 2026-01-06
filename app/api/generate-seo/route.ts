@@ -2,10 +2,60 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import prisma from "@/lib/prisma";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Helper to safely parse JSON arrays from database
+function parseJsonArray(str: string | null | undefined): string[] {
+  if (!str) return [];
+  try {
+    const parsed = JSON.parse(str);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    // If not JSON, try splitting by newlines or commas
+    return str.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+  }
+}
+
+// Get full company profile from database
+async function getCompanyProfile() {
+  try {
+    // @ts-expect-error - companyProfile exists in Prisma schema as CompanyProfile with @@map
+    const profile = await prisma.companyProfile.findUnique({
+      where: { id: "default" }
+    });
+    
+    return {
+      companyName: profile?.companyName || "PSM Phuket",
+      description: profile?.description || "Premium real estate services in Phuket, Thailand",
+      targetAudience: profile?.targetAudience || "International investors, expats, high-net-worth individuals",
+      tone: profile?.tone || "professional",
+      writingStyle: profile?.writingStyle || "Professional and authoritative",
+      usps: parseJsonArray(profile?.usps),
+      brandKeywords: parseJsonArray(profile?.brandKeywords),
+      avoidTopics: parseJsonArray(profile?.avoidTopics),
+      contentThemes: parseJsonArray(profile?.contentThemes),
+      expertise: parseJsonArray(profile?.expertise),
+    };
+  } catch (e) {
+    // Fallback if table doesn't exist
+    return {
+      companyName: "PSM Phuket",
+      description: "Premium real estate services in Phuket, Thailand",
+      targetAudience: "International investors, expats, high-net-worth individuals",
+      tone: "professional",
+      writingStyle: "Professional and authoritative",
+      usps: [],
+      brandKeywords: ["luxury", "premium", "Phuket", "Thailand", "villa", "investment"],
+      avoidTopics: [],
+      contentThemes: [],
+      expertise: ["Phuket real estate", "property investment"],
+    };
+  }
+}
 
 // Strip HTML tags from content
 function stripHtml(html: string): string {
@@ -91,7 +141,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { title, excerpt, content, type, targetKeyword } = await request.json();
+    const { title, excerpt, content, type, targetKeyword, url } = await request.json();
 
     if (!title) {
       return NextResponse.json(
@@ -100,6 +150,12 @@ export async function POST(request: Request) {
       );
     }
 
+    // Detect if this is the homepage
+    const isHomepage = url === "/" || url === "" || url?.toLowerCase() === "home" || title?.toLowerCase() === "home";
+
+    // Get company profile for branding context
+    const companyProfile = await getCompanyProfile();
+    
     // Clean content for context (limit to 1500 chars to keep tokens low)
     const cleanContent = stripHtml(content || "").slice(0, 1500);
     const cleanExcerpt = stripHtml(excerpt || "").slice(0, 300);
@@ -107,50 +163,133 @@ export async function POST(request: Request) {
     // Extract or use provided keyword
     const primaryKeyword = targetKeyword || extractKeywordFromTitle(title);
 
-    // Build enhanced system prompt with keyword enforcement
+    // Build company context with all available data
+    const uspsText = companyProfile.usps.length > 0 
+      ? `- Unique Selling Points: ${companyProfile.usps.join(", ")}`
+      : "";
+    const brandKeywordsText = companyProfile.brandKeywords.length > 0
+      ? `- Brand Keywords to naturally include: ${companyProfile.brandKeywords.join(", ")}`
+      : "";
+    const avoidTopicsText = companyProfile.avoidTopics.length > 0
+      ? `- Topics to NEVER mention: ${companyProfile.avoidTopics.join(", ")}`
+      : "";
+    const expertiseText = companyProfile.expertise.length > 0
+      ? `- Expertise Areas: ${companyProfile.expertise.join(", ")}`
+      : "";
+
+    // Build enhanced system prompt with keyword enforcement and company context
     let systemPrompt: string;
     
     if (type === "title") {
-      systemPrompt = `You are an SEO expert specializing in real estate content for Thailand/Phuket properties.
+      // Different title format for homepage vs other pages
+      const titleRules = isHomepage 
+        ? `HOMEPAGE SEO TITLE RULES (BRAND FIRST):
+1. MAXIMUM 60 CHARACTERS TOTAL - count carefully!
+2. Start with the brand name: "${companyProfile.companyName}"
+3. Format: "${companyProfile.companyName} | [Primary Value Proposition]"
+4. Example: "${companyProfile.companyName} | Luxury Real Estate in Phuket"
+5. Include the main benefit/keywords AFTER the brand name
+6. Make it compelling and click-worthy
+7. Match the ${companyProfile.tone} tone of voice`
+        : `PAGE SEO TITLE RULES (KEYWORD FIRST, BRAND LAST):
+1. MAXIMUM 60 CHARACTERS TOTAL - count carefully!
+2. Start with the primary keyword "${primaryKeyword}" in the first 25 characters
+3. End with "| ${companyProfile.companyName}" if room allows
+4. Format: "[Keyword/Topic] | ${companyProfile.companyName}"
+5. Use one power word if space allows (Guide, Tips, Best, How, etc.)
+6. Make it compelling and click-worthy
+7. Match the ${companyProfile.tone} tone of voice`;
 
-Your task is to create an optimized SEO title for a blog article.
+      systemPrompt = `You are an SEO expert for ${companyProfile.companyName}, a premium real estate company in Phuket, Thailand.
 
-CRITICAL SEO RULES - FOLLOW EXACTLY:
-1. MAXIMUM 55 CHARACTERS TOTAL - this is STRICT, count carefully!
-2. The keyword "${primaryKeyword}" MUST appear in the first 25 characters
-3. Do NOT add brand suffix like "| Real Estate Pulse" - keep it short
-4. Use one power word if space allows (Guide, Tips, Best, How, etc.)
-5. Make it compelling and click-worthy
-6. Target audience: International property investors
-7. Language: English
+COMPANY PROFILE (Note: Some text may be in Dutch - translate to English):
+- Company: ${companyProfile.companyName}
+- Description: ${companyProfile.description}
+- Target Audience: ${companyProfile.targetAudience}
+- Tone of Voice: ${companyProfile.tone}
+- Writing Style: ${companyProfile.writingStyle}
+${uspsText}
+${brandKeywordsText}
+${expertiseText}
+${avoidTopicsText}
 
-IMPORTANT: The title MUST be under 55 characters. If your output is longer, shorten it.
+Your task is to create an optimized SEO title for ${isHomepage ? "the HOMEPAGE" : "a page"} on the ${companyProfile.companyName} website.
 
-OUTPUT: Only the SEO title, nothing else. No quotes, no explanation.`;
+${titleRules}
+
+ADDITIONAL RULES:
+- Try to naturally include one brand keyword if it fits
+- LANGUAGE: ENGLISH ONLY - Never output Dutch or other languages!
+- IMPORTANT: The title MUST be under 60 characters. If your output is longer, shorten it.
+
+OUTPUT: Only the SEO title in English, nothing else. No quotes, no explanation.`;
     } else {
-      systemPrompt = `You are an SEO expert specializing in real estate content for Thailand/Phuket properties.
-
-Your task is to create an optimized meta description for a blog article.
-
-CRITICAL SEO RULES:
-1. The primary keyword "${primaryKeyword}" MUST appear within the first 50 characters - this is MANDATORY
-2. Length: 145-155 characters exactly (very important!)
+      // Different description rules for homepage vs other pages
+      const descriptionRules = isHomepage
+        ? `HOMEPAGE META DESCRIPTION RULES:
+1. Length: 145-160 characters exactly (very important!)
+2. Mention "${companyProfile.companyName}" within the first 30 characters
+3. Describe the main value proposition of the company
+4. Include location (Phuket, Thailand) and main services
+5. Create trust and credibility
+6. End with a compelling call-to-action
+7. Target audience: ${companyProfile.targetAudience}`
+        : `PAGE META DESCRIPTION RULES:
+1. The primary keyword "${primaryKeyword}" MUST appear within the first 50 characters
+2. Length: 145-160 characters exactly (very important!)
 3. Start with an action verb or compelling hook
 4. Include the main benefit for the reader
 5. Create urgency or curiosity
 6. End with a subtle call-to-action (Discover, Learn, Explore, Find, etc.)
-7. Target audience: International property investors and expats
-8. Language: English
+7. Mention ${companyProfile.companyName} naturally if space allows`;
 
-OUTPUT: Only the meta description, nothing else. No quotes, no explanation.`;
+      systemPrompt = `You are an SEO expert for ${companyProfile.companyName}, a premium real estate company in Phuket, Thailand.
+
+COMPANY PROFILE (Note: Some text may be in Dutch - translate to English):
+- Company: ${companyProfile.companyName}
+- Description: ${companyProfile.description}
+- Target Audience: ${companyProfile.targetAudience}
+- Tone of Voice: ${companyProfile.tone}
+- Writing Style: ${companyProfile.writingStyle}
+${uspsText}
+${brandKeywordsText}
+${expertiseText}
+${avoidTopicsText}
+
+Your task is to create an optimized meta description for ${isHomepage ? "the HOMEPAGE" : "a page"} on the ${companyProfile.companyName} website.
+
+${descriptionRules}
+
+ADDITIONAL RULES:
+- Match the ${companyProfile.tone} tone of voice
+- Try to naturally include brand keywords: ${companyProfile.brandKeywords.slice(0, 5).join(", ")}
+- LANGUAGE: ENGLISH ONLY - Never output Dutch or other languages!
+
+OUTPUT: Only the meta description in English, nothing else. No quotes, no explanation.`;
     }
 
-    const userPrompt = `Blog Title: ${title}
+    const pageTypeInfo = isHomepage 
+      ? `Page Type: HOMEPAGE (main landing page)
+Format: Brand name FIRST - "${companyProfile.companyName} | [Value Proposition]"`
+      : `Page Type: Internal page
+Format: Keyword FIRST, brand LAST - "[Topic] | ${companyProfile.companyName}"`;
+
+    const userPrompt = `${pageTypeInfo}
+
+Page Title: ${title}
+Page URL: ${url || "/"}
+Company: ${companyProfile.companyName}
 Primary Keyword: ${primaryKeyword}
-${cleanExcerpt ? `Excerpt: ${cleanExcerpt}` : ""}
+${cleanExcerpt ? `Page Summary: ${cleanExcerpt}` : ""}
 ${cleanContent ? `Content Preview: ${cleanContent}` : ""}
 
-Generate the ${type === "title" ? "SEO title" : "meta description"} now. Remember: the keyword "${primaryKeyword}" must appear early in the output!`;
+Generate the ${type === "title" ? "SEO title (max 60 chars)" : "meta description (145-155 chars)"} for ${companyProfile.companyName}'s website.
+
+CRITICAL REMINDERS:
+- Output in ENGLISH only
+${isHomepage ? `- HOMEPAGE: Start with "${companyProfile.companyName} |"` : `- Keyword "${primaryKeyword}" must appear early, end with "| ${companyProfile.companyName}"`}
+- Match the ${companyProfile.tone} tone
+- Be compelling and SEO-optimized`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -176,15 +315,36 @@ Generate the ${type === "title" ? "SEO title" : "meta description"} now. Remembe
       characterCount: cleanResult.length,
       primaryKeyword,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("SEO Generation Error:", error);
     
+    // Check for specific OpenAI errors
+    if (error?.code === "insufficient_quota" || error?.type === "insufficient_quota") {
+      return NextResponse.json(
+        { error: "OpenAI API quota exceeded. Please check your billing at platform.openai.com" },
+        { status: 402 }
+      );
+    }
+    
+    if (error?.code === "rate_limit_exceeded") {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please try again in a moment." },
+        { status: 429 }
+      );
+    }
+    
     if (error instanceof Error) {
-      // Check for specific OpenAI errors
       if (error.message.includes("API key")) {
         return NextResponse.json(
           { error: "OpenAI API key not configured" },
           { status: 500 }
+        );
+      }
+      
+      if (error.message.includes("insufficient_quota")) {
+        return NextResponse.json(
+          { error: "OpenAI API quota exceeded. Please add credits at platform.openai.com" },
+          { status: 402 }
         );
       }
     }

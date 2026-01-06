@@ -48,10 +48,10 @@ interface LandingPageSeoPanelProps {
 
 // Variable snippets for SEO title
 const titleVariables = [
-  { label: "Titel", value: "{{title}}", description: "Page title" },
-  { label: "Locatie", value: "{{location}}", description: "Location name" },
+  { label: "Title", value: "{{title}}", description: "Page title" },
+  { label: "Location", value: "{{location}}", description: "Location name" },
   { label: "Keyword", value: "{{keyword}}", description: "Primary keyword" },
-  { label: "Merk", value: "{{brand}}", description: "Brand name (PSM Phuket)" },
+  { label: "Brand", value: "{{brand}}", description: "Brand name (PSM Phuket)" },
 ];
 
 const separators = ["|", "-", "•", "–", "—", "·"];
@@ -184,13 +184,13 @@ export default function LandingPageSeoPanel({
   // Generate SEO Title with AI
   const generateSEOTitle = async () => {
     if (!title) {
-      toast.error("Voeg eerst een titel toe");
+      toast.error("Please add a title first");
       return;
     }
 
     // Warn if no keywords defined
     if (targetKeywords.length === 0) {
-      toast.warning("Tip: Voeg eerst target keywords toe voor betere optimalisatie");
+      toast.warning("Tip: Add target keywords first for better optimization");
     }
 
     setIsGeneratingTitle(true);
@@ -223,13 +223,13 @@ export default function LandingPageSeoPanel({
         const { result } = await response.json();
         onMetaTitleChange(result);
         setAiGeneratedFields((prev) => ({ ...prev, metaTitle: true }));
-        toast.success("SEO titel gegenereerd!");
+        toast.success("SEO title generated!");
       } else {
         const error = await response.json();
         toast.error(error.error || "Generation failed");
       }
     } catch (error) {
-      toast.error("Kon SEO titel niet genereren");
+      toast.error("Could not generate SEO title");
     } finally {
       setIsGeneratingTitle(false);
     }
@@ -238,13 +238,13 @@ export default function LandingPageSeoPanel({
   // Generate Meta Description with AI
   const generateMetaDescription = async () => {
     if (!title) {
-      toast.error("Voeg eerst een titel toe");
+      toast.error("Please add a title first");
       return;
     }
 
     // Warn if no keywords defined
     if (targetKeywords.length === 0) {
-      toast.warning("Tip: Voeg eerst target keywords toe voor betere optimalisatie");
+      toast.warning("Tip: Add target keywords first for better optimization");
     }
 
     setIsGeneratingDescription(true);
@@ -278,13 +278,13 @@ export default function LandingPageSeoPanel({
         const { result } = await response.json();
         onMetaDescriptionChange(result);
         setAiGeneratedFields((prev) => ({ ...prev, metaDescription: true }));
-        toast.success("Meta description gegenereerd!");
+        toast.success("Meta description generated!");
       } else {
         const error = await response.json();
         toast.error(error.error || "Generation failed");
       }
     } catch (error) {
-      toast.error("Kon meta description niet genereren");
+      toast.error("Could not generate meta description");
     } finally {
       setIsGeneratingDescription(false);
     }
@@ -331,19 +331,19 @@ export default function LandingPageSeoPanel({
 
   // Status helpers
   const getTitleStatus = () => {
-    if (metaTitleLength === 0) return { color: "text-gray-400", label: "Niet ingesteld", barColor: "bg-gray-300" };
-    if (metaTitleLength < 40) return { color: "text-orange-500", label: "Te kort", barColor: "bg-orange-400" };
-    if (metaTitleLength > 60) return { color: "text-red-500", label: "Te lang", barColor: "bg-red-500" };
-    if (metaTitleLength >= 50) return { color: "text-green-500", label: "Uitstekend", barColor: "bg-green-500" };
-    return { color: "text-green-500", label: "Goed", barColor: "bg-green-500" };
+    if (metaTitleLength === 0) return { color: "text-gray-400", label: "Not set", barColor: "bg-gray-300" };
+    if (metaTitleLength < 40) return { color: "text-orange-500", label: "Too short", barColor: "bg-orange-400" };
+    if (metaTitleLength > 60) return { color: "text-red-500", label: "Too long", barColor: "bg-red-500" };
+    if (metaTitleLength >= 50) return { color: "text-green-500", label: "Excellent", barColor: "bg-green-500" };
+    return { color: "text-green-500", label: "Good", barColor: "bg-green-500" };
   };
 
   const getDescriptionStatus = () => {
-    if (metaDescriptionLength === 0) return { color: "text-gray-400", label: "Niet ingesteld", barColor: "bg-gray-300" };
-    if (metaDescriptionLength < 120) return { color: "text-orange-500", label: "Te kort", barColor: "bg-orange-400" };
-    if (metaDescriptionLength > 160) return { color: "text-red-500", label: "Te lang", barColor: "bg-red-500" };
-    if (metaDescriptionLength >= 145) return { color: "text-green-500", label: "Uitstekend", barColor: "bg-green-500" };
-    return { color: "text-green-500", label: "Goed", barColor: "bg-green-500" };
+    if (metaDescriptionLength === 0) return { color: "text-gray-400", label: "Not set", barColor: "bg-gray-300" };
+    if (metaDescriptionLength < 120) return { color: "text-orange-500", label: "Too short", barColor: "bg-orange-400" };
+    if (metaDescriptionLength > 160) return { color: "text-red-500", label: "Too long", barColor: "bg-red-500" };
+    if (metaDescriptionLength >= 145) return { color: "text-green-500", label: "Excellent", barColor: "bg-green-500" };
+    return { color: "text-green-500", label: "Good", barColor: "bg-green-500" };
   };
 
   const titleStatus = getTitleStatus();
@@ -366,10 +366,10 @@ export default function LandingPageSeoPanel({
       <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
         <div className="flex items-center gap-2">
           <Icon icon="ph:magnifying-glass" className="h-5 w-5 text-white" />
-          <h3 className="text-lg font-semibold text-white">SEO Instellingen</h3>
+          <h3 className="text-lg font-semibold text-white">SEO Settings</h3>
         </div>
         <p className="text-purple-200 text-sm mt-1">
-          Optimaliseer hoe je pagina eruitziet in zoekmachines
+          Optimize how your page appears in search engines
         </p>
       </div>
 
@@ -386,14 +386,14 @@ export default function LandingPageSeoPanel({
             <div>
               <p className="font-semibold">SEO Score</p>
               <p className="text-sm text-muted-foreground">
-                {seoScore >= 80 ? "Uitstekend!" : seoScore >= 60 ? "Goed" : seoScore >= 40 ? "Kan beter" : "Verbeter dit"}
+                {seoScore >= 80 ? "Excellent!" : seoScore >= 60 ? "Good" : seoScore >= 40 ? "Needs improvement" : "Improve this"}
               </p>
             </div>
           </div>
           {aiGeneratedFields.metaTitle || aiGeneratedFields.metaDescription ? (
             <Badge className="bg-purple-100 text-purple-700 gap-1">
               <Icon icon="ph:magic-wand" className="h-3 w-3" />
-              AI gegenereerd
+              AI generated
             </Badge>
           ) : null}
         </div>
@@ -403,7 +403,7 @@ export default function LandingPageSeoPanel({
           <Label>SEO Template</Label>
           <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
             <SelectTrigger>
-              <SelectValue placeholder="Kies een template" />
+              <SelectValue placeholder="Select a template" />
             </SelectTrigger>
             <SelectContent>
               {templates.map((template) => (
@@ -421,9 +421,9 @@ export default function LandingPageSeoPanel({
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            Templates bepalen de AI-regels voor SEO generatie.{" "}
+            Templates determine AI rules for SEO generation.{" "}
             <a href="/dashboard/seo-templates" className="text-primary hover:underline">
-              Templates beheren →
+              Manage templates →
             </a>
           </p>
         </div>
@@ -431,7 +431,7 @@ export default function LandingPageSeoPanel({
         {/* Target Keywords */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label>Doel Keywords</Label>
+            <Label>Target Keywords</Label>
             {targetKeywords.length === 0 && title && (
               <Button
                 type="button"
@@ -443,12 +443,12 @@ export default function LandingPageSeoPanel({
                   const suggested = extractKeywordFromTitle(title);
                   if (suggested) {
                     onKeywordsChange([suggested]);
-                    toast.success("Keyword voorgesteld op basis van titel");
+                    toast.success("Keyword suggested based on title");
                   }
                 }}
               >
                 <Icon icon="ph:magic-wand" className="h-3 w-3" />
-                Stel voor
+                Suggest
               </Button>
             )}
           </div>
@@ -456,7 +456,7 @@ export default function LandingPageSeoPanel({
             <Input
               value={newKeyword}
               onChange={(e) => setNewKeyword(e.target.value)}
-              placeholder="Voeg keyword toe..."
+              placeholder="Add keyword..."
               onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addKeyword())}
             />
             <Button type="button" variant="outline" size="icon" onClick={addKeyword}>
@@ -485,15 +485,15 @@ export default function LandingPageSeoPanel({
             </div>
           )}
           <p className="text-xs text-muted-foreground">
-            Eerste keyword is het primaire keyword (wordt prominent geplaatst).
-            {targetKeywords.length < 2 && " Voeg meerdere keywords toe voor betere SEO score."}
+            First keyword is the primary keyword (placed prominently).
+            {targetKeywords.length < 2 && " Add more keywords for better SEO score."}
           </p>
         </div>
 
         {/* Google Preview */}
         <div className="space-y-2">
           <Label className="text-sm font-medium text-muted-foreground">
-            Google Voorbeeld
+            Google Preview
           </Label>
           <div className="rounded-lg border bg-white dark:bg-slate-900 p-4 space-y-1">
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -501,10 +501,10 @@ export default function LandingPageSeoPanel({
               <span>{siteUrl}{getCategoryPrefix()}{localSlug || "..."}</span>
             </div>
             <h4 className="text-xl text-[#1a0dab] dark:text-blue-400 hover:underline cursor-pointer font-normal">
-              {metaTitle || title || "Voeg een titel toe"}
+              {metaTitle || title || "Add a title"}
             </h4>
             <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-              {metaDescription || "Voeg een meta beschrijving toe om te laten zien wat deze pagina bevat..."}
+              {metaDescription || "Add a meta description to show what this page contains..."}
             </p>
           </div>
         </div>
@@ -513,7 +513,7 @@ export default function LandingPageSeoPanel({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label htmlFor="metaTitle" className="text-sm font-medium">
-              SEO Titel
+              SEO Title
               {aiGeneratedFields.metaTitle && (
                 <Badge variant="outline" className="ml-2 text-xs">
                   <Icon icon="ph:magic-wand" className="h-3 w-3 mr-1" />
@@ -534,7 +534,7 @@ export default function LandingPageSeoPanel({
               ) : (
                 <Icon icon="ph:magic-wand" className="h-3.5 w-3.5" />
               )}
-              {isGeneratingTitle ? "Genereren..." : "AI Genereer"}
+              {isGeneratingTitle ? "Generating..." : "AI Generate"}
             </Button>
           </div>
 
@@ -546,7 +546,7 @@ export default function LandingPageSeoPanel({
                 onMetaTitleChange(e.target.value);
                 setAiGeneratedFields((prev) => ({ ...prev, metaTitle: false }));
               }}
-              placeholder="SEO titel voor zoekmachines"
+              placeholder="SEO title for search engines"
               className="pr-20"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -568,7 +568,7 @@ export default function LandingPageSeoPanel({
             </div>
             <div className="flex justify-between text-xs">
               <span className={titleStatus.color}>{titleStatus.label}</span>
-              <span className="text-muted-foreground">Ideaal: 50-60 tekens</span>
+              <span className="text-muted-foreground">Ideal: 50-60 characters</span>
             </div>
           </div>
         </div>
@@ -587,7 +587,7 @@ export default function LandingPageSeoPanel({
               onClick={generateSlug}
             >
               <Icon icon="ph:arrow-clockwise" className="h-3.5 w-3.5" />
-              Regenereren
+              Regenerate
             </Button>
           </div>
 
@@ -600,12 +600,12 @@ export default function LandingPageSeoPanel({
               value={localSlug}
               onChange={(e) => handleSlugChange(e.target.value)}
               onBlur={handleSlugBlur}
-              placeholder="jouw-pagina-url"
+              placeholder="your-page-url"
               className="border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Gebruik korte, beschrijvende woorden gescheiden door streepjes. Plaats het primaire keyword vooraan.
+            Use short, descriptive words separated by hyphens. Place the primary keyword first.
           </p>
         </div>
 
@@ -613,7 +613,7 @@ export default function LandingPageSeoPanel({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label htmlFor="metaDescription" className="text-sm font-medium">
-              Meta Beschrijving
+              Meta Description
               {aiGeneratedFields.metaDescription && (
                 <Badge variant="outline" className="ml-2 text-xs">
                   <Icon icon="ph:magic-wand" className="h-3 w-3 mr-1" />
@@ -634,7 +634,7 @@ export default function LandingPageSeoPanel({
               ) : (
                 <Icon icon="ph:magic-wand" className="h-3.5 w-3.5" />
               )}
-              {isGeneratingDescription ? "Genereren..." : "AI Genereer"}
+              {isGeneratingDescription ? "Generating..." : "AI Generate"}
             </Button>
           </div>
 
@@ -646,7 +646,7 @@ export default function LandingPageSeoPanel({
                 onMetaDescriptionChange(e.target.value);
                 setAiGeneratedFields((prev) => ({ ...prev, metaDescription: false }));
               }}
-              placeholder="Schrijf een korte, overtuigende beschrijving die gebruikers aanmoedigt om te klikken..."
+              placeholder="Write a short, compelling description that encourages users to click..."
               rows={3}
               className="resize-none pr-16"
             />
@@ -669,7 +669,7 @@ export default function LandingPageSeoPanel({
             </div>
             <div className="flex justify-between text-xs">
               <span className={descriptionStatus.color}>{descriptionStatus.label}</span>
-              <span className="text-muted-foreground">Ideaal: 145-155 tekens</span>
+              <span className="text-muted-foreground">Ideal: 145-155 characters</span>
             </div>
           </div>
         </div>
@@ -681,27 +681,27 @@ export default function LandingPageSeoPanel({
             {[
               { 
                 check: metaTitleLength >= 50 && metaTitleLength <= 60, 
-                text: "Meta titel heeft ideale lengte (50-60 tekens)" 
+                text: "Meta title has ideal length (50-60 characters)" 
               },
               { 
                 check: targetKeywords.length > 0 && metaTitle?.toLowerCase().includes(targetKeywords[0]?.toLowerCase()), 
-                text: "Primair keyword staat in de titel" 
+                text: "Primary keyword is in the title" 
               },
               { 
                 check: metaDescriptionLength >= 145 && metaDescriptionLength <= 155, 
-                text: "Meta beschrijving heeft ideale lengte (145-155 tekens)" 
+                text: "Meta description has ideal length (145-155 characters)" 
               },
               { 
                 check: targetKeywords.length > 0 && metaDescription?.toLowerCase().slice(0, 50).includes(targetKeywords[0]?.toLowerCase()), 
-                text: "Primair keyword staat in eerste 50 tekens van beschrijving" 
+                text: "Primary keyword is in first 50 characters of description" 
               },
               { 
                 check: localSlug && localSlug.length <= 50, 
-                text: "URL slug is kort en beschrijvend" 
+                text: "URL slug is short and descriptive" 
               },
               { 
                 check: targetKeywords.length >= 2, 
-                text: "Meerdere target keywords gedefinieerd" 
+                text: "Multiple target keywords defined" 
               },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-2 text-sm">
@@ -721,7 +721,7 @@ export default function LandingPageSeoPanel({
 
         {/* Separator Selection */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Scheidingsteken (voor templates)</Label>
+          <Label className="text-sm font-medium">Separator (for templates)</Label>
           <div className="flex flex-wrap gap-2">
             {separators.map((sep) => (
               <Button

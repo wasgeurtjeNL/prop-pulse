@@ -19,9 +19,10 @@ import { toast } from "react-hot-toast";
 interface BlogDeleteButtonProps {
   blogId: string;
   title: string;
+  onDelete?: () => void;
 }
 
-export default function BlogDeleteButton({ blogId, title }: BlogDeleteButtonProps) {
+export default function BlogDeleteButton({ blogId, title, onDelete }: BlogDeleteButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -32,7 +33,11 @@ export default function BlogDeleteButton({ blogId, title }: BlogDeleteButtonProp
       await deleteBlog(blogId);
       toast.success("Blog post deleted successfully");
       setOpen(false);
-      router.refresh();
+      if (onDelete) {
+        onDelete();
+      } else {
+        router.refresh();
+      }
     } catch (error) {
       console.error(error);
       toast.error("Failed to delete blog post");

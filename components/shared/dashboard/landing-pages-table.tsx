@@ -78,6 +78,17 @@ interface SeoTemplate {
   displayName: string;
 }
 
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+const ITEMS_PER_PAGE = 10;
+
 export default function LandingPagesTable() {
   const [pages, setPages] = useState<LandingPage[]>([]);
   const [stats, setStats] = useState<Stats>({ 
@@ -86,6 +97,8 @@ export default function LandingPagesTable() {
     draft: 0,
     seo: { missing: 0, partial: 0, optimized: 0 }
   });
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [publishedFilter, setPublishedFilter] = useState<string>("all");
@@ -103,7 +116,7 @@ export default function LandingPagesTable() {
   const [templates, setTemplates] = useState<SeoTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
 
-  const fetchPages = useCallback(async () => {
+  const fetchPages = useCallback(async (page: number = 1) => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -111,6 +124,8 @@ export default function LandingPagesTable() {
       if (publishedFilter !== "all") params.set("published", publishedFilter);
       if (seoFilter !== "all") params.set("seoStatus", seoFilter);
       if (searchQuery) params.set("search", searchQuery);
+      params.set("page", page.toString());
+      params.set("limit", ITEMS_PER_PAGE.toString());
 
       const response = await fetch(`/api/landing-pages?${params.toString()}`);
       const data = await response.json();
@@ -118,6 +133,7 @@ export default function LandingPagesTable() {
       if (data.success) {
         setPages(data.data);
         setStats(data.stats);
+        setPagination(data.pagination);
       }
     } catch (error) {
       console.error("Failed to fetch pages:", error);
@@ -144,16 +160,22 @@ export default function LandingPagesTable() {
   };
 
   useEffect(() => {
-    fetchPages();
-  }, [fetchPages]);
+    fetchPages(currentPage);
+  }, [fetchPages, currentPage]);
 
   useEffect(() => {
     fetchTemplates();
   }, []);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryFilter, publishedFilter, seoFilter]);
+
   useEffect(() => {
     const debounce = setTimeout(() => {
-      fetchPages();
+      setCurrentPage(1); // Reset to page 1 on search
+      fetchPages(1);
     }, 300);
     return () => clearTimeout(debounce);
   }, [searchQuery, fetchPages]);
@@ -645,6 +667,79 @@ export default function LandingPagesTable() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Page {currentPage} of {pagination.totalPages} ({pagination.total} items)
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              <Icon icon="ph:caret-double-left" className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={!pagination.hasPrev}
+            >
+              <Icon icon="ph:caret-left" className="h-4 w-4" />
+              Previous
+            </Button>
+            
+            {/* Page numbers */}
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                let pageNum;
+                if (pagination.totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= pagination.totalPages - 2) {
+                  pageNum = pagination.totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? "default" : "outline"}
+                    size="sm"
+                    className="w-8"
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={!pagination.hasNext}
+            >
+              Next
+              <Icon icon="ph:caret-right" className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(pagination.totalPages)}
+              disabled={currentPage === pagination.totalPages}
+            >
+              <Icon icon="ph:caret-double-right" className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

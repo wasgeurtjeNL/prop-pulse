@@ -1540,3 +1540,31 @@ model SeoTemplate {
   @@index([isActive])
   @@map("seo_template")
 }
+
+// Custom SEO settings for static pages (like /tools, /about, etc.)
+model StaticPageSeo {
+  id              String   @id @default(cuid())
+  url             String   @unique
+  metaTitle       String?  @map("meta_title")
+  metaDescription String?  @map("meta_description")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([url])
+  @@map("static_page_seo")
+}
+
+// URL Redirects for SEO - 301 permanent redirects when slugs change
+model UrlRedirect {
+  id          String   @id @default(cuid())
+  oldUrl      String   @unique @map("old_url")
+  newUrl      String   @map("new_url")
+  statusCode  Int      @default(301) @map("status_code") // 301 permanent, 302 temporary
+  hits        Int      @default(0) // Track how many times redirect was used
+  pageType    String?  @map("page_type") // blog, property, landing_page, static
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([oldUrl])
+  @@map("url_redirects")
+}

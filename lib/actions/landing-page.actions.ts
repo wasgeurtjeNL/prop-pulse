@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { submitUrlForIndexing, generateLandingPageUrl } from "@/lib/services/google-indexing";
 
 export interface LandingPageData {
   id: string;
@@ -115,6 +116,12 @@ export async function updateLandingPage(
   data: Partial<Omit<LandingPageData, "id" | "createdAt" | "updatedAt">>
 ) {
   try {
+    // Get current page state to check publish status change
+    const currentPage = await prisma.landingPage.findUnique({
+      where: { id },
+      select: { published: true, slug: true },
+    });
+
     const updatedPage = await prisma.landingPage.update({
       where: { id },
       data,
@@ -123,6 +130,20 @@ export async function updateLandingPage(
     // Revalidate the page
     revalidatePath(updatedPage.url);
     revalidatePath("/dashboard/pages");
+
+    // Submit to Google Indexing API if being published for the first time
+    if (data.published === true && currentPage && !currentPage.published) {
+      const pageUrl = generateLandingPageUrl(updatedPage.slug);
+      submitUrlForIndexing(pageUrl, 'URL_UPDATED')
+        .then(result => {
+          if (result.success) {
+            console.log(`[Landing Page] Submitted to Google Indexing: ${pageUrl}`);
+          } else {
+            console.warn(`[Landing Page] Failed to submit to Google Indexing: ${result.error}`);
+          }
+        })
+        .catch(err => console.warn('[Landing Page] Google Indexing error:', err.message));
+    }
 
     return { success: true, data: updatedPage };
   } catch (error) {
@@ -136,7 +157,7 @@ export async function toggleLandingPagePublished(id: string) {
   try {
     const page = await prisma.landingPage.findUnique({
       where: { id },
-      select: { published: true, url: true },
+      select: { published: true, url: true, slug: true },
     });
 
     if (!page) {
@@ -150,6 +171,20 @@ export async function toggleLandingPagePublished(id: string) {
 
     revalidatePath(page.url);
     revalidatePath("/dashboard/pages");
+
+    // Submit to Google Indexing API when published
+    if (!page.published && updatedPage.published) {
+      const pageUrl = generateLandingPageUrl(page.slug);
+      submitUrlForIndexing(pageUrl, 'URL_UPDATED')
+        .then(result => {
+          if (result.success) {
+            console.log(`[Landing Page] Submitted to Google Indexing: ${pageUrl}`);
+          } else {
+            console.warn(`[Landing Page] Failed to submit to Google Indexing: ${result.error}`);
+          }
+        })
+        .catch(err => console.warn('[Landing Page] Google Indexing error:', err.message));
+    }
 
     return { success: true, data: updatedPage };
   } catch (error) {

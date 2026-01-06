@@ -20,9 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import Link from "next/link";
+import AllPagesSeoModal from "./all-pages-seo-modal";
 
 interface Page {
   id: string;
@@ -54,26 +56,44 @@ interface Stats {
   };
 }
 
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+const ITEMS_PER_PAGE = 10;
+
 export default function AllPagesTable() {
   const [pages, setPages] = useState<Page[]>([]);
   const [filteredPages, setFilteredPages] = useState<Page[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [seoFilter, setSeoFilter] = useState<string>("all");
+  
+  // SEO Modal state
+  const [seoModalOpen, setSeoModalOpen] = useState(false);
+  const [selectedPage, setSelectedPage] = useState<Page | null>(null);
 
-  const fetchPages = useCallback(async () => {
+  const fetchPages = useCallback(async (page: number = 1) => {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/all-pages");
+      const response = await fetch(`/api/all-pages?page=${page}&limit=${ITEMS_PER_PAGE}`);
       const data = await response.json();
 
       if (data.success) {
         setPages(data.data);
         setFilteredPages(data.data);
         setStats(data.stats);
+        setPagination(data.pagination);
       }
     } catch (error) {
       console.error("Failed to fetch pages:", error);
@@ -84,8 +104,8 @@ export default function AllPagesTable() {
   }, []);
 
   useEffect(() => {
-    fetchPages();
-  }, [fetchPages]);
+    fetchPages(currentPage);
+  }, [fetchPages, currentPage]);
 
   // Apply filters
   useEffect(() => {
@@ -335,7 +355,8 @@ export default function AllPagesTable() {
 
       {/* Results count */}
       <div className="text-sm text-muted-foreground">
-        Showing {filteredPages.length} of {pages.length} pages
+        Showing {filteredPages.length} of {pagination?.total || 0} pages
+        {pagination && pagination.totalPages > 1 && ` (Page ${currentPage} of ${pagination.totalPages})`}
       </div>
 
       {/* Table */}
@@ -389,6 +410,21 @@ export default function AllPagesTable() {
                           <Icon icon="ph:eye" className="h-4 w-4" />
                         </Button>
                       </Link>
+                      {page.canEdit && (
+                        <Tooltip content="Edit SEO Settings">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            title="Edit SEO"
+                            onClick={() => {
+                              setSelectedPage(page);
+                              setSeoModalOpen(true);
+                            }}
+                          >
+                            <Icon icon="ph:magnifying-glass" className="h-4 w-4 text-purple-600" />
+                          </Button>
+                        </Tooltip>
+                      )}
                       {page.canEdit && getEditLink(page) && (
                         <Link href={getEditLink(page)!}>
                           <Button variant="ghost" size="icon" title="Edit">
@@ -404,6 +440,90 @@ export default function AllPagesTable() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Page {currentPage} of {pagination.totalPages}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              <Icon icon="ph:caret-double-left" className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={!pagination.hasPrev}
+            >
+              <Icon icon="ph:caret-left" className="h-4 w-4" />
+              Previous
+            </Button>
+            
+            {/* Page numbers */}
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                let pageNum;
+                if (pagination.totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= pagination.totalPages - 2) {
+                  pageNum = pagination.totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? "default" : "outline"}
+                    size="sm"
+                    className="w-8"
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={!pagination.hasNext}
+            >
+              Next
+              <Icon icon="ph:caret-right" className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(pagination.totalPages)}
+              disabled={currentPage === pagination.totalPages}
+            >
+              <Icon icon="ph:caret-double-right" className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* SEO Edit Modal */}
+      <AllPagesSeoModal
+        open={seoModalOpen}
+        onOpenChange={setSeoModalOpen}
+        page={selectedPage}
+        onSave={() => {
+          fetchPages(currentPage);
+          setSeoModalOpen(false);
+        }}
+      />
     </div>
   );
 }

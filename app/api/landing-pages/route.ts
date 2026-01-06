@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
     const published = searchParams.get("published");
     const search = searchParams.get("search");
     const seoStatus = searchParams.get("seoStatus"); // New filter
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
 
     const where: any = {};
 
@@ -97,26 +99,60 @@ export async function GET(request: NextRequest) {
       filteredPages = pagesWithSeoStatus.filter((p) => p.seoStatus === seoStatus);
     }
 
-    // Calculate SEO stats
+    // Apply search filter if specified
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredPages = filteredPages.filter((p) => 
+        p.title.toLowerCase().includes(searchLower) ||
+        p.url.toLowerCase().includes(searchLower) ||
+        (p.metaDescription && p.metaDescription.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Apply category filter
+    if (category && category !== "all") {
+      filteredPages = filteredPages.filter((p) => p.category === category);
+    }
+
+    // Apply published filter
+    if (published && published !== "all") {
+      filteredPages = filteredPages.filter((p) => p.published === (published === "true"));
+    }
+
+    // Calculate SEO stats from all pages (before pagination)
     const seoStats = {
       missing: pagesWithSeoStatus.filter((p) => p.seoStatus === "missing").length,
       partial: pagesWithSeoStatus.filter((p) => p.seoStatus === "partial").length,
       optimized: pagesWithSeoStatus.filter((p) => p.seoStatus === "optimized").length,
     };
 
+    // Apply pagination
+    const totalFiltered = filteredPages.length;
+    const totalPages = Math.ceil(totalFiltered / limit);
+    const offset = (page - 1) * limit;
+    const paginatedData = filteredPages.slice(offset, offset + limit);
+
     // Get general stats
-    const totalPages = await prisma.landingPage.count();
+    const totalCount = await prisma.landingPage.count();
     const publishedCount = await prisma.landingPage.count({ where: { published: true } });
     const draftCount = await prisma.landingPage.count({ where: { published: false } });
 
     return NextResponse.json({
       success: true,
-      data: filteredPages,
+      data: paginatedData,
       stats: {
-        total: totalPages,
+        total: totalCount,
         published: publishedCount,
         draft: draftCount,
         seo: seoStats,
+      },
+      pagination: {
+        page,
+        limit,
+        total: totalFiltered,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
       },
     });
   } catch (error) {

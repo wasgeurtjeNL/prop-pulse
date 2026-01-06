@@ -17,6 +17,12 @@ module.exports = {
     '/sign-up',
     '/forgot-password',
     '/server-sitemap.xml', // Exclude the server-side sitemap from static sitemap
+    '/icon', // Next.js internal icon route
+    '/my-bookings', // User-authenticated page
+    '/my-bookings/*',
+    '/embed/*', // Embed pages for iframes
+    '/contactus', // Redirect to /contact
+    '/documentation', // Internal docs
   ],
   
   // Robots.txt configuration

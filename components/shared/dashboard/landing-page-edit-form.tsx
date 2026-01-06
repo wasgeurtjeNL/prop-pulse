@@ -504,16 +504,16 @@ export default function LandingPageEditForm({ page }: LandingPageEditFormProps) 
           {/* Publish Status */}
           <Card>
             <CardHeader>
-              <CardTitle>Publicatie Status</CardTitle>
+              <CardTitle>Publication Status</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <Label>Gepubliceerd</Label>
+                  <Label>Published</Label>
                   <p className="text-sm text-muted-foreground">
                     {formData.published
-                      ? "Pagina is zichtbaar voor bezoekers"
-                      : "Pagina is verborgen voor bezoekers"}
+                      ? "Page is visible to visitors"
+                      : "Page is hidden from visitors"}
                   </p>
                 </div>
                 <Switch
@@ -551,19 +551,19 @@ export default function LandingPageEditForm({ page }: LandingPageEditFormProps) 
           {/* Page Info */}
           <Card>
             <CardHeader>
-              <CardTitle>Pagina Informatie</CardTitle>
+              <CardTitle>Page Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Aangemaakt</span>
-                <span>{new Date(page.createdAt).toLocaleDateString("nl-NL")}</span>
+                <span className="text-muted-foreground">Created</span>
+                <span>{new Date(page.createdAt).toLocaleDateString("en-US")}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Laatst bijgewerkt</span>
-                <span>{new Date(page.updatedAt).toLocaleDateString("nl-NL")}</span>
+                <span className="text-muted-foreground">Last updated</span>
+                <span>{new Date(page.updatedAt).toLocaleDateString("en-US")}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Secties</span>
+                <span className="text-muted-foreground">Sections</span>
                 <span>{content.sections.length}</span>
               </div>
               <div className="flex justify-between">
@@ -572,12 +572,12 @@ export default function LandingPageEditForm({ page }: LandingPageEditFormProps) 
               </div>
               {page.aiGenerated && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">AI Gegenereerd</span>
+                  <span className="text-muted-foreground">AI Generated</span>
                   <Badge variant="outline" className="text-xs">
                     <Icon icon="ph:magic-wand" className="h-3 w-3 mr-1" />
                     {page.aiGeneratedAt
-                      ? new Date(page.aiGeneratedAt).toLocaleDateString("nl-NL")
-                      : "Ja"}
+                      ? new Date(page.aiGeneratedAt).toLocaleDateString("en-US")
+                      : "Yes"}
                   </Badge>
                 </div>
               )}
