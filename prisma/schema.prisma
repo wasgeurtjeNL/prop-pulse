@@ -19,7 +19,7 @@ model Account {
   scope                 String?
   password              String?
   createdAt             DateTime
-  updatedAt             DateTime
+  updatedAt DateTime @updatedAt
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
@@ -30,7 +30,7 @@ model Session {
   expiresAt      DateTime
   token          String   @unique
   createdAt      DateTime
-  updatedAt      DateTime
+  updatedAt DateTime @updatedAt
   ipAddress      String?
   userAgent      String?
   userId         String
@@ -47,7 +47,7 @@ model User {
   emailVerified                                Boolean
   image                                        String?
   createdAt                                    DateTime
-  updatedAt                                    DateTime
+  updatedAt DateTime @updatedAt
   role                                         String?
   banned                                       Boolean?
   banReason                                    String?
@@ -340,7 +340,7 @@ model agent_invite {
   createdBy String
   note      String?
   createdAt DateTime  @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
 
   @@index([code])
   @@index([email])
@@ -348,7 +348,7 @@ model agent_invite {
 }
 
 model blog {
-  id                     String         @id
+  id                     String         @id @default(cuid())
   title                  String
   slug                   String         @unique
   excerpt                String
@@ -363,7 +363,7 @@ model blog {
   publishedAt            DateTime?
   authorId               String
   createdAt              DateTime       @default(now())
-  updatedAt              DateTime
+  updatedAt              DateTime       @updatedAt
   internalLinkCount      Int            @default(0)
   linkOptimizedAt        DateTime?
   originalContent        String?
@@ -394,7 +394,7 @@ model blog_category {
   order               Int             @default(0)
   isActive            Boolean         @default(true)
   createdAt           DateTime        @default(now())
-  updatedAt           DateTime
+  updatedAt DateTime @updatedAt
   blog                blog[]
   blog_category       blog_category?  @relation("blog_categoryToblog_category", fields: [parentId], references: [id])
   other_blog_category blog_category[] @relation("blog_categoryToblog_category")
@@ -410,7 +410,7 @@ model blog_schedule_settings {
   preferredPostTime   String?  @default("09:00")
   preferredPostDays   String?
   createdAt           DateTime @default(now())
-  updatedAt           DateTime
+  updatedAt DateTime @updatedAt
 }
 
 model booking_guest {
@@ -485,7 +485,7 @@ model company_profile {
   lastAnalyzedAt  DateTime?
   analysisData    String?
   createdAt       DateTime  @default(now())
-  updatedAt       DateTime
+  updatedAt DateTime @updatedAt
 }
 
 model HeroImage {
@@ -504,7 +504,7 @@ model HeroImage {
   optimizedSize Int?
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
-  updatedAt     DateTime
+  updatedAt DateTime @updatedAt
 
   @@unique([page, deviceType])
   @@index([isActive])
@@ -523,7 +523,7 @@ model internal_link {
   isActive    Boolean      @default(true)
   usageCount  Int          @default(0)
   createdAt   DateTime     @default(now())
-  updatedAt   DateTime
+  updatedAt DateTime @updatedAt
   anchorTexts String?
   lastChecked DateTime?
   pageExists  Boolean      @default(true)
@@ -547,9 +547,24 @@ model LandingPage {
   published       Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  
+  // AI Generation fields
+  aiGenerated        Boolean   @default(false) @map("ai_generated")
+  aiGeneratedAt      DateTime? @map("ai_generated_at")
+  aiPrompt           String?   @map("ai_prompt")
+  aiResearch         String?   @map("ai_research")
+  seoScore           Int?      @map("seo_score")
+  targetKeywords     String[]  @default([]) @map("target_keywords")
+  internalLinksCount Int       @default(0) @map("internal_links_count")
+  
+  // SEO Template relation
+  seoTemplateId      String?   @map("seo_template_id")
+  seoTemplate        SeoTemplate? @relation(fields: [seoTemplateId], references: [id], onDelete: SetNull)
 
   @@index([category])
   @@index([published])
+  @@index([aiGenerated])
+  @@index([seoTemplateId])
   @@map("landing_page")
 }
 
@@ -654,7 +669,7 @@ model Poi {
   lastSyncedAt          DateTime?
   syncError             String?
   createdAt             DateTime                @default(now())
-  updatedAt             DateTime
+  updatedAt DateTime @updatedAt
   propertyDistances     PropertyPoiDistance[]
 
   @@unique([externalId, source])
@@ -720,7 +735,7 @@ model property_alert {
   userAgent         String?
   source            String?
   createdAt         DateTime          @default(now())
-  updatedAt         DateTime
+  updatedAt DateTime @updatedAt
 
   @@index([createdAt])
   @@index([email])
@@ -806,7 +821,7 @@ model PropertyPoiDistance {
   @@map("property_poi_distance")
 }
 
-model property_submission {
+model PropertySubmission {
   id                  String           @id
   ownerName           String
   ownerEmail          String
@@ -840,12 +855,13 @@ model property_submission {
   userAgent           String?
   source              String?
   createdAt           DateTime         @default(now())
-  updatedAt           DateTime
+  updatedAt DateTime @updatedAt
 
   @@index([accessToken])
   @@index([createdAt])
   @@index([ownerEmail])
   @@index([status])
+  @@map("property_submission")
 }
 
 model rental_booking {
@@ -874,7 +890,7 @@ model rental_booking {
   cancellationReason                 String?
   internalNotes                      String?
   createdAt                          DateTime            @default(now())
-  updatedAt                          DateTime
+  updatedAt DateTime @updatedAt
   userId                             String
   check_in_time                      String?             @default("14:00")
   check_out_time                     String?             @default("11:00")
@@ -944,13 +960,13 @@ model scheduled_blog {
   processedAt         DateTime?
   errorMessage        String?
   createdAt           DateTime            @default(now())
-  updatedAt           DateTime
+  updatedAt DateTime @updatedAt
 
   @@index([scheduledFor])
   @@index([status])
 }
 
-model site_settings {
+model SiteSettings {
   id                  String    @id @default("default")
   smtpHost            String?
   smtpPort            Int?      @default(587)
@@ -976,7 +992,9 @@ model site_settings {
   scanConfidence      Float?
   detectedThemes      String?
   createdAt           DateTime  @default(now())
-  updatedAt           DateTime
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
 }
 
 model tm30_accommodation {
@@ -1057,7 +1075,7 @@ model tm30_accommodation_request {
   @@index([whatsapp_phone])
 }
 
-model topic_suggestion {
+model TopicSuggestion {
   id              String      @id
   title           String
   description     String?
@@ -1071,11 +1089,12 @@ model topic_suggestion {
   generatedBlogId String?
   batchId         String?
   createdAt       DateTime    @default(now())
-  updatedAt       DateTime
+  updatedAt DateTime @updatedAt
 
   @@index([batchId])
   @@index([language])
   @@index([status])
+  @@map("topic_suggestion")
 }
 
 model whatsapp_listing_session {
@@ -1406,4 +1425,72 @@ model FbMarketplaceLead {
   @@index([assignedToId])
   @@index([createdAt])
   @@map("fb_marketplace_lead")
+}
+
+// ============================================
+// Currency Exchange Rate (for Property Calculator)
+// ============================================
+
+model CurrencyExchangeRate {
+  id              String    @id @default(uuid())
+  base_currency   String    @default("THB")
+  target_currency String
+  rate            Float
+  source          String    @default("exchangerate-api")
+  fetched_at      DateTime  @default(now())
+  valid_until     DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  @@unique([base_currency, target_currency], name: "unique_currency_pair")
+  @@index([target_currency])
+  @@index([fetched_at(sort: Desc)])
+  @@map("currency_exchange_rate")
+}
+
+// ============================================
+// SEO Template System (for AI-driven SEO generation)
+// ============================================
+
+model SeoTemplate {
+  id                    String    @id @default(cuid())
+  
+  // Template identification
+  name                  String    @unique
+  displayName           String    @map("display_name")
+  description           String?
+  category              String?   // Link to specific landing page category
+  
+  // AI Prompts (editable by admin)
+  metaTitlePrompt       String    @map("meta_title_prompt") @db.Text
+  metaDescriptionPrompt String    @map("meta_description_prompt") @db.Text
+  urlSlugRules          String    @map("url_slug_rules") @db.Text
+  contentPrompt         String?   @map("content_prompt") @db.Text
+  faqPrompt             String?   @map("faq_prompt") @db.Text
+  
+  // SEO Rules (JSON for flexibility)
+  seoRules              Json      @default("{}") @map("seo_rules")
+  
+  // Available variables for prompts
+  availableVariables    Json      @default("[]") @map("available_variables")
+  
+  // Status
+  isActive              Boolean   @default(true) @map("is_active")
+  isDefault             Boolean   @default(false) @map("is_default")
+  
+  // Versioning
+  version               Int       @default(1)
+  previousVersionId     String?   @map("previous_version_id")
+  
+  // Audit
+  createdBy             String?   @map("created_by")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  landingPages          LandingPage[]
+
+  @@index([category])
+  @@index([isActive])
+  @@map("seo_template")
 }

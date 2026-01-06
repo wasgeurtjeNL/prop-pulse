@@ -49,7 +49,8 @@ function SectionHeader({
 
 const PropertiesWithFilters: React.FC = () => {
   const [propertyHomes, setPropertyHomes] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true); // First load only
+  const [isRefreshing, setIsRefreshing] = useState(false); // Filter changes - subtle indicator
   const [showFilters, setShowFilters] = useState(true); // Desktop sidebar
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false); // Mobile bottom sheet
   const searchParams = useSearchParams();
@@ -221,7 +222,14 @@ const PropertiesWithFilters: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
+      // Use refreshing state for filter changes (keeps content visible)
+      // Use initial loading only on first load (shows spinner)
+      const isFirstLoad = propertyHomes.length === 0 && isInitialLoading;
+      
+      if (!isFirstLoad) {
+        setIsRefreshing(true);
+      }
+      
       try {
         // Build query string from search params
         const queryParams = new URLSearchParams();
@@ -253,7 +261,8 @@ const PropertiesWithFilters: React.FC = () => {
         console.error('Error fetching properties:', error);
         setPropertyHomes([]);
       } finally {
-        setIsLoading(false);
+        setIsInitialLoading(false);
+        setIsRefreshing(false);
       }
     };
     fetchData();
@@ -393,7 +402,7 @@ const PropertiesWithFilters: React.FC = () => {
         badge={favoritesParam === "true" ? "❤️ Favorites" : (shortStayParam === "true" ? "Short Stay" : "Properties")}
         breadcrumbs={breadcrumbs}
         propertyCount={displayProperties.length}
-        isLoading={isLoading}
+        isLoading={isInitialLoading || isRefreshing}
         activeFilters={activeFiltersForHero}
         onClearFilters={activeFiltersForHero.length > 0 ? handleClearFilters : undefined}
       />
@@ -448,8 +457,18 @@ const PropertiesWithFilters: React.FC = () => {
             )}
             
             {/* Properties Grid */}
-            <div className={`${showFilters ? 'col-span-1 lg:col-span-3' : 'col-span-1 lg:col-span-4'}`}>
-              {isLoading ? (
+            <div className={`${showFilters ? 'col-span-1 lg:col-span-3' : 'col-span-1 lg:col-span-4'} relative min-h-[400px]`}>
+              {/* Refreshing overlay - shows over ALL content including "no results" */}
+              {isRefreshing && (
+                <div className="absolute inset-0 bg-white/70 dark:bg-black/50 z-10 flex items-start justify-center pt-20 rounded-xl backdrop-blur-[2px]">
+                  <div className="flex items-center gap-3 bg-white dark:bg-slate-800 px-5 py-3 rounded-full shadow-lg border border-slate-200 dark:border-slate-700">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent"></div>
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Updating filters...</span>
+                  </div>
+                </div>
+              )}
+              
+              {isInitialLoading ? (
                 <div className="flex justify-center items-center min-h-[400px]">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
@@ -525,7 +544,7 @@ const PropertiesWithFilters: React.FC = () => {
               )}
               
               {/* Property Alert CTA - Show after properties */}
-              {!isLoading && (
+              {!isInitialLoading && (
                 <div className="mt-12">
                   <PropertyAlertCTA 
                     variant="banner" 

@@ -3374,7 +3374,8 @@ async function downloadAndUploadImage(
     if (!imageResponse.ok) {
       const errorText = await imageResponse.text().catch(() => 'No error body');
       console.error(`[WhatsApp] Failed to download image: ${imageResponse.status} - ${errorText}`);
-      throw new Error(`Failed to download image: ${imageResponse.status}`);
+      // Return null instead of throwing - 404 means media expired or was already fetched
+      return null;
     }
     
     const contentType = imageResponse.headers.get('content-type');

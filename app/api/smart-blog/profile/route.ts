@@ -3,6 +3,18 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
 
+// Helper functie om veilig JSON te parsen (of comma-separated strings)
+const safeParseArray = (str: string | null | undefined): string[] => {
+  if (!str) return [];
+  try {
+    const parsed = JSON.parse(str);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    // Als het geen geldige JSON is, behandel als comma-separated string
+    return str.split(",").map(s => s.trim()).filter(Boolean);
+  }
+};
+
 // GET - Retrieve company profile
 export async function GET() {
   try {
@@ -78,13 +90,13 @@ export async function GET() {
         tone: profile.tone || "professional",
         writingStyle: profile.writingStyle || "",
         targetAudience: profile.targetAudience || "",
-        targetLocations: profile.targetLocations ? JSON.parse(profile.targetLocations) : [],
-        usps: profile.usps ? JSON.parse(profile.usps) : [],
-        expertise: profile.expertise ? JSON.parse(profile.expertise) : [],
-        contentThemes: profile.contentThemes ? JSON.parse(profile.contentThemes) : [],
-        brandKeywords: profile.brandKeywords ? JSON.parse(profile.brandKeywords) : [],
-        avoidTopics: profile.avoidTopics ? JSON.parse(profile.avoidTopics) : [],
-        competitors: profile.competitors ? JSON.parse(profile.competitors) : [],
+        targetLocations: safeParseArray(profile.targetLocations),
+        usps: safeParseArray(profile.usps),
+        expertise: safeParseArray(profile.expertise),
+        contentThemes: safeParseArray(profile.contentThemes),
+        brandKeywords: safeParseArray(profile.brandKeywords),
+        avoidTopics: safeParseArray(profile.avoidTopics),
+        competitors: safeParseArray(profile.competitors),
         websiteUrl: profile.websiteUrl || "",
         lastAnalyzedAt: profile.lastAnalyzedAt?.toISOString() || null
       },

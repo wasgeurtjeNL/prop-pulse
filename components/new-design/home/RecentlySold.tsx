@@ -1,4 +1,4 @@
-"use client";
+s d"use client";
 
 import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";

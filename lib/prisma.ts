@@ -2,28 +2,27 @@
  * Prisma Database Client Configuration
  * 
  * Handles database connections with proper error recovery for serverless environments.
- * Supports both direct PostgreSQL connections and Prisma Accelerate.
+ * Uses PrismaPg driver adapter for direct PostgreSQL connections.
  * 
  * @developer Jack Wullems
  * @contact jackwullems18@gmail.com
  */
 
-import { withAccelerate } from "@prisma/extension-accelerate";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
-// Type for the extended Prisma client
-type ExtendedPrismaClient = ReturnType<typeof createPrismaClient>;
+// Type for the Prisma client
+type PrismaClientType = PrismaClient;
 
 const globalForPrisma = global as unknown as { 
-  prisma: ExtendedPrismaClient | undefined;
+  prisma: PrismaClientType | undefined;
   lastConnectionTime: number | undefined;
 };
 
 // Connection timeout in milliseconds (refresh connection after 5 minutes of inactivity)
 const CONNECTION_REFRESH_INTERVAL = 5 * 60 * 1000;
 
-function createPrismaClient(): ExtendedPrismaClient {
+function createPrismaClient(): PrismaClientType {
   // Configure the adapter with connection string
   const adapter = new PrismaPg({ 
     connectionString: process.env.DATABASE_URL,
@@ -35,10 +34,10 @@ function createPrismaClient(): ExtendedPrismaClient {
     log: process.env.NODE_ENV === "development" 
       ? ["warn", "error"] 
       : ["error"],
-  }).$extends(withAccelerate());
+  });
 }
 
-function getPrismaClient(): ExtendedPrismaClient {
+function getPrismaClient(): PrismaClientType {
   const now = Date.now();
   
   // In production, check if we need to refresh the connection

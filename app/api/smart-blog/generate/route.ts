@@ -248,50 +248,82 @@ Company Profile:
 
 ${companyContext}
 
-Your task is to create a STRUCTURED blog post with distinct sections for visual enhancement.
+Your task is to create a STRUCTURED blog post optimized for Google Featured Snippets and EEAT signals.
 
 ${languageInstruction}
 
-CRITICAL REQUIREMENTS:
-1. Write a compelling, SEO-optimized title (50-65 characters)
-2. Write a meta description (150-160 characters)
-3. Write an engaging excerpt (2-3 sentences)
-4. Create an intro paragraph that hooks the reader
-5. Create ${lengthConfig.sections} distinct sections, each with a clear heading
-6. Each section should cover a different aspect of the topic
-7. Section headings should be descriptive and visual (they will have images)
-8. Include 1-2 internal links per section using ACTUAL URLs from the provided list
-9. Include a FAQ section with 3-5 questions at the end
+═══════════════════════════════════════════════════════════════
+GOOGLE SEO OPTIMIZATION REQUIREMENTS
+═══════════════════════════════════════════════════════════════
 
-SECTION CONTENT RULES:
-- Section content should be HTML (using <p>, <ul><li>, <a>, <strong>)
-- DO NOT include <h2> or <h3> in section content - headings are separate
-- Each section should be 150-300 words
-- Include practical, actionable information
-- Add statistics and data points where relevant
+1. TITLE (50-65 characters):
+   - Include primary keyword near the beginning
+   - Make it compelling and click-worthy
+   - Avoid clickbait; be specific and valuable
 
-INTERNAL LINKING (CRITICAL):
-- NEVER use placeholder URLs like "/path" or "#"
-- ONLY use real URLs from the available links list
-- Format links as: <a href="/blogs/actual-slug">descriptive anchor text</a>
+2. META DESCRIPTION (150-160 characters):
+   - Include primary keyword naturally
+   - Add a clear value proposition
+   - Include a soft call-to-action
+
+3. EXCERPT (2-3 sentences):
+   - This appears as the article summary
+   - Should entice readers to continue
+
+4. INTRO PARAGRAPH - FEATURED SNIPPET READY:
+   - First paragraph MUST directly answer the main question/topic
+   - Keep it 40-60 words for optimal snippet length
+   - Start with a clear, factual statement
+   - Include the primary keyword in the first sentence
+   - Format: "<p><strong>[Topic]</strong> [direct answer in 1-2 sentences]. [Supporting context].</p>"
+
+5. SECTIONS (${lengthConfig.sections} total):
+   - Each section heading (H2) should be a searchable question or keyword phrase
+   - Use action words: "How to", "Why", "Best", "Guide to", etc.
+   - Section content can include H3 subheadings for deeper hierarchy
+   - Each section: 200-350 words with practical, actionable content
+   
+6. CONTENT STRUCTURE FOR SEO:
+   - Use <h3> tags within section content for sub-topics
+   - Use <ul> or <ol> for lists (Google loves lists for snippets)
+   - Bold (<strong>) important terms and key phrases
+   - Include statistics with sources where relevant
+   - Add "Pro Tip:" callouts using <div class="pro-tip"><strong>Pro Tip:</strong> ...</div>
+
+7. FAQ SECTION (4-6 questions):
+   - Use "People Also Ask" style questions
+   - Answers should be 2-3 sentences, direct and factual
+   - Include long-tail keywords in questions
+
+8. INTERNAL LINKING (CRITICAL):
+   - 2-3 internal links per section
+   - Use descriptive anchor text (not "click here")
+   - ONLY use URLs from the provided list
+   - Format: <a href="/blogs/actual-slug">descriptive anchor text</a>
+
+═══════════════════════════════════════════════════════════════
+JSON OUTPUT FORMAT
+═══════════════════════════════════════════════════════════════
 
 Return ONLY valid JSON in this EXACT format:
 {
-  "title": "Blog title here",
-  "metaTitle": "SEO title (50-65 chars)",
-  "metaDescription": "Meta description (150-160 chars)",
-  "excerpt": "2-3 sentence excerpt",
-  "intro": "<p>Engaging intro paragraph...</p>",
+  "title": "Blog title here (50-65 chars)",
+  "metaTitle": "SEO title | Brand Name (50-65 chars)",
+  "metaDescription": "Meta description with keyword and value prop (150-160 chars)",
+  "excerpt": "2-3 sentence compelling excerpt for article cards",
+  "intro": "<p><strong>Primary Keyword</strong> direct answer to the topic. Supporting context that provides immediate value to the reader.</p>",
   "sections": [
-    { "heading": "First Section Heading", "content": "<p>Section content with <a href=\\"/blogs/slug\\">links</a>...</p>" },
-    { "heading": "Second Section Heading", "content": "<p>More content...</p>" }
+    { 
+      "heading": "How to [Action] for [Benefit]", 
+      "content": "<p>Opening statement...</p><h3>Sub-topic One</h3><p>Details...</p><ul><li>Point one</li><li>Point two</li></ul><div class=\\"pro-tip\\"><strong>Pro Tip:</strong> Actionable advice...</div><p>More content with <a href=\\"/blogs/slug\\">internal link</a>...</p>"
+    }
   ],
   "faq": [
-    { "question": "Question 1?", "answer": "Answer 1" },
-    { "question": "Question 2?", "answer": "Answer 2" }
+    { "question": "What is [topic] and why does it matter?", "answer": "Direct, factual 2-3 sentence answer." },
+    { "question": "How much does [topic] cost in [location]?", "answer": "Specific answer with data if available." }
   ],
-  "suggestedTags": ["tag1", "tag2", "tag3"],
-  "suggestedSlug": "url-friendly-slug"
+  "suggestedTags": ["primary-keyword", "secondary-keyword", "location-tag"],
+  "suggestedSlug": "primary-keyword-descriptive-slug"
 }`;
 
     const userPrompt = `Create a complete, professional blog post about: "${topic}"

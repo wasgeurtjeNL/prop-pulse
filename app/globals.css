@@ -974,6 +974,105 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   BLOG PROSE - Structured Blog Content Styling
+   For use in BlogSections component with structured JSON content
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.blog-prose {
+  @apply text-slate-700 dark:text-slate-200;
+  @apply text-[1.0625rem] leading-8;
+}
+
+.blog-prose p {
+  @apply text-[1.0625rem] leading-8 text-slate-700 dark:text-slate-300;
+  @apply mb-4;
+}
+
+.blog-prose strong {
+  @apply font-semibold text-slate-900 dark:text-white;
+}
+
+.blog-prose a {
+  @apply text-blue-700 dark:text-blue-400 font-medium;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  @apply transition-colors duration-200;
+}
+
+.blog-prose a:hover {
+  @apply text-blue-800 dark:text-blue-300;
+}
+
+/* H3 Subheadings with left border accent */
+.blog-prose h3 {
+  @apply relative mt-8 mb-4;
+  @apply text-xl md:text-2xl font-semibold;
+  @apply text-slate-800 dark:text-slate-100;
+  @apply pl-4 border-l-[3px] border-primary;
+}
+
+.blog-prose h4 {
+  @apply mt-6 mb-3 text-lg md:text-xl font-medium;
+  @apply text-slate-700 dark:text-slate-200;
+}
+
+/* Enhanced List Styling */
+.blog-prose ul {
+  @apply my-6 pl-0 space-y-2;
+  list-style: none;
+}
+
+.blog-prose ul li {
+  @apply relative pl-7;
+  @apply text-[1.0625rem] leading-8 text-slate-700 dark:text-slate-300;
+}
+
+.blog-prose ul li::before {
+  content: "";
+  @apply absolute left-0 top-3.5 w-2 h-2 rounded-full;
+  @apply bg-gradient-to-br from-primary to-blue-400;
+  box-shadow: 0 0 0 3px rgba(0, 74, 172, 0.1);
+}
+
+.blog-prose ol {
+  @apply my-6 pl-0 space-y-2;
+  counter-reset: list-counter;
+  list-style: none;
+}
+
+.blog-prose ol li {
+  @apply relative pl-10;
+  @apply text-[1.0625rem] leading-8 text-slate-700 dark:text-slate-300;
+  counter-increment: list-counter;
+}
+
+.blog-prose ol li::before {
+  content: counter(list-counter);
+  @apply absolute left-0 top-1;
+  @apply w-6 h-6 rounded-full;
+  @apply bg-primary/10 text-primary;
+  @apply text-sm font-semibold;
+  @apply flex items-center justify-center;
+}
+
+/* Blockquote styling */
+.blog-prose blockquote {
+  @apply relative my-8 py-6 px-6 md:px-8;
+  @apply bg-gradient-to-br from-slate-50 to-slate-100/50;
+  @apply dark:from-slate-900/50 dark:to-slate-800/30;
+  @apply border-l-4 border-primary rounded-r-xl;
+  @apply text-lg italic text-slate-600 dark:text-slate-300;
+}
+
+/* Code styling */
+.blog-prose code {
+  @apply bg-slate-100 dark:bg-slate-800;
+  @apply px-2 py-1 rounded-md text-sm font-mono;
+  @apply text-rose-600 dark:text-rose-400;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    TABLE OF CONTENTS - Navigation Aid
    ───────────────────────────────────────────────────────────────────────────── */
 

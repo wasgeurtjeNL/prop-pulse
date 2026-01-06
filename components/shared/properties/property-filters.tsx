@@ -560,6 +560,23 @@ export default function PropertyFilters() {
         </div>
       </FilterSection>
 
+      {/* Ownership */}
+      <FilterSection title="Ownership" icon="ph:scroll-fill" defaultOpen={true}>
+        <Select
+          value={searchParams.get("ownershipType") || "all"}
+          onValueChange={(val) => updateFilter("ownershipType", val === "all" ? null : val)}
+        >
+          <SelectTrigger className="w-full h-11 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="FREEHOLD">✅ Freehold</SelectItem>
+            <SelectItem value="LEASEHOLD">📋 Leasehold</SelectItem>
+          </SelectContent>
+        </Select>
+      </FilterSection>
+
       {/* Living Area */}
       <FilterSection 
         title="Living Area" 
@@ -590,23 +607,6 @@ export default function PropertyFilters() {
             </div>
           </div>
         </div>
-      </FilterSection>
-
-      {/* Ownership */}
-      <FilterSection title="Ownership" icon="ph:scroll-fill" defaultOpen={false}>
-        <Select
-          value={searchParams.get("ownershipType") || "all"}
-          onValueChange={(val) => updateFilter("ownershipType", val === "all" ? null : val)}
-        >
-          <SelectTrigger className="w-full h-11 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
-            <SelectValue placeholder="All Types" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="FREEHOLD">✅ Freehold</SelectItem>
-            <SelectItem value="LEASEHOLD">📋 Leasehold</SelectItem>
-          </SelectContent>
-        </Select>
       </FilterSection>
 
       {/* Amenities */}

@@ -7,9 +7,27 @@ import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 function Select({
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />
+  const scrollPositionRef = React.useRef<number>(0);
+  
+  const handleOpenChange = React.useCallback((open: boolean) => {
+    if (open) {
+      // Save scroll position when opening
+      scrollPositionRef.current = window.scrollY;
+      // Restore after Radix has done its focus magic
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' as ScrollBehavior });
+        });
+      });
+    }
+    // Call original handler if provided
+    onOpenChange?.(open);
+  }, [onOpenChange]);
+  
+  return <SelectPrimitive.Root data-slot="select" onOpenChange={handleOpenChange} {...props} />
 }
 
 function SelectGroup({

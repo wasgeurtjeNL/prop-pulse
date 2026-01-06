@@ -92,13 +92,52 @@ export default function HTMLContent({ content, className = "" }: HTMLContentProp
       root.innerHTML = sanitized;
 
       // ═══════════════════════════════════════════════════════════════
+      // AUTO-GENERATE IDS FOR HEADINGS (SEO & Anchor Links)
+      // This enables Table of Contents navigation and jump links
+      // ═══════════════════════════════════════════════════════════════
+
+      const generateSlug = (text: string): string => {
+        return text
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-")
+          .trim();
+      };
+
+      // Track used IDs to prevent duplicates
+      const usedIds = new Set<string>();
+
+      const headings = root.querySelectorAll("h2, h3, h4");
+      headings.forEach((heading) => {
+        if (!heading.id) {
+          let baseId = generateSlug(heading.textContent || "section");
+          let uniqueId = baseId;
+          let counter = 1;
+          
+          // Ensure unique ID
+          while (usedIds.has(uniqueId)) {
+            uniqueId = `${baseId}-${counter}`;
+            counter++;
+          }
+          
+          usedIds.add(uniqueId);
+          heading.id = uniqueId;
+          
+          // Add scroll margin for fixed header
+          (heading as HTMLElement).style.scrollMarginTop = "7rem";
+        }
+      });
+
+      // ═══════════════════════════════════════════════════════════════
       // AUTO-DETECT AND STYLE SPECIAL CONTENT ELEMENTS
       // This ensures styling works even without explicit CSS classes
       // ═══════════════════════════════════════════════════════════════
 
-      // Style all images within the content
+      // Style all images within the content (CLS-optimized)
       const images = root.querySelectorAll("img");
       images.forEach((img) => {
+        // Prevent CLS by setting aspect-ratio
         img.style.width = "100%";
         img.style.height = "auto";
         img.style.maxHeight = "500px";
@@ -106,7 +145,10 @@ export default function HTMLContent({ content, className = "" }: HTMLContentProp
         img.style.borderRadius = "1rem";
         img.style.marginTop = "1.5rem";
         img.style.marginBottom = "1.5rem";
+        img.style.aspectRatio = "16 / 9"; // Prevents CLS
+        img.style.backgroundColor = "#f1f5f9"; // Placeholder color while loading
         img.setAttribute("loading", "lazy");
+        img.setAttribute("decoding", "async");
       });
 
       // Auto-detect and style divs based on content patterns
