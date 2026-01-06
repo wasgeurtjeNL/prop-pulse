@@ -156,12 +156,13 @@ async function getSearchConsoleAuth() {
   const credentials = process.env.GOOGLE_SEARCH_CONSOLE_CREDENTIALS || process.env.GOOGLE_INDEXING_CREDENTIALS;
   
   if (!credentials) {
-    console.warn('[Search Console] No credentials found. Set GOOGLE_INDEXING_CREDENTIALS or GOOGLE_SEARCH_CONSOLE_CREDENTIALS');
+    console.error('[Search Console] No credentials found. Set GOOGLE_INDEXING_CREDENTIALS or GOOGLE_SEARCH_CONSOLE_CREDENTIALS');
     return null;
   }
 
   try {
     const parsedCredentials = JSON.parse(credentials);
+    console.log('[Search Console] Credentials loaded for:', parsedCredentials.client_email);
     
     const auth = new google.auth.GoogleAuth({
       credentials: parsedCredentials,
@@ -213,15 +214,25 @@ export async function getSearchPerformance(
   const auth = await getSearchConsoleAuth();
   
   if (!auth) {
-    console.warn('[Search Console] Auth not available');
+    console.error('[Search Console] Auth not available - credentials missing or invalid');
     return null;
   }
 
   try {
+    console.log('[Search Console] Fetching data for site:', SITE_URL);
+    console.log('[Search Console] Query:', JSON.stringify(query));
+    
     const searchconsole = google.searchconsole({ version: 'v1', auth });
     
+    // For domain properties, use sc-domain: prefix
+    const siteUrlForApi = SITE_URL.includes('://') 
+      ? `sc-domain:${SITE_URL.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}`
+      : SITE_URL;
+    
+    console.log('[Search Console] Using siteUrl for API:', siteUrlForApi);
+    
     const response = await searchconsole.searchanalytics.query({
-      siteUrl: SITE_URL,
+      siteUrl: siteUrlForApi,
       requestBody: {
         startDate: query.startDate,
         endDate: query.endDate,
@@ -239,6 +250,7 @@ export async function getSearchPerformance(
     });
 
     const data = response.data;
+    console.log('[Search Console] Response received, rows:', data.rows?.length || 0);
     
     return {
       rows: data.rows?.map(row => ({
@@ -257,6 +269,7 @@ export async function getSearchPerformance(
     };
   } catch (error: any) {
     console.error('[Search Console] Failed to fetch performance data:', error.message);
+    console.error('[Search Console] Error details:', error.response?.data || error);
     return null;
   }
 }

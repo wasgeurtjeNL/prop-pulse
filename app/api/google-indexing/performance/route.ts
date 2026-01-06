@@ -58,13 +58,18 @@ export async function GET(request: Request) {
       return NextResponse.json(
         { 
           error: "Failed to fetch performance data. Check if Search Console credentials are configured.",
-          message: "Set GOOGLE_INDEXING_CREDENTIALS environment variable with your service account JSON."
+          message: "Set GOOGLE_INDEXING_CREDENTIALS environment variable with your service account JSON.",
+          configured: !!process.env.GOOGLE_INDEXING_CREDENTIALS
         },
         { status: 503 }
       );
     }
 
-    return NextResponse.json(data);
+    // Return empty data structure if no rows (normal for new sites)
+    return NextResponse.json({
+      rows: data.rows || [],
+      totals: data.totals || { clicks: 0, impressions: 0, ctr: 0, position: 0 }
+    });
   } catch (error: any) {
     console.error("[Search Console API] Error:", error);
     return NextResponse.json(
