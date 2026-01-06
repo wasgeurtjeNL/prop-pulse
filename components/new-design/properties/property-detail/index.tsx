@@ -62,6 +62,11 @@ const FavoriteButton = dynamic(
   { ssr: false }
 );
 
+const PropertyCalculatorWidget = dynamic(
+  () => import('@/components/tools/property-calculator/PropertyCalculatorWidget'),
+  { ssr: false, loading: () => <div className="animate-pulse h-48 rounded-2xl bg-slate-100 dark:bg-slate-800" /> }
+);
+
 // Skeleton component for image placeholders with fixed aspect ratio to prevent CLS
 const ImageSkeleton = ({ className = "", aspectRatio = "4/3" }: { className?: string; aspectRatio?: string }) => (
   <div 
@@ -772,6 +777,18 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                         propertySlug={item.slug}
                                         phoneNumber="+66 (0)98 626 1646"
                                     />
+                                )}
+                                
+                                {/* Transfer Cost Calculator Widget - Only for sale properties */}
+                                {item?.type === 'FOR_SALE' && item?.priceRaw && (
+                                    <div className="mt-6">
+                                        <PropertyCalculatorWidget
+                                            propertyPrice={item.priceRaw}
+                                            propertyTitle={item.title}
+                                            propertyType={item.category === 'CONDO' ? 'condo' : item.category === 'LAND' ? 'land_only' : 'house_land'}
+                                            isForSale={true}
+                                        />
+                                    </div>
                                 )}
                             </>
                         )}

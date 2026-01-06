@@ -12,6 +12,15 @@ export const blogSchema = z.object({
   metaTitle: z.string().max(70).optional(), // Increased to 70 for flexibility
   metaDescription: z.string().max(160).optional(),
   published: z.boolean().default(false),
+  // SEO data from AI keyword research
+  primaryKeyword: z.string().optional(),
+  secondaryKeywords: z.array(z.string()).optional(),
+  searchIntent: z.string().optional(), // "informational" | "transactional" | "navigational" | "commercial"
+  // Research data for reference
+  researchContent: z.string().optional(),
+  researchSources: z.array(z.string()).optional(),
+  researchProvider: z.string().optional(),
+  sourceTopicId: z.string().optional(),
 });
 
 export type BlogFormData = z.infer<typeof blogSchema>;

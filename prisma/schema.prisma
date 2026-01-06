@@ -370,6 +370,35 @@ model blog {
   has_dynamic_properties Boolean        @default(false)
   poi_query_params       String?
   poi_template_id        String?
+  
+  // SEO Analysis Fields
+  seoScore               Int?           @default(0) @map("seo_score")
+  keywordDensity         Float?         @map("keyword_density")
+  primaryKeyword         String?        @map("primary_keyword")
+  secondaryKeywords      String[]       @default([]) @map("secondary_keywords")
+  
+  // Content Structure Analysis
+  h1Count                Int            @default(0) @map("h1_count")
+  h2Count                Int            @default(0) @map("h2_count")
+  h3Count                Int            @default(0) @map("h3_count")
+  wordCount              Int            @default(0) @map("word_count")
+  readabilityScore       Float?         @map("readability_score")
+  
+  // External Sources (from Perplexity research)
+  externalSources        Json?          @map("external_sources") // [{url, title, usedCount, placement}]
+  sourceTopicId          String?        @map("source_topic_id") // Link to original TopicSuggestion
+  
+  // Research Data (from AI/Perplexity)
+  searchIntent           String?        @map("search_intent") // informational, transactional, etc.
+  researchContent        String?        @map("research_content") @db.Text
+  researchSources        String[]       @default([]) @map("research_sources")
+  researchProvider       String?        @map("research_provider") // perplexity, openai, etc.
+  researchedAt           DateTime?      @map("researched_at")
+  
+  // SEO Optimization Tracking
+  seoOptimizedAt         DateTime?      @map("seo_optimized_at")
+  lastSeoAnalysis        Json?          @map("last_seo_analysis") // Full analysis results
+  
   author                 User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   category               blog_category? @relation(fields: [categoryId], references: [id])
   linkUsages             link_usage[]
@@ -379,6 +408,8 @@ model blog {
   @@index([linkOptimizedAt])
   @@index([published])
   @@index([slug])
+  @@index([seoScore])
+  @@index([sourceTopicId])
 }
 
 model blog_category {
@@ -466,7 +497,7 @@ model booking_message {
   @@index([sender_id])
 }
 
-model company_profile {
+model CompanyProfile {
   id              String    @id @default("default")
   companyName     String?
   tagline         String?
@@ -485,7 +516,9 @@ model company_profile {
   lastAnalyzedAt  DateTime?
   analysisData    String?
   createdAt       DateTime  @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt       DateTime  @updatedAt
+
+  @@map("company_profile")
 }
 
 model HeroImage {
@@ -512,7 +545,7 @@ model HeroImage {
   @@map("hero_image")
 }
 
-model internal_link {
+model InternalLink {
   id          String       @id
   url         String       @unique
   title       String
@@ -523,16 +556,17 @@ model internal_link {
   isActive    Boolean      @default(true)
   usageCount  Int          @default(0)
   createdAt   DateTime     @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt   DateTime     @updatedAt
   anchorTexts String?
   lastChecked DateTime?
   pageExists  Boolean      @default(true)
   subCategory String?
-  link_usage  link_usage[]
+  linkUsages  link_usage[]
 
   @@index([category])
   @@index([isActive])
   @@index([pageExists])
+  @@map("internal_link")
 }
 
 model LandingPage {
@@ -598,7 +632,7 @@ model link_usage {
   insertedAt      DateTime      @default(now())
   createdAt       DateTime      @default(now())
   blog            blog          @relation(fields: [blogId], references: [id], onDelete: Cascade)
-  internal_link   internal_link @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  internalLink    InternalLink  @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
   @@index([blogId])
   @@index([linkId])
@@ -1089,11 +1123,23 @@ model TopicSuggestion {
   generatedBlogId String?
   batchId         String?
   createdAt       DateTime    @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt       DateTime    @updatedAt
+
+  // SEO & Research Data (from Perplexity)
+  researchContent     String?   @db.Text @map("research_content")
+  researchSources     String[]  @default([]) @map("research_sources")
+  researchProvider    String?   @map("research_provider") // "perplexity" | "openai"
+  researchedAt        DateTime? @map("researched_at")
+  
+  // Keyword Targeting
+  primaryKeyword      String?   @map("primary_keyword")
+  secondaryKeywords   String[]  @default([]) @map("secondary_keywords")
+  targetSearchIntent  String?   @map("target_search_intent") // "informational" | "transactional" | "navigational"
 
   @@index([batchId])
   @@index([language])
   @@index([status])
+  @@index([primaryKeyword])
   @@map("topic_suggestion")
 }
 

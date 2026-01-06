@@ -46,6 +46,10 @@ const FAQ = dynamic(() => import('@/components/new-design/home/faqs'), {
 
 const FavoritesSection = dynamic(() => import('@/components/new-design/home/favorites-section'));
 
+const CalculatorCTA = dynamic(() => import('@/components/new-design/home/calculator-cta'), {
+  loading: () => <div className="animate-pulse h-48 bg-slate-100 dark:bg-slate-800 rounded-3xl mx-4 lg:mx-8" />,
+});
+
 export const metadata: Metadata = {
   title: 'Luxury Phuket Real Estate | Villas & Condos | PSM Phuket',
   description:
@@ -138,6 +142,12 @@ export default async function HomePage() {
         <div className="lazy-section">
           <WhyChooseUs />
         </div>
+        
+        {/* Calculator CTA - Promote free tools */}
+        <div className="lazy-section">
+          <CalculatorCTA />
+        </div>
+        
         <div className="lazy-section">
           <InvestorStrategy />
         </div>

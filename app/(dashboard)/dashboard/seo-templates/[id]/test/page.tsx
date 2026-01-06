@@ -23,6 +23,17 @@ interface Variable {
   example?: string;
 }
 
+// Helper to normalize variables (can be strings or objects)
+function normalizeVariables(vars: unknown[]): Variable[] {
+  if (!Array.isArray(vars)) return [];
+  return vars.map((v) => {
+    if (typeof v === "string") {
+      return { key: `{{${v}}}`, description: v, example: "" };
+    }
+    return v as Variable;
+  });
+}
+
 interface SeoTemplate {
   id: string;
   name: string;
@@ -66,12 +77,17 @@ export default function SeoTemplateTestPage({ params }: PageProps) {
     try {
       const response = await fetch(`/api/seo-templates/${id}`);
       if (response.ok) {
-        const data: SeoTemplate = await response.json();
-        setTemplate(data);
+        const data = await response.json();
+        // Normalize availableVariables to handle both string[] and Variable[]
+        const normalizedTemplate: SeoTemplate = {
+          ...data,
+          availableVariables: normalizeVariables(data.availableVariables || []),
+        };
+        setTemplate(normalizedTemplate);
         
         // Pre-fill variables with examples
         const initialVars: Record<string, string> = {};
-        data.availableVariables.forEach((v) => {
+        normalizedTemplate.availableVariables.forEach((v) => {
           const key = v.key.replace(/[{}]/g, "");
           initialVars[key] = v.example || "";
         });

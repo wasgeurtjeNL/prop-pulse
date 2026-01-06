@@ -67,6 +67,13 @@ const Footer = () => {
                     </Link>
                   </div>
                 ))}
+                {/* Free Tools - Always visible */}
+                <div>
+                  <Link href="/tools" prefetch={false} className="text-white/40 text-xm hover:text-white flex items-center gap-1.5">
+                    <Icon icon="solar:calculator-bold" width={14} height={14} />
+                    Free Tools
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

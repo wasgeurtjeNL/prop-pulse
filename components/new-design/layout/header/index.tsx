@@ -444,6 +444,25 @@ const Header: React.FC = () => {
 
         {/* Navigation Links - Scrollable middle section */}
         <nav className="relative z-10 flex-1 overflow-y-auto px-4 sm:px-5 py-2">
+          {/* Free Tools Quick Link */}
+          <Link
+            href="/tools"
+            prefetch={false}
+            onClick={() => setNavbarOpen(false)}
+            className="flex items-center justify-between mb-3 p-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/10 border border-emerald-500/30 hover:from-emerald-500/30 hover:to-teal-500/20 transition-all duration-300 group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                <Icon icon="solar:calculator-bold" className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <span className="text-white font-semibold text-sm">Free Tools</span>
+                <p className="text-white/50 text-xs">Property calculators & more</p>
+              </div>
+            </div>
+            <Icon icon="ph:arrow-right-bold" className="w-4 h-4 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
+          </Link>
+
           {/* Favorites Quick Link - Only show when user has favorites */}
           {favoritesCount > 0 && (
             <Link

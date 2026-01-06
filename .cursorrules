@@ -245,6 +245,35 @@ import Link from 'next/link'
 
 ## 💾 Database (Prisma)
 
+### ⚠️ TWO DATABASES - Local vs Supabase MCP
+
+**CRITICAL: The project uses TWO different database connections!**
+
+| Connection | Used By | Database |
+|------------|---------|----------|
+| `DATABASE_URL` in `.env` | Next.js app, Prisma, API routes | Local PostgreSQL (`127.0.0.1:5432`) |
+| MCP Supabase tools | `mcp_supabase_*` commands in Cursor | Supabase cloud database |
+
+**This means:**
+- ❌ Data added via `mcp_supabase_execute_sql` is NOT visible to the Next.js app
+- ❌ Data added via Prisma/Next.js is NOT visible in MCP Supabase queries
+- ✅ Always seed/migrate BOTH databases when needed
+
+**How to sync:**
+```bash
+# For LOCAL database (Next.js app uses this):
+npx prisma db push                    # Push schema
+npx tsx prisma/seed-[name].ts         # Run seed scripts
+
+# For SUPABASE (MCP tools use this):
+mcp_supabase_apply_migration          # Push schema
+mcp_supabase_execute_sql              # Insert data
+```
+
+**Quick check which DB you're working with:**
+- Using `prisma.*` or API routes → Local DB
+- Using `mcp_supabase_*` → Supabase cloud
+
 ### ⚠️ User Roles - ALWAYS UPPERCASE
 
 User roles in the database MUST always be in **UPPERCASE**:

@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { BlogCalendar } from "@/components/smart-blog/BlogCalendar";
 import { LinkManagement } from "@/components/smart-blog/LinkManagement";
+import { ContentSeoAnalyzer } from "@/components/smart-blog/ContentSeoAnalyzer";
 
 interface TopicSuggestion {
   id: string;
@@ -76,6 +77,28 @@ interface GeneratedBlog {
   sources?: string[];
   coverImage?: string;
   coverImageAlt?: string;
+  // SEO data from AI keyword research
+  primaryKeyword?: string;
+  secondaryKeywords?: string[];
+  searchIntent?: string;
+  suggestedH2s?: string[];
+  keywordDensityTarget?: number;
+  externalSources?: { url: string; title?: string }[];
+  sourceTopicId?: string;
+}
+
+interface KeywordResearchData {
+  primaryKeyword: string;
+  secondaryKeywords: string[];
+  searchIntent: string;
+  suggestedH2s: string[];
+  keywordDensityTarget: number;
+}
+
+interface ResearchData {
+  content: string;
+  sources: string[];
+  provider: string;
 }
 
 interface CoverImageStats {
@@ -130,6 +153,8 @@ export default function SmartBlogGeneratorPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [generatedBlog, setGeneratedBlog] = useState<GeneratedBlog | null>(null);
+  const [researchData, setResearchData] = useState<ResearchData | null>(null);
+  const [keywordResearchData, setKeywordResearchData] = useState<KeywordResearchData | null>(null);
   const [topics, setTopics] = useState<TopicSuggestion[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
@@ -328,6 +353,15 @@ export default function SmartBlogGeneratorPage() {
       }
 
       setGeneratedBlog(data.blog);
+      // Store research data for SEO analyzer
+      if (data.research) {
+        setResearchData(data.research);
+      }
+      // Store keyword research data for display and storage
+      if (data.keywordResearch) {
+        setKeywordResearchData(data.keywordResearch);
+        console.log("🎯 AI Keyword Research:", data.keywordResearch);
+      }
       setActiveTab("preview");
       toast.success("Blog generated successfully! 🎉");
     } catch (error: any) {
@@ -420,7 +454,16 @@ export default function SmartBlogGeneratorPage() {
           tag: generatedBlog.suggestedTags?.[0] || "",
           coverImage: generatedBlog.coverImage,
           coverImageAlt: generatedBlog.coverImageAlt,
-          isPublished: publishOnSave
+          isPublished: publishOnSave,
+          // NEW: SEO data from AI keyword research
+          primaryKeyword: generatedBlog.primaryKeyword || keywordResearchData?.primaryKeyword,
+          secondaryKeywords: generatedBlog.secondaryKeywords || keywordResearchData?.secondaryKeywords || [],
+          searchIntent: generatedBlog.searchIntent || keywordResearchData?.searchIntent,
+          // Research data for reference
+          researchContent: researchData?.content,
+          researchSources: researchData?.sources || [],
+          researchProvider: researchData?.provider,
+          sourceTopicId: generatedBlog.sourceTopicId,
         })
       });
 
@@ -779,17 +822,17 @@ export default function SmartBlogGeneratorPage() {
                         <div className="w-12 h-12 rounded-full border-3 border-purple-200 dark:border-purple-800"></div>
                         <div className="absolute top-0 left-0 w-12 h-12 rounded-full border-3 border-transparent border-t-purple-500 animate-spin"></div>
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl">
-                          {blogLoadingMessages[loadingMessageIndex].icon}
+                          {blogLoadingMessages[loadingMessageIndex % blogLoadingMessages.length]?.icon || "⏳"}
                         </div>
                       </div>
                       <div className="flex-1 space-y-2">
                         <p className="font-medium text-purple-700 dark:text-purple-300">
-                          {blogLoadingMessages[loadingMessageIndex].text}
+                          {blogLoadingMessages[loadingMessageIndex % blogLoadingMessages.length]?.text || "Generating..."}
                         </p>
                         <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-1.5">
                           <div 
                             className="bg-purple-500 h-1.5 rounded-full transition-all duration-500"
-                            style={{ width: `${((loadingMessageIndex + 1) / blogLoadingMessages.length) * 100}%` }}
+                            style={{ width: `${(((loadingMessageIndex % blogLoadingMessages.length) + 1) / blogLoadingMessages.length) * 100}%` }}
                           ></div>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -1312,41 +1355,228 @@ export default function SmartBlogGeneratorPage() {
                 </div>
               )}
 
-              {/* Sources */}
-              {generatedBlog.sources && generatedBlog.sources.length > 0 && (
-                <Card>
+              {/* AI Keyword Research Results - NEW */}
+              {keywordResearchData && (
+                <Card className="border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-transparent">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Globe className="h-4 w-4" />
-                      Research Sources
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Sparkles className="h-5 w-5 text-purple-500" />
+                      AI Keyword Research
                     </CardTitle>
+                    <CardDescription>
+                      Automatisch geanalyseerde zoekwoorden op basis van onderwerp en research
+                    </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-1 text-sm">
-                      {generatedBlog.sources.map((source, i) => (
-                        <li key={i} className="flex items-center gap-2 text-muted-foreground">
-                          <ExternalLink className="h-3 w-3" />
-                          {source}
-                        </li>
-                      ))}
-                    </ul>
+                  <CardContent className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Primary Keyword
+                        </span>
+                        <p className="text-lg font-semibold text-purple-600 dark:text-purple-400 mt-1">
+                          "{keywordResearchData.primaryKeyword}"
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Search Intent
+                        </span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant={
+                            keywordResearchData.searchIntent === 'transactional' ? 'default' :
+                            keywordResearchData.searchIntent === 'commercial' ? 'secondary' :
+                            'outline'
+                          }>
+                            {keywordResearchData.searchIntent}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {keywordResearchData.searchIntent === 'transactional' && '→ Koopintentie'}
+                            {keywordResearchData.searchIntent === 'informational' && '→ Informatie zoeken'}
+                            {keywordResearchData.searchIntent === 'commercial' && '→ Vergelijken'}
+                            {keywordResearchData.searchIntent === 'navigational' && '→ Specifieke site'}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Keyword Density Target
+                        </span>
+                        <p className="text-sm mt-1">{keywordResearchData.keywordDensityTarget}%</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Secondary Keywords (LSI)
+                        </span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {keywordResearchData.secondaryKeywords.map((kw, i) => (
+                            <Badge key={i} variant="outline" className="text-xs">
+                              {kw}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Suggested H2 Headings
+                        </span>
+                        <ul className="text-sm mt-1 space-y-1">
+                          {keywordResearchData.suggestedH2s?.slice(0, 3).map((h2, i) => (
+                            <li key={i} className="text-muted-foreground flex items-start gap-1">
+                              <span className="text-purple-500">•</span>
+                              {h2}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Content Preview */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{generatedBlog.title}</CardTitle>
-                  <CardDescription>{generatedBlog.excerpt}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div 
-                    className="blog-details prose prose-lg max-w-none"
-                    dangerouslySetInnerHTML={{ __html: generatedBlog.content }}
+              {/* SEO Content Analyzer */}
+              <div className="grid gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                  {/* Content Preview - Properly parsed JSON structure */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{generatedBlog.title}</CardTitle>
+                      <CardDescription>{generatedBlog.excerpt}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {(() => {
+                        try {
+                          // Parse the JSON content structure
+                          const structured = JSON.parse(generatedBlog.content);
+                          return (
+                            <div className="blog-details prose prose-lg max-w-none space-y-8">
+                              {/* Intro */}
+                              {structured.intro && (
+                                <div 
+                                  className="text-lg leading-relaxed"
+                                  dangerouslySetInnerHTML={{ __html: structured.intro }} 
+                                />
+                              )}
+                              
+                              {/* Sections */}
+                              {structured.sections?.map((section: any, idx: number) => (
+                                <div key={idx} className="space-y-4">
+                                  <h2 className="text-2xl font-bold text-foreground border-b pb-2">
+                                    {section.heading}
+                                  </h2>
+                                  {section.imageUrl && (
+                                    <div className={`float-${section.position || 'left'} ${section.position === 'right' ? 'ml-6' : 'mr-6'} mb-4 w-full md:w-1/2`}>
+                                      <img 
+                                        src={section.imageUrl} 
+                                        alt={section.imageAlt || section.heading}
+                                        className="rounded-lg shadow-md w-full"
+                                      />
+                                      {section.imageAlt && (
+                                        <p className="text-xs text-muted-foreground mt-1 italic">
+                                          {section.imageAlt}
+                                        </p>
+                                      )}
+                                    </div>
+                                  )}
+                                  <div 
+                                    className="prose prose-lg max-w-none"
+                                    dangerouslySetInnerHTML={{ __html: section.content }} 
+                                  />
+                                  <div className="clear-both" />
+                                </div>
+                              ))}
+                              
+                              {/* FAQ */}
+                              {structured.faq?.length > 0 && (
+                                <div className="space-y-4 mt-8 pt-8 border-t">
+                                  <h2 className="text-2xl font-bold text-foreground">
+                                    Veelgestelde Vragen
+                                  </h2>
+                                  {structured.faq.map((item: any, idx: number) => (
+                                    <div key={idx} className="border-l-4 border-purple-500 pl-4 py-2">
+                                      <h3 className="font-semibold text-foreground">{item.question}</h3>
+                                      <p className="text-muted-foreground mt-1">{item.answer}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        } catch {
+                          // Fallback for raw HTML content (legacy)
+                          return (
+                            <div 
+                              className="blog-details prose prose-lg max-w-none"
+                              dangerouslySetInnerHTML={{ __html: generatedBlog.content }}
+                            />
+                          );
+                        }
+                      })()}
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                {/* SEO Analyzer Sidebar */}
+                <div className="space-y-4">
+                  <ContentSeoAnalyzer
+                    title={generatedBlog.title}
+                    metaTitle={generatedBlog.metaTitle}
+                    metaDescription={generatedBlog.metaDescription}
+                    content={generatedBlog.content}
+                    primaryKeyword={generatedBlog.primaryKeyword || keywordResearchData?.primaryKeyword}
+                    secondaryKeywords={generatedBlog.secondaryKeywords || keywordResearchData?.secondaryKeywords}
+                    researchData={researchData || undefined}
+                    onKeywordChange={(primary, secondary) => {
+                      setGeneratedBlog(prev => prev ? {
+                        ...prev,
+                        primaryKeyword: primary,
+                        secondaryKeywords: secondary
+                      } : null);
+                    }}
+                    onOptimize={(type, optimized) => {
+                      if (type === 'h2' || type === 'content') {
+                        setGeneratedBlog(prev => prev ? { ...prev, content: optimized } : null);
+                      } else if (type === 'meta') {
+                        try {
+                          const metaData = JSON.parse(optimized);
+                          setGeneratedBlog(prev => prev ? {
+                            ...prev,
+                            metaTitle: metaData.metaTitle || prev.metaTitle,
+                            metaDescription: metaData.metaDescription || prev.metaDescription
+                          } : null);
+                        } catch {}
+                      }
+                    }}
                   />
-                </CardContent>
-              </Card>
+                  
+                  {/* Sources Card (moved to sidebar) */}
+                  {generatedBlog.sources && generatedBlog.sources.length > 0 && (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Globe className="h-4 w-4" />
+                          Research Sources
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="space-y-1 text-sm">
+                          {generatedBlog.sources.map((source, i) => (
+                            <li key={i} className="flex items-center gap-2 text-muted-foreground">
+                              <ExternalLink className="h-3 w-3" />
+                              <a href={source} target="_blank" rel="noopener noreferrer" className="hover:underline truncate">
+                                {(() => { try { return new URL(source).hostname; } catch { return source; } })()}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+
+              {/* Content Preview moved to grid above with SEO Analyzer */}
             </>
           )}
         </TabsContent>

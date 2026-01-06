@@ -13,11 +13,26 @@ import {
 
 interface GenerateRequest {
   topic: string;
+  topicId?: string; // Optional: Link to existing TopicSuggestion
   language?: "en" | "nl";
   length?: "short" | "medium" | "long";
   tone?: "professional" | "friendly" | "luxury" | "educational";
   includeResearch?: boolean;
   generateImages?: boolean; // New: enable/disable section image generation
+}
+
+interface ResearchResult {
+  research: string;
+  sources: string[];
+  provider: "perplexity" | "openai";
+}
+
+interface KeywordResearch {
+  primaryKeyword: string;
+  secondaryKeywords: string[];
+  searchIntent: "informational" | "transactional" | "navigational" | "commercial";
+  suggestedH2s: string[];
+  keywordDensityTarget: number; // percentage
 }
 
 interface GeneratedSection {
@@ -33,8 +48,92 @@ interface StoredSection {
   position: "left" | "right";
 }
 
+// AI-driven keyword research - understands context and search intent
+async function performKeywordResearch(
+  topic: string, 
+  research: string, 
+  language: string
+): Promise<KeywordResearch> {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  
+  const languageContext = language === "nl" 
+    ? "Focus on Dutch/Netherlands real estate terms where relevant."
+    : "Focus on English search terms for international investors.";
+  
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: `You are an expert SEO keyword researcher specializing in Thailand/Phuket real estate market.
+
+Your task is to analyze the topic and research data to identify the BEST keywords for Google ranking.
+
+${languageContext}
+
+RULES FOR PRIMARY KEYWORD:
+- Must be 2-4 words that someone would actually type in Google
+- Include high-intent real estate terms: "buy", "invest", "luxury", "villa", "condo", "property", "market"
+- Include location if mentioned: "Phuket", "Thailand", "Bangkok", etc.
+- Should have search potential (people actually search for this)
+- Example good keywords: "phuket luxury villa investment", "buy condo phuket foreigner", "thailand property market 2026"
+- Example BAD keywords: "potential how infrastructure", "unlocking market", "real estate trends"
+
+RULES FOR SECONDARY KEYWORDS (LSI - Latent Semantic Indexing):
+- 5-7 related terms that support the primary keyword
+- Include long-tail variations
+- Include related concepts people also search for
+
+SEARCH INTENT:
+- informational: user wants to learn (how to, guide, tips)
+- transactional: user wants to buy/invest
+- navigational: user looking for specific place/company
+- commercial: user researching before purchase
+
+Return ONLY valid JSON.`
+      },
+      {
+        role: "user",
+        content: `Analyze this topic and research to determine the best SEO keywords:
+
+TOPIC: "${topic}"
+
+RESEARCH DATA:
+${research.slice(0, 2500)}
+
+Return JSON:
+{
+  "primaryKeyword": "2-4 word search term",
+  "secondaryKeywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+  "searchIntent": "informational|transactional|navigational|commercial",
+  "suggestedH2s": [
+    "H2 heading that includes the primary keyword",
+    "Another H2 with secondary keyword",
+    "Third H2 variation"
+  ],
+  "keywordDensityTarget": 1.5
+}`
+      }
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.3,
+    max_tokens: 800
+  });
+
+  const result = JSON.parse(completion.choices[0]?.message?.content || "{}");
+  
+  // Fallback values if AI fails
+  return {
+    primaryKeyword: result.primaryKeyword || topic.toLowerCase().slice(0, 50),
+    secondaryKeywords: result.secondaryKeywords || [],
+    searchIntent: result.searchIntent || "informational",
+    suggestedH2s: result.suggestedH2s || [],
+    keywordDensityTarget: result.keywordDensityTarget || 1.5
+  };
+}
+
 // Perform web research using Perplexity or OpenAI
-async function performResearch(topic: string, language: string): Promise<{ research: string; sources: string[] }> {
+async function performResearch(topic: string, language: string): Promise<ResearchResult> {
   const perplexityKey = process.env.PERPLEXITY_API_KEY;
   
   if (perplexityKey) {
@@ -68,7 +167,8 @@ ${language === "nl" ? "Respond in Dutch." : "Respond in English."}`
         const data = await response.json();
         return {
           research: data.choices[0]?.message?.content || "",
-          sources: data.citations || []
+          sources: data.citations || [],
+          provider: "perplexity"
         };
       }
     } catch (error) {
@@ -98,7 +198,8 @@ ${language === "nl" ? "Respond in Dutch." : "Respond in English."}`
 
   return {
     research: completion.choices[0]?.message?.content || "",
-    sources: []
+    sources: [],
+    provider: "openai"
   };
 }
 
@@ -116,6 +217,7 @@ export async function POST(request: Request) {
     const body: GenerateRequest = await request.json();
     const { 
       topic, 
+      topicId,
       language = "en", 
       length = "medium",
       tone = "professional",
@@ -235,14 +337,78 @@ Company Profile:
       : "Write everything in English. All headings, paragraphs, and content must be in English.";
 
     // Step 1: Perform research if enabled
-    let researchData = { research: "", sources: [] as string[] };
+    let researchData: ResearchResult = { 
+      research: "", 
+      sources: [], 
+      provider: "openai"
+    };
+    
     if (includeResearch) {
       if (isDev) console.log("📚 Performing research...");
       researchData = await performResearch(topic, language);
     }
 
-    // Step 2: Generate structured blog content with sections
+    // Step 2: AI-driven keyword research (ALWAYS run, uses research if available)
+    if (isDev) console.log("🔍 Performing AI keyword research...");
+    const keywordResearch = await performKeywordResearch(
+      topic, 
+      researchData.research || topic, 
+      language
+    );
+    if (isDev) console.log(`🎯 Primary keyword: "${keywordResearch.primaryKeyword}"`);
+    if (isDev) console.log(`📝 Secondary keywords: ${keywordResearch.secondaryKeywords.join(", ")}`);
+    
+    // Save research data to TopicSuggestion if topicId provided
+    if (topicId) {
+      try {
+        await prisma.topicSuggestion.update({
+          where: { id: topicId },
+          data: {
+            researchContent: researchData.research || null,
+            researchSources: researchData.sources,
+            researchProvider: researchData.provider,
+            researchedAt: researchData.research ? new Date() : null,
+            primaryKeyword: keywordResearch.primaryKeyword,
+            secondaryKeywords: keywordResearch.secondaryKeywords,
+            targetSearchIntent: keywordResearch.searchIntent,
+          }
+        });
+        if (isDev) console.log("💾 Research & keywords saved to TopicSuggestion");
+      } catch (e) {
+        console.error("Failed to save research to topic:", e);
+      }
+    }
+
+    // Step 3: Generate structured blog content with sections
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // Build keyword placement instructions
+    const keywordInstructions = `
+═══════════════════════════════════════════════════════════════
+🎯 MANDATORY KEYWORD PLACEMENT (CRITICAL FOR SEO)
+═══════════════════════════════════════════════════════════════
+
+PRIMARY KEYWORD: "${keywordResearch.primaryKeyword}"
+This MUST appear in:
+✓ Title (near the beginning)
+✓ Meta title (near the beginning)  
+✓ Meta description (first half)
+✓ First paragraph/intro (first sentence, bold it)
+✓ At least 2 H2 section headings
+✓ 4-6 times naturally in the body (${keywordResearch.keywordDensityTarget}% density target)
+✓ URL slug
+
+SECONDARY KEYWORDS (distribute throughout):
+${keywordResearch.secondaryKeywords.map((kw, i) => `- "${kw}" → Use in section ${i + 1} or FAQ`).join('\n')}
+
+SEARCH INTENT: ${keywordResearch.searchIntent}
+${keywordResearch.searchIntent === 'transactional' ? '→ Focus on buying, investing, pricing, ROI' : ''}
+${keywordResearch.searchIntent === 'informational' ? '→ Focus on explaining, guiding, teaching' : ''}
+${keywordResearch.searchIntent === 'commercial' ? '→ Focus on comparisons, reviews, best options' : ''}
+
+SUGGESTED H2 HEADINGS (use or adapt these):
+${keywordResearch.suggestedH2s.map(h2 => `- "${h2}"`).join('\n')}
+`;
 
     const systemPrompt = `You are an elite content strategist and SEO specialist for a premium real estate company.
 
@@ -252,78 +418,68 @@ Your task is to create a STRUCTURED blog post optimized for Google Featured Snip
 
 ${languageInstruction}
 
+${keywordInstructions}
+
 ═══════════════════════════════════════════════════════════════
-GOOGLE SEO OPTIMIZATION REQUIREMENTS
+CONTENT STRUCTURE REQUIREMENTS
 ═══════════════════════════════════════════════════════════════
 
 1. TITLE (50-65 characters):
-   - Include primary keyword near the beginning
+   - MUST include "${keywordResearch.primaryKeyword}" near the beginning
    - Make it compelling and click-worthy
-   - Avoid clickbait; be specific and valuable
 
 2. META DESCRIPTION (150-160 characters):
-   - Include primary keyword naturally
+   - MUST include "${keywordResearch.primaryKeyword}" in first half
    - Add a clear value proposition
    - Include a soft call-to-action
 
-3. EXCERPT (2-3 sentences):
-   - This appears as the article summary
-   - Should entice readers to continue
+3. INTRO PARAGRAPH - FEATURED SNIPPET READY:
+   - Start with: "<p><strong>${keywordResearch.primaryKeyword.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</strong>"
+   - Direct answer in 40-60 words
+   - This is what Google shows in featured snippets
 
-4. INTRO PARAGRAPH - FEATURED SNIPPET READY:
-   - First paragraph MUST directly answer the main question/topic
-   - Keep it 40-60 words for optimal snippet length
-   - Start with a clear, factual statement
-   - Include the primary keyword in the first sentence
-   - Format: "<p><strong>[Topic]</strong> [direct answer in 1-2 sentences]. [Supporting context].</p>"
+4. SECTIONS (${lengthConfig.sections} total):
+   - At least 2 H2 headings MUST contain "${keywordResearch.primaryKeyword}" or close variant
+   - Use action words: "How to", "Why", "Best", "Guide to"
+   - Each section: 200-350 words
 
-5. SECTIONS (${lengthConfig.sections} total):
-   - Each section heading (H2) should be a searchable question or keyword phrase
-   - Use action words: "How to", "Why", "Best", "Guide to", etc.
-   - Section content can include H3 subheadings for deeper hierarchy
-   - Each section: 200-350 words with practical, actionable content
-   
-6. CONTENT STRUCTURE FOR SEO:
-   - Use <h3> tags within section content for sub-topics
-   - Use <ul> or <ol> for lists (Google loves lists for snippets)
-   - Bold (<strong>) important terms and key phrases
-   - Include statistics with sources where relevant
-   - Add "Pro Tip:" callouts using <div class="pro-tip"><strong>Pro Tip:</strong> ...</div>
+5. CONTENT FORMATTING:
+   - Use <h3> tags for sub-topics
+   - Use <ul> or <ol> for lists (Google loves lists)
+   - Bold (<strong>) important terms including keywords
+   - Add "Pro Tip:" callouts: <div class="pro-tip"><strong>Pro Tip:</strong> ...</div>
 
-7. FAQ SECTION (4-6 questions):
-   - Use "People Also Ask" style questions
-   - Answers should be 2-3 sentences, direct and factual
-   - Include long-tail keywords in questions
+6. FAQ SECTION (4-6 questions):
+   - Include secondary keywords in questions
+   - Answers: 2-3 sentences, direct and factual
 
-8. INTERNAL LINKING (CRITICAL):
+7. INTERNAL LINKING:
    - 2-3 internal links per section
-   - Use descriptive anchor text (not "click here")
+   - Descriptive anchor text (not "click here")
    - ONLY use URLs from the provided list
-   - Format: <a href="/blogs/actual-slug">descriptive anchor text</a>
 
 ═══════════════════════════════════════════════════════════════
 JSON OUTPUT FORMAT
 ═══════════════════════════════════════════════════════════════
 
-Return ONLY valid JSON in this EXACT format:
+Return ONLY valid JSON:
 {
-  "title": "Blog title here (50-65 chars)",
-  "metaTitle": "SEO title | Brand Name (50-65 chars)",
-  "metaDescription": "Meta description with keyword and value prop (150-160 chars)",
-  "excerpt": "2-3 sentence compelling excerpt for article cards",
-  "intro": "<p><strong>Primary Keyword</strong> direct answer to the topic. Supporting context that provides immediate value to the reader.</p>",
+  "title": "Title with ${keywordResearch.primaryKeyword} (50-65 chars)",
+  "metaTitle": "SEO title with keyword | Brand (50-65 chars)",
+  "metaDescription": "${keywordResearch.primaryKeyword} + value prop (150-160 chars)",
+  "excerpt": "2-3 sentence excerpt",
+  "intro": "<p><strong>${keywordResearch.primaryKeyword.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</strong> direct answer...</p>",
   "sections": [
     { 
-      "heading": "How to [Action] for [Benefit]", 
-      "content": "<p>Opening statement...</p><h3>Sub-topic One</h3><p>Details...</p><ul><li>Point one</li><li>Point two</li></ul><div class=\\"pro-tip\\"><strong>Pro Tip:</strong> Actionable advice...</div><p>More content with <a href=\\"/blogs/slug\\">internal link</a>...</p>"
+      "heading": "H2 with keyword or variant", 
+      "content": "<p>Content...</p>"
     }
   ],
   "faq": [
-    { "question": "What is [topic] and why does it matter?", "answer": "Direct, factual 2-3 sentence answer." },
-    { "question": "How much does [topic] cost in [location]?", "answer": "Specific answer with data if available." }
+    { "question": "Question with secondary keyword?", "answer": "Answer." }
   ],
-  "suggestedTags": ["primary-keyword", "secondary-keyword", "location-tag"],
-  "suggestedSlug": "primary-keyword-descriptive-slug"
+  "suggestedTags": ["${keywordResearch.primaryKeyword.replace(/\s+/g, '-')}", ...],
+  "suggestedSlug": "${keywordResearch.primaryKeyword.replace(/\s+/g, '-')}-guide"
 }`;
 
     const userPrompt = `Create a complete, professional blog post about: "${topic}"
@@ -491,6 +647,15 @@ Each section will have an AI-generated image, so make the headings descriptive a
       blogData.sources = researchData.sources;
     }
 
+    // Format external sources for storage (with usage tracking)
+    const externalSources = researchData.sources.map((url, index) => ({
+      url,
+      title: `Source ${index + 1}`,
+      usedCount: 0,
+      placement: null as string | null,
+      addedAt: new Date().toISOString()
+    }));
+
     return NextResponse.json({
       success: true,
       blog: {
@@ -502,13 +667,29 @@ Each section will have an AI-generated image, so make the headings descriptive a
         suggestedTags: blogData.suggestedTags,
         suggestedSlug: blogData.suggestedSlug,
         sources: blogData.sources,
+        // SEO data from AI keyword research
+        primaryKeyword: keywordResearch.primaryKeyword,
+        secondaryKeywords: keywordResearch.secondaryKeywords,
+        searchIntent: keywordResearch.searchIntent,
+        suggestedH2s: keywordResearch.suggestedH2s,
+        keywordDensityTarget: keywordResearch.keywordDensityTarget,
+        externalSources,
+        sourceTopicId: topicId,
       },
+      // Full research data for storage/display
+      research: {
+        content: researchData.research,
+        sources: researchData.sources,
+        provider: researchData.provider,
+      },
+      // Full keyword research for storage/display
+      keywordResearch: keywordResearch,
       stats: {
         sectionsGenerated: processedSections.length,
         imagesGenerated: processedSections.filter(s => s.imageUrl).length,
       },
       researchUsed: includeResearch,
-      provider: researchData.sources.length > 0 ? "perplexity" : "openai"
+      provider: researchData.provider
     });
 
   } catch (error: any) {

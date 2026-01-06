@@ -14,25 +14,106 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const templates = await prisma.seoTemplate.findMany({
-      orderBy: [
-        { isDefault: "desc" },
-        { displayName: "asc" },
-      ],
-      include: {
-        _count: {
-          select: { landingPages: true },
-        },
-      },
-    });
+    // Use raw SQL to bypass Prisma caching issues
+    console.log("[SEO Templates API] Starting raw SQL query...");
+    
+    const templates = await prisma.$queryRaw<any[]>`
+      SELECT 
+        id,
+        name,
+        display_name as "displayName",
+        description,
+        category,
+        meta_title_prompt as "metaTitlePrompt",
+        meta_description_prompt as "metaDescriptionPrompt",
+        url_slug_rules as "urlSlugRules",
+        content_prompt as "contentPrompt",
+        faq_prompt as "faqPrompt",
+        seo_rules as "seoRules",
+        available_variables as "availableVariables",
+        is_active as "isActive",
+        is_default as "isDefault",
+        version,
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM seo_template
+      WHERE is_active = true
+      ORDER BY is_default DESC, display_name ASC
+    `;
 
-    return NextResponse.json(templates);
+    console.log(`[SEO Templates API] Raw query returned ${templates?.length || 0} templates`);
+
+    // Add _count for landing pages
+    const templatesWithCount = await Promise.all(
+      templates.map(async (template) => {
+        const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
+          SELECT COUNT(*) as count FROM landing_page WHERE seo_template_id = ${template.id}
+        `;
+        return {
+          ...template,
+          _count: { landingPages: Number(countResult[0]?.count || 0) },
+        };
+      })
+    );
+
+    console.log(`[SEO Templates API] After mapping: ${templatesWithCount.length} templates`);
+
+    // If no templates exist, return default fallback
+    if (templatesWithCount.length === 0) {
+      console.log("[SEO Templates API] No templates found, returning fallback");
+      return NextResponse.json([{
+        id: "default",
+        name: "default",
+        displayName: "Default SEO Template",
+        description: "Standard SEO optimization template",
+        category: null,
+        metaTitlePrompt: "Create an SEO-optimized title for: {{title}}",
+        metaDescriptionPrompt: "Create an SEO-optimized meta description for: {{title}}",
+        urlSlugRules: "Use lowercase, hyphens, max 60 chars",
+        isActive: true,
+        isDefault: true,
+        _count: { landingPages: 0 },
+      }]);
+    }
+
+    return NextResponse.json(templatesWithCount);
   } catch (error) {
     console.error("Error fetching SEO templates:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch templates" },
-      { status: 500 }
-    );
+    console.error("Error details:", error instanceof Error ? error.message : "Unknown error");
+    
+    // Try simple raw query as last resort
+    try {
+      const fallbackTemplates = await prisma.$queryRaw<any[]>`
+        SELECT id, name, display_name, description, category, is_active, is_default, version
+        FROM seo_template
+        ORDER BY is_default DESC
+      `;
+      
+      return NextResponse.json(fallbackTemplates.map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        displayName: t.display_name,
+        description: t.description,
+        category: t.category,
+        isActive: t.is_active,
+        isDefault: t.is_default,
+        version: t.version,
+        _count: { landingPages: 0 },
+      })));
+    } catch (fallbackError) {
+      console.error("Fallback query also failed:", fallbackError);
+      // Return default template on error
+      return NextResponse.json([{
+        id: "default",
+        name: "default",
+        displayName: "Default SEO Template",
+        description: "Standard SEO optimization template (fallback)",
+        category: null,
+        isActive: true,
+        isDefault: true,
+        _count: { landingPages: 0 },
+      }]);
+    }
   }
 }
 

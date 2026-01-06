@@ -187,6 +187,15 @@ export async function createBlog(data: BlogFormData) {
         published: validatedData.published,
         publishedAt: validatedData.published ? new Date() : null,
         authorId: session.user.id,
+        // NEW: SEO data from AI keyword research
+        primaryKeyword: validatedData.primaryKeyword || null,
+        secondaryKeywords: validatedData.secondaryKeywords || [],
+        searchIntent: validatedData.searchIntent || null,
+        researchContent: validatedData.researchContent || null,
+        researchSources: validatedData.researchSources || [],
+        researchProvider: validatedData.researchProvider || null,
+        sourceTopicId: validatedData.sourceTopicId || null,
+        researchedAt: validatedData.researchContent ? new Date() : null,
       },
     });
 

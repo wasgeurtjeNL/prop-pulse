@@ -3,6 +3,21 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
+// Helper to calculate SEO status
+function getSeoStatus(page: { 
+  metaTitle: string | null; 
+  metaDescription: string | null;
+  seoScore?: number | null;
+}): "missing" | "partial" | "optimized" {
+  const hasTitle = page.metaTitle && page.metaTitle.length >= 30;
+  const hasDescription = page.metaDescription && page.metaDescription.length >= 100;
+  
+  if (!hasTitle && !hasDescription) return "missing";
+  if (!hasTitle || !hasDescription) return "partial";
+  if (page.seoScore && page.seoScore >= 70) return "optimized";
+  return "partial";
+}
+
 // GET - Fetch all landing pages with optional filters
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +33,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get("category");
     const published = searchParams.get("published");
     const search = searchParams.get("search");
+    const seoStatus = searchParams.get("seoStatus"); // New filter
 
     const where: any = {};
 
@@ -37,40 +53,70 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const pages = await prisma.landingPage.findMany({
-      where,
-      orderBy: { updatedAt: "desc" },
-      select: {
-        id: true,
-        url: true,
-        title: true,
-        category: true,
-        metaTitle: true,
-        metaDescription: true,
-        published: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    // Use raw SQL directly - use only original columns to avoid schema mismatch
+    const result = await prisma.$queryRawUnsafe(`
+      SELECT 
+        id,
+        url,
+        title,
+        category,
+        "metaTitle",
+        "metaDescription",
+        published,
+        "createdAt",
+        "updatedAt"
+      FROM landing_page
+      ORDER BY "updatedAt" DESC
+    `);
+    const pages = result as any[];
 
-    // Get stats
-    const stats = await prisma.landingPage.groupBy({
-      by: ["category", "published"],
-      _count: true,
-    });
+    // Add SEO status to each page - handle optional fields gracefully
+    const pagesWithSeoStatus = pages.map((page: any) => ({
+      id: page.id,
+      url: page.url,
+      title: page.title,
+      category: page.category,
+      metaTitle: page.metaTitle,
+      metaDescription: page.metaDescription,
+      published: page.published,
+      createdAt: page.createdAt,
+      updatedAt: page.updatedAt,
+      // SEO fields with fallbacks
+      aiGenerated: page.aiGenerated ?? page.ai_generated ?? false,
+      seoScore: page.seoScore ?? page.seo_score ?? null,
+      targetKeywords: page.targetKeywords ?? page.target_keywords ?? [],
+      seoTemplateId: page.seoTemplateId ?? page.seo_template_id ?? null,
+      seoStatus: getSeoStatus(page),
+      metaTitleLength: page.metaTitle?.length || 0,
+      metaDescriptionLength: page.metaDescription?.length || 0,
+    }));
 
+    // Filter by SEO status if specified
+    let filteredPages = pagesWithSeoStatus;
+    if (seoStatus && seoStatus !== "all") {
+      filteredPages = pagesWithSeoStatus.filter((p) => p.seoStatus === seoStatus);
+    }
+
+    // Calculate SEO stats
+    const seoStats = {
+      missing: pagesWithSeoStatus.filter((p) => p.seoStatus === "missing").length,
+      partial: pagesWithSeoStatus.filter((p) => p.seoStatus === "partial").length,
+      optimized: pagesWithSeoStatus.filter((p) => p.seoStatus === "optimized").length,
+    };
+
+    // Get general stats
     const totalPages = await prisma.landingPage.count();
     const publishedCount = await prisma.landingPage.count({ where: { published: true } });
     const draftCount = await prisma.landingPage.count({ where: { published: false } });
 
     return NextResponse.json({
       success: true,
-      data: pages,
+      data: filteredPages,
       stats: {
         total: totalPages,
         published: publishedCount,
         draft: draftCount,
-        byCategory: stats,
+        seo: seoStats,
       },
     });
   } catch (error) {

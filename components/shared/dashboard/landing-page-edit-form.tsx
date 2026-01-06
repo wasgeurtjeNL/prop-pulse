@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
@@ -31,13 +31,7 @@ import {
 } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import Link from "next/link";
-
-interface SeoTemplate {
-  id: string;
-  name: string;
-  displayName: string;
-  category: string | null;
-}
+import LandingPageSeoPanel from "@/components/shared/forms/landing-page-seo-panel";
 
 interface Section {
   heading: string;
@@ -83,103 +77,8 @@ interface LandingPageEditFormProps {
 
 export default function LandingPageEditForm({ page }: LandingPageEditFormProps) {
   const router = useRouter();
-  const [isSaving, setIsSaving] = useState(false);
-  const [templates, setTemplates] = useState<SeoTemplate[]>([]);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(page.seoTemplateId || "");
-  const [isGenerating, setIsGenerating] = useState<string | null>(null);
-  const [seoScore, setSeoScore] = useState<number | null>(page.seoScore ?? null);
-  const [targetKeywords, setTargetKeywords] = useState<string[]>(page.targetKeywords || []);
-  const [newKeyword, setNewKeyword] = useState("");
-
-  // Fetch SEO templates on mount
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  const fetchTemplates = async () => {
-    try {
-      const response = await fetch("/api/seo-templates");
-      if (response.ok) {
-        const data = await response.json();
-        setTemplates(data);
-        // Set default template if none selected
-        if (!selectedTemplateId) {
-          const defaultTemplate = data.find((t: SeoTemplate) => t.name === "default");
-          if (defaultTemplate) {
-            setSelectedTemplateId(defaultTemplate.id);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch templates:", error);
-    }
-  };
-
-  // Generate SEO content with AI
-  const generateSeo = useCallback(async (type: "metaTitle" | "metaDescription" | "urlSlug") => {
-    if (!formData.title) {
-      toast.error("Please enter a title first");
-      return;
-    }
-
-    setIsGenerating(type);
-    try {
-      // Extract location from title or category
-      const locationMatch = formData.title.match(/(Kamala|Patong|Rawai|Kata|Karon|Bang Tao|Surin|Phuket)/i);
-      const location = locationMatch ? locationMatch[0] : "Phuket";
-
-      const response = await fetch("/api/seo-templates/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          templateId: selectedTemplateId || undefined,
-          type,
-          variables: {
-            title: formData.title,
-            location,
-            category: formData.category,
-            primaryKeyword: targetKeywords[0] || formData.title.toLowerCase(),
-            secondaryKeywords: targetKeywords.slice(1).join(", "),
-            brand: "PSM Phuket",
-            usp: "Expert guidance for foreign buyers",
-          },
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (type === "metaTitle") {
-          setFormData((prev) => ({ ...prev, metaTitle: data.result }));
-        } else if (type === "metaDescription") {
-          setFormData((prev) => ({ ...prev, metaDescription: data.result }));
-        }
-        
-        setSeoScore(data.seoScore);
-        toast.success(`${type === "metaTitle" ? "Meta title" : type === "metaDescription" ? "Meta description" : "URL"} generated!`);
-      } else {
-        const error = await response.json();
-        toast.error(error.error || "Generation failed");
-      }
-    } catch {
-      toast.error("Generation failed");
-    } finally {
-      setIsGenerating(null);
-    }
-  }, [formData.title, formData.category, selectedTemplateId, targetKeywords]);
-
-  const addKeyword = () => {
-    if (newKeyword && !targetKeywords.includes(newKeyword.toLowerCase())) {
-      setTargetKeywords([...targetKeywords, newKeyword.toLowerCase()]);
-      setNewKeyword("");
-    }
-  };
-
-  const removeKeyword = (keyword: string) => {
-    setTargetKeywords(targetKeywords.filter((k) => k !== keyword));
-  };
-
-  // Parse content
+  
+  // Parse content helper
   const parseContent = (): LandingPageContent => {
     try {
       const parsed = JSON.parse(page.content);
@@ -192,7 +91,7 @@ export default function LandingPageEditForm({ page }: LandingPageEditFormProps) 
     }
   };
 
-  // Parse FAQ
+  // Parse FAQ helper
   const parseFaq = (): FaqItem[] => {
     if (Array.isArray(page.faq)) {
       return page.faq as FaqItem[];
@@ -200,7 +99,7 @@ export default function LandingPageEditForm({ page }: LandingPageEditFormProps) 
     return [];
   };
 
-  // Form state
+  // Form state - MUST be defined before useCallback that uses it
   const [formData, setFormData] = useState({
     title: page.title,
     category: page.category,
@@ -211,6 +110,11 @@ export default function LandingPageEditForm({ page }: LandingPageEditFormProps) 
 
   const [content, setContent] = useState<LandingPageContent>(parseContent());
   const [faq, setFaq] = useState<FaqItem[]>(parseFaq());
+  
+  // Other state
+  const [isSaving, setIsSaving] = useState(false);
+  const [seoScore, setSeoScore] = useState<number | null>(page.seoScore ?? null);
+  const [targetKeywords, setTargetKeywords] = useState<string[]>(page.targetKeywords || []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -600,16 +504,16 @@ export default function LandingPageEditForm({ page }: LandingPageEditFormProps) 
           {/* Publish Status */}
           <Card>
             <CardHeader>
-              <CardTitle>Publication Status</CardTitle>
+              <CardTitle>Publicatie Status</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <Label>Published</Label>
+                  <Label>Gepubliceerd</Label>
                   <p className="text-sm text-muted-foreground">
                     {formData.published
-                      ? "Page is visible to visitors"
-                      : "Page is hidden from visitors"}
+                      ? "Pagina is zichtbaar voor bezoekers"
+                      : "Pagina is verborgen voor bezoekers"}
                   </p>
                 </div>
                 <Switch
@@ -622,210 +526,61 @@ export default function LandingPageEditForm({ page }: LandingPageEditFormProps) 
             </CardContent>
           </Card>
 
-          {/* AI SEO Generation */}
-          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Icon icon="ph:magic-wand" className="h-5 w-5 text-primary" />
-                AI SEO Generator
-              </CardTitle>
-              <CardDescription>
-                Generate optimized SEO content with AI
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Template Selector */}
-              <div className="space-y-2">
-                <Label>SEO Template</Label>
-                <Select
-                  value={selectedTemplateId}
-                  onValueChange={setSelectedTemplateId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.displayName}
-                        {template.category && (
-                          <span className="text-muted-foreground ml-2">
-                            ({template.category})
-                          </span>
-                        )}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Link href="/dashboard/seo-templates" className="text-xs text-primary hover:underline">
-                  Manage templates →
-                </Link>
-              </div>
-
-              {/* Target Keywords */}
-              <div className="space-y-2">
-                <Label>Target Keywords</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={newKeyword}
-                    onChange={(e) => setNewKeyword(e.target.value)}
-                    placeholder="Add keyword..."
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addKeyword())}
-                  />
-                  <Button type="button" variant="outline" size="icon" onClick={addKeyword}>
-                    <Icon icon="ph:plus" className="h-4 w-4" />
-                  </Button>
-                </div>
-                {targetKeywords.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {targetKeywords.map((keyword) => (
-                      <Badge key={keyword} variant="secondary" className="gap-1">
-                        {keyword}
-                        <button
-                          type="button"
-                          onClick={() => removeKeyword(keyword)}
-                          className="ml-1 hover:text-red-500"
-                        >
-                          <Icon icon="ph:x" className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* SEO Score */}
-              {seoScore !== null && (
-                <div className="p-3 rounded-lg bg-muted">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">SEO Score</span>
-                    <Badge className={
-                      seoScore >= 80 ? "bg-green-500" :
-                      seoScore >= 60 ? "bg-yellow-500" : "bg-red-500"
-                    }>
-                      {seoScore}%
-                    </Badge>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        seoScore >= 80 ? "bg-green-500" :
-                        seoScore >= 60 ? "bg-yellow-500" : "bg-red-500"
-                      }`}
-                      style={{ width: `${seoScore}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* SEO Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>SEO Settings</CardTitle>
-              <CardDescription>Search engine optimization</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="metaTitle">Meta Title</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => generateSeo("metaTitle")}
-                    disabled={isGenerating !== null}
-                    className="h-7 gap-1 text-xs"
-                  >
-                    {isGenerating === "metaTitle" ? (
-                      <Icon icon="ph:spinner" className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Icon icon="ph:magic-wand" className="h-3 w-3" />
-                    )}
-                    AI Generate
-                  </Button>
-                </div>
-                <Input
-                  id="metaTitle"
-                  name="metaTitle"
-                  value={formData.metaTitle}
-                  onChange={handleInputChange}
-                  placeholder="SEO title"
-                />
-                <p className={`text-xs ${
-                  formData.metaTitle.length >= 50 && formData.metaTitle.length <= 60
-                    ? "text-green-600"
-                    : formData.metaTitle.length > 60
-                    ? "text-red-600"
-                    : "text-muted-foreground"
-                }`}>
-                  {formData.metaTitle.length}/60 characters
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="metaDescription">Meta Description</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => generateSeo("metaDescription")}
-                    disabled={isGenerating !== null}
-                    className="h-7 gap-1 text-xs"
-                  >
-                    {isGenerating === "metaDescription" ? (
-                      <Icon icon="ph:spinner" className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Icon icon="ph:magic-wand" className="h-3 w-3" />
-                    )}
-                    AI Generate
-                  </Button>
-                </div>
-                <Textarea
-                  id="metaDescription"
-                  name="metaDescription"
-                  value={formData.metaDescription}
-                  onChange={handleInputChange}
-                  placeholder="Brief description for search engines"
-                  rows={3}
-                />
-                <p className={`text-xs ${
-                  formData.metaDescription.length >= 145 && formData.metaDescription.length <= 155
-                    ? "text-green-600"
-                    : formData.metaDescription.length > 160
-                    ? "text-red-600"
-                    : "text-muted-foreground"
-                }`}>
-                  {formData.metaDescription.length}/160 characters
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Yoast-style SEO Panel */}
+          <LandingPageSeoPanel
+            title={formData.title}
+            slug={page.url.split("/").pop() || ""}
+            category={formData.category}
+            metaTitle={formData.metaTitle}
+            metaDescription={formData.metaDescription}
+            targetKeywords={targetKeywords}
+            onSlugChange={(slug) => {
+              // Note: URL slug updates would need API support
+              console.log("Slug changed to:", slug);
+            }}
+            onMetaTitleChange={(metaTitle) =>
+              setFormData((prev) => ({ ...prev, metaTitle }))
+            }
+            onMetaDescriptionChange={(metaDescription) =>
+              setFormData((prev) => ({ ...prev, metaDescription }))
+            }
+            onKeywordsChange={setTargetKeywords}
+            onSeoScoreChange={setSeoScore}
+          />
 
           {/* Page Info */}
           <Card>
             <CardHeader>
-              <CardTitle>Page Information</CardTitle>
+              <CardTitle>Pagina Informatie</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Created</span>
-                <span>{new Date(page.createdAt).toLocaleDateString()}</span>
+                <span className="text-muted-foreground">Aangemaakt</span>
+                <span>{new Date(page.createdAt).toLocaleDateString("nl-NL")}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Last Updated</span>
-                <span>{new Date(page.updatedAt).toLocaleDateString()}</span>
+                <span className="text-muted-foreground">Laatst bijgewerkt</span>
+                <span>{new Date(page.updatedAt).toLocaleDateString("nl-NL")}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Sections</span>
+                <span className="text-muted-foreground">Secties</span>
                 <span>{content.sections.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">FAQ Items</span>
                 <span>{faq.length}</span>
               </div>
+              {page.aiGenerated && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">AI Gegenereerd</span>
+                  <Badge variant="outline" className="text-xs">
+                    <Icon icon="ph:magic-wand" className="h-3 w-3 mr-1" />
+                    {page.aiGeneratedAt
+                      ? new Date(page.aiGeneratedAt).toLocaleDateString("nl-NL")
+                      : "Ja"}
+                  </Badge>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

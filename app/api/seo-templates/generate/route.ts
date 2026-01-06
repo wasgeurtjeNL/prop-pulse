@@ -18,8 +18,14 @@ interface GenerateRequest {
 function replaceVariables(prompt: string, variables: Record<string, string>): string {
   let result = prompt;
   
+  // Normalize variable names (primaryKeyword -> keyword)
+  const normalizedVars: Record<string, string> = { ...variables };
+  if (variables.primaryKeyword && !variables.keyword) {
+    normalizedVars.keyword = variables.primaryKeyword;
+  }
+  
   // Replace all {{variable}} patterns
-  for (const [key, value] of Object.entries(variables)) {
+  for (const [key, value] of Object.entries(normalizedVars)) {
     const pattern = new RegExp(`{{${key}}}`, "g");
     result = result.replace(pattern, value || "");
   }
@@ -160,15 +166,50 @@ export async function POST(request: Request) {
     // Replace variables in the prompt
     const prompt = replaceVariables(promptTemplate, variables);
 
+    // Build enhanced system prompt with keyword enforcement
+    const primaryKeyword = variables.primaryKeyword || variables.keyword || "";
+    const secondaryKeywords = variables.secondaryKeywords || "";
+    
+    let systemPrompt = `You are an expert SEO specialist for real estate websites in Thailand/Phuket.
+Follow the rules EXACTLY as specified. Pay special attention to character length limits.
+Output ONLY what is requested - no explanations, no quotes, no markdown formatting.`;
+
+    // Add keyword enforcement rules based on type
+    if (type === "metaTitle" && primaryKeyword) {
+      systemPrompt += `
+
+CRITICAL SEO RULES FOR META TITLE:
+1. The primary keyword "${primaryKeyword}" MUST appear in the first 30 characters of the title
+2. Title length MUST be between 50-60 characters
+3. Include brand "PSM Phuket" at the end with separator "|"
+4. Make it compelling and click-worthy`;
+    } else if (type === "metaDescription" && primaryKeyword) {
+      systemPrompt += `
+
+CRITICAL SEO RULES FOR META DESCRIPTION:
+1. The primary keyword "${primaryKeyword}" MUST appear within the first 50 characters - this is MANDATORY
+2. Description length MUST be between 145-155 characters
+3. Include a clear call-to-action (Explore, Discover, Find, Contact, etc.)
+4. Make it compelling to encourage clicks
+${secondaryKeywords ? `5. Try to include secondary keywords naturally: ${secondaryKeywords}` : ""}`;
+    } else if (type === "urlSlug" && primaryKeyword) {
+      systemPrompt += `
+
+CRITICAL SEO RULES FOR URL SLUG:
+1. Include the primary keyword "${primaryKeyword}" at the start
+2. Use lowercase with hyphens only
+3. Maximum 50 characters
+4. Remove stop words (the, a, an, and, or)
+5. Output ONLY the slug part, no domain or slashes`;
+    }
+
     // Call OpenAI
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: `You are an expert SEO specialist for real estate websites in Thailand/Phuket.
-Follow the rules EXACTLY as specified. Pay special attention to character length limits.
-Output ONLY what is requested - no explanations, no quotes, no markdown formatting.`,
+          content: systemPrompt,
         },
         {
           role: "user",
