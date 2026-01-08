@@ -12,6 +12,7 @@ import { LanguageProvider } from "@/lib/contexts/language-context";
 import { LayoutDataProvider } from "@/lib/contexts/layout-data-context";
 import { PropertyNavigationProvider } from "@/lib/contexts/PropertyNavigationContext";
 import { FavoritesProvider } from "@/lib/contexts/FavoritesContext";
+import { ScrollRestorationProvider } from "@/components/providers/ScrollRestorationProvider";
 
 const font = Bricolage_Grotesque({ 
   subsets: ["latin"],
@@ -169,6 +170,7 @@ export default function RootLayout({
       </head>
       <body className={`${font.className} bg-white dark:bg-black antialiased h-full m-0 p-0`}>
         <NextTopLoader color="#004aac" />
+        <ScrollRestorationProvider />
         <SessionProvider>
           <ThemeProvider
             attribute="class"
