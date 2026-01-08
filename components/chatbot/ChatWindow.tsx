@@ -55,7 +55,8 @@ interface ViewingFormData {
   isRental?: boolean;
 }
 
-const INITIAL_MESSAGE: Message = {
+// Default welcome message for buyers
+const DEFAULT_WELCOME_MESSAGE: Message = {
   id: 'welcome',
   role: 'assistant',
   content: "Hi! 🏡 I'm your PSM property concierge. How can I help you today?",
@@ -68,15 +69,53 @@ const INITIAL_MESSAGE: Message = {
   timestamp: new Date(),
 };
 
+// Welcome message for owners (on /for-owners page)
+const OWNER_WELCOME_MESSAGE: Message = {
+  id: 'welcome',
+  role: 'assistant',
+  content: `Welcome! 🏡 I see you're interested in listing your property with us.
+
+Did you know our owners sell **7 months faster** on average? I can tell you about:
+
+📊 Real-time dashboard with live statistics
+✅ Passport-verified bidding (no time wasters!)
+🤖 Automated TM30 for rentals
+💰 Calculate your potential savings
+
+What would you like to know, or are you ready to get started?`,
+  actions: [
+    { type: 'owner_features', label: '📊 Platform Features' },
+    { type: 'roi_calculator', label: '💰 ROI Calculator' },
+    { type: 'owner_register', label: '🚀 Create Account' },
+    { type: 'owner_call', label: '📞 Talk to Expert' },
+  ],
+  timestamp: new Date(),
+};
+
+// Helper to get initial message based on page context
+function getInitialMessage(pathname: string | null): Message {
+  const isOwnerPage = pathname === '/for-owners' || 
+                      pathname === '/voor-eigenaren' ||
+                      pathname?.includes('owner');
+  
+  return isOwnerPage ? OWNER_WELCOME_MESSAGE : DEFAULT_WELCOME_MESSAGE;
+}
+
 export function ChatWindow({ onClose }: ChatWindowProps) {
-  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
+  const pathname = usePathname();
+  
+  // Determine if on owner page
+  const isOwnerPage = pathname === '/for-owners' || 
+                      pathname === '/voor-eigenaren' ||
+                      pathname?.includes('owner');
+
+  const [messages, setMessages] = useState<Message[]>([getInitialMessage(pathname)]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showViewingForm, setShowViewingForm] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<PropertyResult | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const pathname = usePathname();
 
   // Get current property slug if on a property page
   const currentPropertySlug = pathname?.startsWith('/properties/') 
@@ -145,6 +184,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
             content: m.content,
           })),
           currentPropertySlug,
+          currentPage: pathname, // Send current page for context
         }),
       });
 
@@ -187,6 +227,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
 
   const handleActionClick = (action: Action, property?: PropertyResult) => {
     switch (action.type) {
+      // ============ BUYER ACTIONS ============
       case 'search':
         sendMessage("I'm looking for properties");
         break;
@@ -220,6 +261,35 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
       case 'make_offer':
         sendMessage(`I'd like to make an offer on property ${action.data?.propertyId || ''}`);
         break;
+      
+      // ============ OWNER ACTIONS ============
+      case 'owner_register':
+        // Navigate to sign-up page
+        window.location.href = '/sign-up';
+        break;
+      case 'roi_calculator':
+        // Navigate to for-owners page with ROI calculator section
+        window.location.href = '/for-owners#roi-calculator';
+        break;
+      case 'owner_demo':
+        // Navigate to for-owners page
+        window.location.href = '/for-owners#features';
+        break;
+      case 'owner_learn_more':
+        // Navigate to for-owners page
+        window.location.href = '/for-owners';
+        break;
+      case 'owner_whatsapp':
+        // Open WhatsApp with owner-specific message
+        window.open('https://wa.me/66986261646?text=Hello%2C%20I%20want%20to%20list%20my%20property%20with%20PSM%20Phuket', '_blank');
+        break;
+      case 'owner_call':
+        window.open('tel:+66986261646', '_blank');
+        break;
+      case 'owner_features':
+        sendMessage("Tell me about the platform features");
+        break;
+
       default:
         sendMessage(action.label.replace(/[^\w\s]/g, ''));
     }
@@ -278,7 +348,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
   };
 
   const clearChat = () => {
-    setMessages([INITIAL_MESSAGE]);
+    setMessages([getInitialMessage(pathname)]);
     localStorage.removeItem('chatbot_messages');
   };
 
@@ -295,8 +365,10 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
                  border border-slate-200 dark:border-slate-700"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 
-                      bg-gradient-to-r from-primary to-blue-600 text-white">
+      <div className={`flex items-center justify-between px-4 py-3 text-white
+                      ${isOwnerPage 
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600' 
+                        : 'bg-gradient-to-r from-primary to-blue-600'}`}>
         <div className="flex items-center gap-3">
           {showViewingForm && (
             <button
@@ -310,14 +382,22 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
             </button>
           )}
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-            <span className="text-xl">{showViewingForm ? '📅' : '🏡'}</span>
+            <span className="text-xl">{showViewingForm ? '📅' : isOwnerPage ? '📊' : '🏡'}</span>
           </div>
           <div>
             <h3 className="font-semibold text-sm">
-              {showViewingForm ? 'Schedule Viewing' : 'PSM Property Concierge'}
+              {showViewingForm 
+                ? 'Schedule Viewing' 
+                : isOwnerPage 
+                  ? 'PSM Owner Specialist'
+                  : 'PSM Property Concierge'}
             </h3>
             <p className="text-xs text-white/80">
-              {showViewingForm ? 'Fill in your details below' : 'Online • Usually replies instantly'}
+              {showViewingForm 
+                ? 'Fill in your details below' 
+                : isOwnerPage
+                  ? 'Online • Ready to help you list'
+                  : 'Online • Usually replies instantly'}
             </p>
           </div>
         </div>
@@ -397,19 +477,25 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
                     {/* Action Buttons */}
                     {message.actions && message.actions.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {message.actions.map((action, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => handleActionClick(action)}
-                            className="px-3 py-1.5 text-xs font-medium
-                                       bg-slate-100 dark:bg-slate-600 
-                                       hover:bg-slate-200 dark:hover:bg-slate-500
-                                       text-slate-700 dark:text-white
-                                       rounded-full transition-colors"
-                          >
-                            {action.label}
-                          </button>
-                        ))}
+                        {message.actions.map((action, idx) => {
+                          // Highlight register/CTA buttons
+                          const isPrimaryAction = action.type === 'owner_register' || 
+                                                  action.type === 'roi_calculator';
+                          
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => handleActionClick(action)}
+                              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors
+                                ${isPrimaryAction 
+                                  ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm' 
+                                  : 'bg-slate-100 dark:bg-slate-600 hover:bg-slate-200 dark:hover:bg-slate-500 text-slate-700 dark:text-white'
+                                }`}
+                            >
+                              {action.label}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

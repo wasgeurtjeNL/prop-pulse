@@ -18,6 +18,7 @@ export interface PropertyTemplateFormat {
   status?: "ACTIVE" | "INACTIVE" | "SOLD" | "RENTED"; // Property availability status
   location: string;
   rate: string;
+  priceRaw?: number; // Numeric price for calculations and price alerts
   beds: number;
   baths: number;
   area: number;
@@ -113,6 +114,9 @@ export function transformPropertyToTemplate(
     icon: string;
   }>>(property.amenitiesWithIcons);
 
+  // Extract numeric price from string (e.g., "฿15,000,000" -> 15000000)
+  const priceRaw = extractNumericPrice(property.price);
+
   return {
     id: property.id, // Include database ID for viewing requests and updates
     listingNumber: property.listingNumber || undefined, // Unique listing reference
@@ -124,6 +128,7 @@ export function transformPropertyToTemplate(
     status: property.status as "ACTIVE" | "INACTIVE" | "SOLD" | "RENTED", // Property availability status
     location: property.location,
     rate: property.price,
+    priceRaw: priceRaw || undefined,
     beds: property.beds,
     baths: property.baths,
     area: property.sqft,
@@ -197,6 +202,23 @@ export function mapSlugToCategory(slug: string): string {
   };
   
   return slugMap[slug] || 'RESIDENTIAL_HOME';
+}
+
+/**
+ * Extract numeric price from formatted price string
+ * e.g., "฿15,000,000" -> 15000000
+ * e.g., "THB 120,000/mo" -> 120000
+ */
+function extractNumericPrice(priceString: string): number | null {
+  if (!priceString) return null;
+  
+  // Remove all non-numeric characters except decimal point
+  const numericStr = priceString.replace(/[^0-9.]/g, '');
+  
+  if (!numericStr) return null;
+  
+  const price = parseFloat(numericStr);
+  return isNaN(price) ? null : price;
 }
 
 /**

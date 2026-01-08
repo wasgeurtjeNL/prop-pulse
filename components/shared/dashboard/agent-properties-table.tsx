@@ -166,23 +166,23 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
       )}
 
       <div className="rounded-md border bg-white dark:bg-slate-900">
-        <Table>
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]">
+              <TableHead className="w-[40px] hidden sm:table-cell">
                 <Checkbox
                   checked={data.length > 0 && selectedIds.size === data.length}
                   onCheckedChange={toggleSelectAll}
                   aria-label="Select all"
                 />
               </TableHead>
-              <TableHead className="w-[80px]">Image</TableHead>
-              <TableHead className="w-[90px]">Listing #</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="w-[50px] sm:w-[70px]">Image</TableHead>
+              <TableHead className="w-[70px] sm:w-[85px] hidden sm:table-cell">Listing #</TableHead>
+              <TableHead className="w-auto">Title</TableHead>
+              <TableHead className="hidden lg:table-cell w-[80px]">Status</TableHead>
+              <TableHead className="hidden xl:table-cell w-[80px]">Type</TableHead>
+              <TableHead className="hidden lg:table-cell w-[120px]">Price</TableHead>
+              <TableHead className="text-right w-[70px] sm:w-[120px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -191,25 +191,25 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
                 key={property.id}
                 className={selectedIds.has(property.id) ? "bg-blue-50/50 dark:bg-blue-950/20" : ""}
               >
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                   <Checkbox
                     checked={selectedIds.has(property.id)}
                     onCheckedChange={() => toggleSelection(property.id)}
                     aria-label={`Select ${property.title}`}
                   />
                 </TableCell>
-                <TableCell>
-                  <div className="relative h-10 w-16 overflow-hidden rounded-md">
+                <TableCell className="p-1 sm:p-2">
+                  <div className="relative h-9 w-9 sm:h-10 sm:w-14 overflow-hidden rounded-md">
                     <Image
                       src={property.image}
                       alt={property.title}
                       fill
-                      sizes="64px"
+                      sizes="56px"
                       className="object-cover"
                     />
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                   {property.listingNumber ? (
                     <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
                       {property.listingNumber}
@@ -218,59 +218,68 @@ export function AgentPropertiesTable({ data }: { data: AgentProperty[] }) {
                     <span className="text-xs text-muted-foreground">-</span>
                   )}
                 </TableCell>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    <span className="line-clamp-1">{property.title}</span>
+                <TableCell className="font-medium overflow-hidden">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <span className="truncate text-sm sm:text-base">{property.title}</span>
                     {property.isHighlighted && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" title="Featured on Homepage">
-                        <Star className="h-3 w-3 fill-current" />
+                      <span className="shrink-0 inline-flex items-center gap-0.5 px-1 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" title="Featured on Homepage">
+                        <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-current" />
                         Hero
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground line-clamp-1">
+                  <div className="text-[11px] sm:text-xs text-muted-foreground truncate">
                     {property.location}
                   </div>
+                  {/* Mobile-only: show status and price */}
+                  <div className="flex items-center gap-1.5 mt-0.5 lg:hidden">
+                    <Badge className={`${getStatusConfig(property.status).badgeClass} text-[10px] px-1.5 py-0`}>
+                      {getStatusConfig(property.status).label}
+                    </Badge>
+                    <span className="text-[11px] font-semibold text-emerald-600 truncate">{property.price}</span>
+                  </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden lg:table-cell">
                   <Badge
                     className={getStatusConfig(property.status).badgeClass}
                   >
                     {getStatusConfig(property.status).label}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden xl:table-cell">
                   <span className="capitalize">{formatType(property.type)}</span>
                 </TableCell>
-                <TableCell>{property.price}</TableCell>
-                <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                  {/* Register Lead Button */}
+                <TableCell className="hidden lg:table-cell">{property.price}</TableCell>
+                <TableCell className="text-right p-1 sm:p-2">
+                <div className="flex items-center justify-end gap-0">
+                  {/* Register Lead Button - hidden on mobile */}
                   <Button
                     variant="ghost"
                     size="icon"
                     title="Register Lead"
                     onClick={() => setRegisterLeadModal({ open: true, property })}
-                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 hidden sm:inline-flex h-8 w-8"
                   >
                     <UserPlus className="h-4 w-4" />
                   </Button>
                   
-                  {/* Direct View Live Button */}
-                  <ViewLiveButton href={getPropertyUrl(property)} variant="icon" />
+                  {/* Direct View Live Button - hidden on mobile */}
+                  <span className="hidden sm:inline-flex">
+                    <ViewLiveButton href={getPropertyUrl(property)} variant="icon" />
+                  </span>
                   
-                  {/* Edit Button */}
+                  {/* Edit Button - always visible */}
                   <Link href={`/dashboard/edit/${property.id}`}>
-                    <Button variant="ghost" size="icon" title="Edit Property">
-                      <Edit className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" title="Edit Property" className="h-7 w-7 sm:h-8 sm:w-8">
+                      <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </Button>
                   </Link>
                   
-                  {/* More Actions */}
+                  {/* More Actions - always visible */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
+                      <Button variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 p-0">
+                        <MoreHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">

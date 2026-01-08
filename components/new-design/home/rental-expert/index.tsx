@@ -131,7 +131,7 @@ export default function RentalExpert() {
 
             {/* Expert Profile */}
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-              <div className="flex items-start gap-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 text-center sm:text-left">
                 <div className="flex-shrink-0">
                   <div className="relative">
                     <Image
@@ -147,32 +147,32 @@ export default function RentalExpert() {
                     </div>
                   </div>
                 </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white mb-1">Lionel Lopez</h3>
+                <div className="min-w-0 w-full">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">Lionel Lopez</h3>
                   <p className="text-primary font-semibold mb-4">Rental Property Specialist</p>
                   <div className="space-y-3">
                     <a
                       href="tel:+66617142353"
-                      className="flex items-center gap-3 text-white hover:text-primary transition-colors group"
+                      className="flex items-center justify-center sm:justify-start gap-3 text-white hover:text-primary transition-colors group"
                     >
-                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors flex-shrink-0">
                         <Icon icon="ph:phone-bold" width={20} height={20} />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <div className="text-xs text-white/60">Direct Line</div>
-                        <div className="font-semibold">+66 61 714 2353</div>
+                        <div className="font-semibold truncate">+66 61 714 2353</div>
                       </div>
                     </a>
                     <a
                       href="mailto:lionel@psmphuket.com"
-                      className="flex items-center gap-3 text-white hover:text-primary transition-colors group"
+                      className="flex items-center justify-center sm:justify-start gap-3 text-white hover:text-primary transition-colors group"
                     >
-                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors flex-shrink-0">
                         <Icon icon="ph:envelope-bold" width={20} height={20} />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <div className="text-xs text-white/60">Email</div>
-                        <div className="font-semibold">lionel@psmphuket.com</div>
+                        <div className="font-semibold truncate">lionel@psmphuket.com</div>
                       </div>
                     </a>
                   </div>
@@ -199,7 +199,7 @@ export default function RentalExpert() {
             </div>
 
             {/* Why Choose Us */}
-            <div className="mt-8 grid grid-cols-2 gap-4">
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-start gap-3">
                 <Icon icon="ph:check-circle-fill" className="text-primary text-xl flex-shrink-0 mt-1" />
                 <div>

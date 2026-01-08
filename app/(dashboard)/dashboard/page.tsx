@@ -27,6 +27,8 @@ import StatsInvestorLeads from "@/components/shared/dashboard/stats-investor-lea
 import FbMarketplaceLeadsTable from "@/components/shared/dashboard/fb-marketplace-leads-table";
 import StatsFbMarketplaceLeads from "@/components/shared/dashboard/stats-fb-marketplace-leads";
 import RentalPricingContent from "@/components/shared/dashboard/rental-pricing-content";
+import ContactSubmissionsTable from "@/components/shared/dashboard/contact-submissions-table";
+import StatsContactSubmissions from "@/components/shared/dashboard/stats-contact-submissions";
 import prisma from "@/lib/prisma";
 
 interface DashboardPageProps {
@@ -128,6 +130,21 @@ const getPendingFbMarketplaceLeadsCount = unstable_cache(
   { revalidate: 30, tags: ["fb-marketplace-leads"] }
 );
 
+// Cached pending contact submissions count
+const getPendingContactSubmissionsCount = unstable_cache(
+  async () => {
+    try {
+      return await prisma.contactSubmission.count({
+        where: { status: "NEW" },
+      });
+    } catch {
+      return 0;
+    }
+  },
+  ["pending-contact-submissions-count"],
+  { revalidate: 30, tags: ["contact-submissions"] }
+);
+
 // Get submissions data
 async function getSubmissions() {
   const submissions = await prisma.propertySubmission.findMany({
@@ -148,6 +165,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     pendingRentalLeadsCount,
     pendingInvestorLeadsCount,
     pendingFbMarketplaceLeadsCount,
+    pendingContactSubmissionsCount,
   ] = await Promise.all([
     getMissingContactsCount(),
     getPendingBookingsCount(),
@@ -156,6 +174,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     getPendingRentalLeadsCount(),
     getPendingInvestorLeadsCount(),
     getPendingFbMarketplaceLeadsCount(),
+    getPendingContactSubmissionsCount(),
   ]);
 
   // Fetch submissions data if on submissions tab
@@ -163,18 +182,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
           <p className="text-muted-foreground">Welcome back!</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" asChild>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <Button variant="outline" asChild className="justify-center">
             <Link href="/dashboard/analytics">
               <BarChart3 className="mr-2 h-4 w-4" /> Analytics
             </Link>
           </Button>
-          <Button asChild>
+          <Button asChild className="justify-center">
             <Link href="/dashboard/add">
               <Plus className="mr-2 h-4 w-4" /> Add Property
             </Link>
@@ -193,6 +212,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         pendingRentalLeadsCount={pendingRentalLeadsCount}
         pendingInvestorLeadsCount={pendingInvestorLeadsCount}
         pendingFbMarketplaceLeadsCount={pendingFbMarketplaceLeadsCount}
+        pendingContactSubmissionsCount={pendingContactSubmissionsCount}
       />
 
       {/* Tab Content */}
@@ -297,6 +317,23 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </CardHeader>
             <CardContent>
               <FbMarketplaceLeadsTable />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {currentTab === "contact-submissions" && (
+        <div className="space-y-6">
+          <StatsContactSubmissions />
+          <Card>
+            <CardHeader>
+              <CardTitle>Contact Form Submissions</CardTitle>
+              <CardDescription>
+                Messages from visitors submitted through the contact form.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ContactSubmissionsTable />
             </CardContent>
           </Card>
         </div>

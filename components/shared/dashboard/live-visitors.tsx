@@ -20,13 +20,18 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 
-interface Property {
+// Unified page info - supports both property pages and general pages
+interface PageInfo {
   id: string;
   title: string;
-  listingNumber: string | null;
-  provinceSlug: string | null;
-  areaSlug: string | null;
-  slug: string | null;
+  listingNumber?: string | null;
+  // Property-specific fields
+  provinceSlug?: string | null;
+  areaSlug?: string | null;
+  slug?: string | null;
+  // General page fields
+  pagePath?: string | null;
+  pageType?: string | null; // "property", "tool", "blog", "landing", "static", "contact", etc.
 }
 
 interface LiveVisitor {
@@ -38,8 +43,8 @@ interface LiveVisitor {
   browser: string;
   pagesViewed: number;
   lastSeen: string;
-  currentPage: Property;
-  recentPages: Property[];
+  currentPage: PageInfo;
+  recentPages: PageInfo[];
   isReturning: boolean;
   totalVisits: number;
   visitDays: number;
@@ -49,7 +54,7 @@ interface LiveVisitor {
 interface RecentView {
   id: string;
   viewedAt: string;
-  property: Property;
+  page: PageInfo;
   country: string | null;
   city: string | null;
   device: string;
@@ -126,11 +131,72 @@ function getDeviceIcon(device: string) {
   }
 }
 
-function getPropertyUrl(property: Property) {
-  if (property.provinceSlug && property.areaSlug && property.slug) {
-    return `/properties/${property.provinceSlug}/${property.areaSlug}/${property.slug}`;
+// Get icon for page type
+function getPageTypeIcon(pageType?: string | null): string {
+  switch (pageType) {
+    case "property":
+      return "🏠";
+    case "tool":
+      return "🧮";
+    case "blog":
+      return "📝";
+    case "contact":
+      return "📧";
+    case "landing":
+      return "📄";
+    case "docs":
+      return "📚";
+    case "legal":
+      return "⚖️";
+    case "static":
+    default:
+      return "🌐";
   }
-  return `/properties/${property.id}`;
+}
+
+// Get URL for any page type
+function getPageUrl(page: PageInfo): string {
+  // If it has a direct page path (non-property pages)
+  if (page.pagePath) {
+    return page.pagePath;
+  }
+  
+  // Property URL construction
+  if (page.provinceSlug && page.areaSlug && page.slug) {
+    return `/properties/${page.provinceSlug}/${page.areaSlug}/${page.slug}`;
+  }
+  
+  // Fallback for properties without full slugs
+  if (page.id && page.pageType === "property") {
+    return `/properties/${page.id}`;
+  }
+  
+  return "#";
+}
+
+// Get display name for a page
+function getPageDisplayName(page: PageInfo): string {
+  // Show listing number for properties
+  if (page.listingNumber) {
+    return page.listingNumber;
+  }
+  
+  // Show readable path for non-property pages
+  if (page.pagePath) {
+    // Extract last part of path and make it readable
+    const pathParts = page.pagePath.split("/").filter(Boolean);
+    const lastPart = pathParts[pathParts.length - 1];
+    if (lastPart) {
+      // Convert kebab-case to Title Case
+      return lastPart
+        .split("-")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    }
+  }
+  
+  // Fallback to title
+  return page.title?.substring(0, 35) || "Unknown page";
 }
 
 export function LiveVisitors() {
@@ -366,14 +432,17 @@ export function LiveVisitors() {
                             {visitor.browser} • {visitor.pagesViewed} page{visitor.pagesViewed !== 1 ? "s" : ""} viewed
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">Viewing:</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs text-muted-foreground shrink-0">Viewing:</span>
                             <Link
-                              href={getPropertyUrl(visitor.currentPage)}
+                              href={getPageUrl(visitor.currentPage)}
                               target="_blank"
-                              className="text-xs text-primary hover:underline truncate flex items-center gap-1"
+                              className="text-xs text-primary hover:underline flex items-center gap-1 min-w-0"
                             >
-                              {visitor.currentPage.listingNumber || visitor.currentPage.title.substring(0, 30)}
+                              <span className="shrink-0">{getPageTypeIcon(visitor.currentPage.pageType)}</span>
+                              <span className="truncate max-w-[120px] sm:max-w-[180px] md:max-w-none">
+                                {getPageDisplayName(visitor.currentPage)}
+                              </span>
                               <ExternalLink className="h-3 w-3 shrink-0" />
                             </Link>
                           </div>
@@ -439,11 +508,15 @@ export function LiveVisitors() {
                               )}
                             </div>
                             <Link
-                              href={getPropertyUrl(view.property)}
+                              href={getPageUrl(view.page)}
                               target="_blank"
-                              className="font-medium hover:underline truncate block text-xs"
+                              className="font-medium hover:underline flex items-center gap-1 min-w-0 text-xs"
                             >
-                              {view.property.listingNumber || view.property.title.substring(0, 40)}
+                              <span className="shrink-0">{getPageTypeIcon(view.page.pageType)}</span>
+                              <span className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-[200px]">
+                                {getPageDisplayName(view.page)}
+                              </span>
+                              <ExternalLink className="h-3 w-3 shrink-0 hidden sm:inline" />
                             </Link>
                             <div className="text-xs text-muted-foreground flex items-center gap-1">
                               {getDeviceIcon(view.device)}

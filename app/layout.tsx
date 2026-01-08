@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "next-themes";
 import NextTopLoader from "nextjs-toploader";
 import SessionProvider from "@/components/providers/SessionProvider";
+import { KlaviyoScript } from "@/components/shared/KlaviyoScript";
 import { UTMCaptureProvider } from "@/components/providers/UTMCaptureProvider";
 import { LanguageProvider } from "@/lib/contexts/language-context";
 import { LayoutDataProvider } from "@/lib/contexts/layout-data-context";
@@ -171,6 +172,8 @@ export default function RootLayout({
             </LanguageProvider>
           </ThemeProvider>
         </SessionProvider>
+        {/* Klaviyo tracking script - lazy loaded for better TTI */}
+        <KlaviyoScript />
       </body>
     </html>
   );

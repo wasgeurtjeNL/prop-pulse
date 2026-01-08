@@ -18,6 +18,18 @@ function generateVisitorCode(ipHash: string | null, sessionId: string | null): s
   return `V-${code}`;
 }
 
+// Unified page info type
+interface PageInfo {
+  id: string;
+  title: string;
+  listingNumber?: string | null;
+  provinceSlug?: string | null;
+  areaSlug?: string | null;
+  slug?: string | null;
+  pagePath?: string | null;
+  pageType?: string | null;
+}
+
 export async function GET() {
   try {
     const session = await auth.api.getSession({
@@ -33,79 +45,108 @@ export async function GET() {
     
     // Live visitors = active in last 5 minutes
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-    
-    // Get recent views with property details
-    const recentViews = await prisma.propertyView.findMany({
-      where: {
-        property: { userId },
-        viewedAt: { gte: fiveMinutesAgo },
-      },
-      include: {
-        property: {
-          select: {
-            id: true,
-            title: true,
-            listingNumber: true,
-            provinceSlug: true,
-            areaSlug: true,
-            slug: true,
-          },
-        },
-      },
-      orderBy: { viewedAt: "desc" },
-      take: 50,
-    });
-
-    // Get unique visitor identifiers - USE ipHash as PRIMARY identifier
-    // ipHash is the most reliable for grouping visitors, especially for historical data
-    // This ensures all sessions from same IP are counted as 1 visitor
-    const getVisitorKey = (v: { sessionId: string | null; ipHash: string | null; id: string }) => 
-      v.ipHash || v.id;
-
-    const uniqueVisitors = new Set(recentViews.map(getVisitorKey));
-
-    // Get views from last 24 hours for the timeline
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const last24hViews = await prisma.propertyView.findMany({
-      where: {
-        property: { userId },
-        viewedAt: { gte: twentyFourHoursAgo },
-      },
-      include: {
-        property: {
-          select: {
-            id: true,
-            title: true,
-            listingNumber: true,
-            provinceSlug: true,
-            areaSlug: true,
-            slug: true,
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    // Fetch PropertyViews and PageViews in parallel
+    const [
+      recentPropertyViews,
+      last24hPropertyViews,
+      historicalPropertyViews,
+      recentPageViews,
+      last24hPageViews,
+      historicalPageViews,
+    ] = await Promise.all([
+      // Property views - last 5 minutes
+      prisma.propertyView.findMany({
+        where: {
+          property: { userId },
+          viewedAt: { gte: fiveMinutesAgo },
+        },
+        include: {
+          property: {
+            select: {
+              id: true,
+              title: true,
+              listingNumber: true,
+              provinceSlug: true,
+              areaSlug: true,
+              slug: true,
+            },
           },
         },
-      },
-      orderBy: { viewedAt: "desc" },
-      take: 200,
-    });
+        orderBy: { viewedAt: "desc" },
+        take: 50,
+      }),
+      // Property views - last 24 hours
+      prisma.propertyView.findMany({
+        where: {
+          property: { userId },
+          viewedAt: { gte: twentyFourHoursAgo },
+        },
+        include: {
+          property: {
+            select: {
+              id: true,
+              title: true,
+              listingNumber: true,
+              provinceSlug: true,
+              areaSlug: true,
+              slug: true,
+            },
+          },
+        },
+        orderBy: { viewedAt: "desc" },
+        take: 200,
+      }),
+      // Historical property views - 30 days
+      prisma.propertyView.findMany({
+        where: {
+          property: { userId },
+          viewedAt: { gte: thirtyDaysAgo },
+        },
+        select: {
+          sessionId: true,
+          ipHash: true,
+          viewedAt: true,
+          country: true,
+          city: true,
+        },
+        orderBy: { viewedAt: "asc" },
+      }),
+      // Page views - last 5 minutes
+      prisma.pageView.findMany({
+        where: {
+          viewedAt: { gte: fiveMinutesAgo },
+        },
+        orderBy: { viewedAt: "desc" },
+        take: 50,
+      }),
+      // Page views - last 24 hours
+      prisma.pageView.findMany({
+        where: {
+          viewedAt: { gte: twentyFourHoursAgo },
+        },
+        orderBy: { viewedAt: "desc" },
+        take: 200,
+      }),
+      // Historical page views - 30 days
+      prisma.pageView.findMany({
+        where: {
+          viewedAt: { gte: thirtyDaysAgo },
+        },
+        select: {
+          sessionId: true,
+          ipHash: true,
+          viewedAt: true,
+          country: true,
+          city: true,
+        },
+        orderBy: { viewedAt: "asc" },
+      }),
+    ]);
 
-    // Get ALL historical views to determine returning visitors
-    // We'll look at the last 30 days to check visit history
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const historicalViews = await prisma.propertyView.findMany({
-      where: {
-        property: { userId },
-        viewedAt: { gte: thirtyDaysAgo },
-      },
-      select: {
-        sessionId: true,
-        ipHash: true,
-        viewedAt: true,
-        country: true,
-        city: true,
-      },
-      orderBy: { viewedAt: "asc" },
-    });
-
-    // Build visitor history map
+    // Build unified visitor history map from both sources
     const visitorHistory = new Map<string, {
       firstSeen: Date;
       totalVisits: number;
@@ -114,8 +155,30 @@ export async function GET() {
       city: string | null;
     }>();
 
-    historicalViews.forEach((view) => {
-      // Use ipHash as primary key - groups all sessions from same IP as 1 visitor
+    // Process historical property views
+    historicalPropertyViews.forEach((view) => {
+      const key = view.ipHash || "";
+      if (!key) return;
+      
+      const dayKey = view.viewedAt.toISOString().split("T")[0];
+      
+      if (!visitorHistory.has(key)) {
+        visitorHistory.set(key, {
+          firstSeen: view.viewedAt,
+          totalVisits: 1,
+          visitDays: new Set([dayKey]),
+          country: view.country,
+          city: view.city,
+        });
+      } else {
+        const history = visitorHistory.get(key)!;
+        history.totalVisits++;
+        history.visitDays.add(dayKey);
+      }
+    });
+
+    // Process historical page views
+    historicalPageViews.forEach((view) => {
       const key = view.ipHash || "";
       if (!key) return;
       
@@ -154,18 +217,27 @@ export async function GET() {
       return { device, browser };
     };
 
-    // Format the response with enriched visitor data
-    const formattedViews = last24hViews.map((view) => {
+    // Format property views
+    const formattedPropertyViews = last24hPropertyViews.map((view) => {
       const { device, browser } = parseUserAgent(view.userAgent);
-      // Use ipHash as primary key - ensures consistent visitor identification
       const visitorKey = view.ipHash || "";
       const history = visitorHistory.get(visitorKey);
       const visitorCode = generateVisitorCode(view.ipHash, null);
       
+      const page: PageInfo = {
+        id: view.property.id,
+        title: view.property.title,
+        listingNumber: view.property.listingNumber,
+        provinceSlug: view.property.provinceSlug,
+        areaSlug: view.property.areaSlug,
+        slug: view.property.slug,
+        pageType: "property",
+      };
+      
       return {
         id: view.id,
         viewedAt: view.viewedAt,
-        property: view.property,
+        page,
         country: view.country,
         city: view.city,
         device,
@@ -181,18 +253,60 @@ export async function GET() {
       };
     });
 
-    // Group live visitors by ipHash (visitorId is now ipHash-based)
-    const liveVisitorMap = new Map<string, typeof formattedViews[0][]>();
-    formattedViews
-      .filter((v) => v.isLive)
-      .forEach((v) => {
-        const key = v.visitorId; // This is now ipHash-based
-        if (!key) return;
-        if (!liveVisitorMap.has(key)) {
-          liveVisitorMap.set(key, []);
-        }
-        liveVisitorMap.get(key)!.push(v);
-      });
+    // Format page views
+    const formattedPageViews = last24hPageViews.map((view) => {
+      const { device, browser } = parseUserAgent(view.userAgent);
+      const visitorKey = view.ipHash || "";
+      const history = visitorHistory.get(visitorKey);
+      const visitorCode = generateVisitorCode(view.ipHash, null);
+      
+      const page: PageInfo = {
+        id: view.id,
+        title: view.pageTitle || view.pagePath,
+        pagePath: view.pagePath,
+        pageType: view.pageType,
+      };
+      
+      return {
+        id: view.id,
+        viewedAt: view.viewedAt,
+        page,
+        country: view.country,
+        city: view.city,
+        device,
+        browser,
+        referrer: view.referrer,
+        visitorId: visitorKey,
+        visitorCode,
+        isLive: view.viewedAt >= fiveMinutesAgo,
+        isReturning: history ? history.visitDays.size > 1 : false,
+        totalVisits: history?.totalVisits || 1,
+        visitDays: history?.visitDays.size || 1,
+        firstSeen: history?.firstSeen || view.viewedAt,
+      };
+    });
+
+    // Combine and sort all views
+    const allFormattedViews = [...formattedPropertyViews, ...formattedPageViews]
+      .sort((a, b) => new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime())
+      .slice(0, 200);
+
+    // Get all live views (last 5 minutes)
+    const allLiveViews = allFormattedViews.filter(v => v.isLive);
+    
+    // Unique live visitors
+    const uniqueLiveVisitors = new Set(allLiveViews.map(v => v.visitorId).filter(Boolean));
+
+    // Group live visitors by ipHash
+    const liveVisitorMap = new Map<string, typeof allFormattedViews[0][]>();
+    allLiveViews.forEach((v) => {
+      const key = v.visitorId;
+      if (!key) return;
+      if (!liveVisitorMap.has(key)) {
+        liveVisitorMap.set(key, []);
+      }
+      liveVisitorMap.get(key)!.push(v);
+    });
 
     const liveVisitors = Array.from(liveVisitorMap.entries()).map(
       ([visitorId, views]) => {
@@ -206,8 +320,8 @@ export async function GET() {
           browser: views[0].browser,
           pagesViewed: views.length,
           lastSeen: views[0].viewedAt,
-          currentPage: views[0].property,
-          recentPages: views.slice(0, 5).map((v) => v.property),
+          currentPage: views[0].page,
+          recentPages: views.slice(0, 5).map((v) => v.page),
           isReturning: history ? history.visitDays.size > 1 : false,
           totalVisits: history?.totalVisits || views.length,
           visitDays: history?.visitDays.size || 1,
@@ -223,7 +337,7 @@ export async function GET() {
       returningVisitors: number;
     }>();
 
-    formattedViews.forEach((view) => {
+    allFormattedViews.forEach((view) => {
       const country = view.country || "Unknown";
       if (!countryStats.has(country)) {
         countryStats.set(country, {
@@ -252,17 +366,22 @@ export async function GET() {
       }))
       .sort((a, b) => b.uniqueVisitors - a.uniqueVisitors);
 
+    // Calculate unique visitors (using ipHash from both sources)
+    const allUniqueVisitors24h = new Set([
+      ...last24hPropertyViews.map(v => v.ipHash).filter(Boolean),
+      ...last24hPageViews.map(v => v.ipHash).filter(Boolean),
+    ]);
+
     return NextResponse.json({
-      liveCount: uniqueVisitors.size,
+      liveCount: uniqueLiveVisitors.size,
       liveVisitors,
-      recentViews: formattedViews,
+      recentViews: allFormattedViews,
       countryBreakdown,
       stats: {
-        totalViews24h: last24hViews.length,
-        // Use ipHash as primary identifier - most reliable for unique visitor count
-        uniqueVisitors24h: new Set(last24hViews.map(v => v.ipHash).filter(Boolean)).size,
-        returningVisitors24h: formattedViews.filter(v => v.isReturning).length > 0 
-          ? new Set(formattedViews.filter(v => v.isReturning).map(v => v.visitorId)).size 
+        totalViews24h: last24hPropertyViews.length + last24hPageViews.length,
+        uniqueVisitors24h: allUniqueVisitors24h.size,
+        returningVisitors24h: allFormattedViews.filter(v => v.isReturning).length > 0 
+          ? new Set(allFormattedViews.filter(v => v.isReturning).map(v => v.visitorId)).size 
           : 0,
       },
       timestamp: now.toISOString(),

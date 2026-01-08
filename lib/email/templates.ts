@@ -549,6 +549,165 @@ export function offerConfirmationTemplate(data: OfferEmailData): { subject: stri
   return { subject, html };
 }
 
+// Template: New Offer Owner Notification (sent to property owner)
+export function newOfferOwnerNotificationTemplate(data: OfferEmailData & {
+  ownerName: string;
+  offerPercentage: number;
+  offerId: string;
+  buyerPassportUploaded?: boolean;
+}): { subject: string; html: string } {
+  const subject = `🔔 Nieuw bod ontvangen: ฿${data.offerAmount} voor ${data.propertyTitle}`;
+  const portalUrl = `${baseUrl}/dashboard/owner-portal`;
+  const propertyUrl = `${baseUrl}/properties/${data.propertySlug}`;
+  
+  const percentageColor = data.offerPercentage >= 95 ? '#16a34a' : 
+                          data.offerPercentage >= 90 ? '#ca8a04' : '#dc2626';
+  const percentageLabel = data.offerPercentage >= 100 ? 'Vraagprijs of hoger!' :
+                          data.offerPercentage >= 95 ? 'Sterk bod' :
+                          data.offerPercentage >= 90 ? 'Redelijk bod' : 'Onder vraagprijs';
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 20px; background-color: #f1f5f9;">
+      <div style="${styles.container}">
+        <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 32px; text-align: center;">
+          <h1 style="${styles.headerText}">💰 Nieuw Bod Ontvangen!</h1>
+        </div>
+        <div style="${styles.body}">
+          <h2 style="${styles.title}">Goed nieuws, ${data.ownerName}!</h2>
+          <p style="${styles.text}">
+            Er is een nieuw bod binnengekomen voor uw woning <strong>"${data.propertyTitle}"</strong>.
+          </p>
+          
+          <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center;">
+            <p style="margin: 0 0 8px 0; color: #92400e; font-size: 14px;">Geboden bedrag</p>
+            <p style="margin: 0; color: #1e293b; font-size: 32px; font-weight: bold;">฿${data.offerAmount}</p>
+            <p style="margin: 8px 0 0 0; color: ${percentageColor}; font-weight: 600;">
+              ${data.offerPercentage.toFixed(1)}% van vraagprijs - ${percentageLabel}
+            </p>
+          </div>
+          
+          <div style="${styles.highlight}">
+            <p style="margin: 0 0 8px 0;"><strong>📊 Bod Details:</strong></p>
+            <p style="margin: 0 0 4px 0;">🏠 <strong>Woning:</strong> ${data.propertyTitle}</p>
+            <p style="margin: 0 0 4px 0;">💵 <strong>Vraagprijs:</strong> ฿${data.propertyPrice}</p>
+            <p style="margin: 0 0 4px 0;">💰 <strong>Bod:</strong> ฿${data.offerAmount}</p>
+            <p style="margin: 0;">📋 <strong>Status:</strong> ${data.buyerPassportUploaded ? '✅ Paspoort geüpload' : '⏳ Wacht op paspoort'}</p>
+          </div>
+          
+          <h3 style="font-size: 18px; color: #1e293b; margin: 24px 0 12px 0;">👤 Koper Informatie</h3>
+          <div style="background-color: #f8fafc; padding: 16px; border-radius: 8px;">
+            <p style="margin: 0 0 8px 0;"><strong>Naam:</strong> ${data.buyerName}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Email:</strong> ${data.buyerEmail}</p>
+            <p style="margin: 0;"><strong>Telefoon:</strong> ${data.buyerPhone}</p>
+          </div>
+          
+          ${data.message ? `
+            <h3 style="font-size: 18px; color: #1e293b; margin: 24px 0 12px 0;">💬 Bericht van Koper</h3>
+            <div style="${styles.notes}">
+              <p style="${styles.notesText}">${data.message}</p>
+            </div>
+          ` : ''}
+          
+          <div style="${styles.buttonWrapper}">
+            <a href="${portalUrl}" style="${styles.button}">Bekijk in Owner Portal</a>
+          </div>
+          
+          <p style="${styles.text}">
+            <strong>Wat nu?</strong><br>
+            1. Log in op uw Owner Portal om alle details te bekijken<br>
+            2. U kunt het bod accepteren, afwijzen of een tegenbod doen<br>
+            3. Als het paspoort is geüpload, kunt u de identiteit verifiëren
+          </p>
+          
+          <p style="${styles.text}; font-size: 14px; color: #64748b;">
+            <em>Let op: Dit bod is 20 dagen geldig. Na deze periode vervalt het automatisch.</em>
+          </p>
+        </div>
+        <div style="${styles.footer}">
+          <p style="${styles.footerText}">
+            Vragen? Neem contact op via info@realestatepulse.com
+          </p>
+          <p style="${styles.footerText}">
+            © ${new Date().getFullYear()} ${companyName}. Alle rechten voorbehouden.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  return { subject, html };
+}
+
+// Template: Passport Uploaded Owner Notification (sent when buyer uploads passport)
+export function passportUploadedOwnerNotificationTemplate(data: {
+  ownerName: string;
+  propertyTitle: string;
+  propertySlug: string;
+  buyerName: string;
+  buyerPassportName: string;
+  buyerNationality: string;
+  offerAmount: string;
+  offerId: string;
+}): { subject: string; html: string } {
+  const subject = `✅ Paspoort geverifieerd voor bod op ${data.propertyTitle}`;
+  const portalUrl = `${baseUrl}/dashboard/owner-portal`;
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 20px; background-color: #f1f5f9;">
+      <div style="${styles.container}">
+        <div style="background: linear-gradient(135deg, #004aac 0%, #003380 100%); padding: 32px; text-align: center;">
+          <h1 style="${styles.headerText}">✅ Paspoort Geverifieerd!</h1>
+        </div>
+        <div style="${styles.body}">
+          <h2 style="${styles.title}">Update voor uw woning, ${data.ownerName}</h2>
+          <p style="${styles.text}">
+            De koper heeft zijn/haar paspoort geüpload voor het bod op <strong>"${data.propertyTitle}"</strong>.
+            Het bod is nu <strong>ACTIEF</strong> en wacht op uw reactie.
+          </p>
+          
+          <div style="${styles.highlight}">
+            <p style="margin: 0 0 12px 0;"><strong>🪪 Koper Identiteit (geverifieerd via paspoort):</strong></p>
+            <p style="margin: 0 0 4px 0;">👤 <strong>Naam:</strong> ${data.buyerPassportName}</p>
+            <p style="margin: 0 0 4px 0;">🌍 <strong>Nationaliteit:</strong> ${data.buyerNationality}</p>
+            <p style="margin: 0;">💰 <strong>Geboden bedrag:</strong> ฿${data.offerAmount}</p>
+          </div>
+          
+          <div style="${styles.buttonWrapper}">
+            <a href="${portalUrl}" style="${styles.button}">Bekijk Bod & Paspoort</a>
+          </div>
+          
+          <p style="${styles.text}">
+            In uw Owner Portal kunt u:
+          </p>
+          <ul style="${styles.text}">
+            <li>Het paspoort bekijken en verifiëren</li>
+            <li>Het bod accepteren of afwijzen</li>
+            <li>Contact opnemen met de koper</li>
+          </ul>
+        </div>
+        <div style="${styles.footer}">
+          <p style="${styles.footerText}">
+            Vragen? Neem contact op via info@realestatepulse.com
+          </p>
+          <p style="${styles.footerText}">
+            © ${new Date().getFullYear()} ${companyName}. Alle rechten voorbehouden.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  return { subject, html };
+}
+
 // Template: Offer Admin Notification (sent to admin)
 export function offerAdminNotificationTemplate(data: OfferEmailData): { subject: string; html: string } {
   const subject = `💰 New Offer Received - ฿${data.offerAmount} for ${data.propertyTitle}`;

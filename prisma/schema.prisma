@@ -61,6 +61,13 @@ model User {
   rentalLeads                                  RentalLead[]     @relation("RentalLeadAssignee")
   sessions                                     Session[]
   fbMarketplaceLeads                           FbMarketplaceLead[] @relation("FbMarketplaceLeadAssignee")
+  
+  // Owner portal relations
+  ownedProperties                              Property[]       @relation("PropertyOwnerUser")
+  marketingSubscriptions                       owner_marketing_subscription[]
+  
+  // Buyer offers
+  placedOffers                                 PropertyOffer[]  @relation("BuyerOffers")
 
   @@map("user")
 }
@@ -146,6 +153,11 @@ model Property {
   property_owner_id             String?
   property_owner                property_owner?         @relation(fields: [property_owner_id], references: [id])
   user                          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Owner portal: Link property to owner's user account
+  ownerUserId                   String?                 @map("owner_user_id")
+  ownerUser                     User?                   @relation("PropertyOwnerUser", fields: [ownerUserId], references: [id])
+  
   property_blocked_date         property_blocked_date[]
   images                        PropertyImage[]
   poiDistances                  PropertyPoiDistance[]
@@ -154,6 +166,14 @@ model Property {
   tm30_accommodation            tm30_accommodation?
   viewingRequests               ViewingRequest[]
   owner_agreements              owner_agreement[]
+  priceAlerts                   PropertyPriceAlert[]
+  ownerMessages                 owner_message[]
+  marketingSubscriptions        owner_marketing_subscription[]
+  
+  // Bidding system
+  biddingEnabled                Boolean         @default(false) @map("bidding_enabled")
+  lowestRejectedOffer           Float?          @map("lowest_rejected_offer")
+  offers                        PropertyOffer[]
 
   @@index([beachScore])
   @@index([convenienceScore])
@@ -189,6 +209,37 @@ model PropertyView {
   @@index([utmSource], map: "idx_property_view_utm_source")
   @@index([utmCampaign], map: "idx_property_view_utm_campaign")
   @@map("property_view")
+}
+
+// General page view tracking for non-property pages (tools, blogs, static pages, etc.)
+model PageView {
+  id         String   @id @default(cuid())
+  pagePath   String   @map("page_path")     // e.g., "/tools/property-transfer-calculator"
+  pageTitle  String?  @map("page_title")    // e.g., "Property Transfer Calculator"
+  pageType   String?  @map("page_type")     // e.g., "tool", "blog", "landing", "static", "contact"
+  viewedAt   DateTime @default(now()) @map("viewed_at")
+  
+  // Visitor info
+  country    String?
+  city       String?
+  ipHash     String?  @map("ip_hash")
+  userAgent  String?  @map("user_agent")
+  referrer   String?
+  sessionId  String?  @map("session_id")
+  
+  // UTM tracking
+  utmSource   String? @map("utm_source")
+  utmMedium   String? @map("utm_medium")
+  utmCampaign String? @map("utm_campaign")
+  utmTerm     String? @map("utm_term")
+  utmContent  String? @map("utm_content")
+
+  @@index([pagePath])
+  @@index([pageType])
+  @@index([viewedAt])
+  @@index([ipHash])
+  @@index([utmSource], map: "idx_page_view_utm_source")
+  @@map("page_view")
 }
 
 model PropertyImage {
@@ -793,6 +844,47 @@ model property_alert_notification {
 
   @@index([alertId])
   @@index([createdAt])
+}
+
+// Price Drop Alerts - Subscribe to specific property price changes
+model PropertyPriceAlert {
+  id              String    @id @default(cuid())
+  email           String
+  propertyId      String
+  
+  // Store price at subscription time for comparison
+  subscribedPrice Float     @map("subscribed_price")
+  
+  // Notification preferences
+  notifyPriceDrop   Boolean @default(true) @map("notify_price_drop")
+  notifyPriceChange Boolean @default(false) @map("notify_price_change") // Any change (up or down)
+  notifyStatusChange Boolean @default(false) @map("notify_status_change") // SOLD, RENTED, etc.
+  
+  // Tracking
+  lastNotifiedAt  DateTime? @map("last_notified_at")
+  lastNotifiedPrice Float?  @map("last_notified_price")
+  notificationCount Int     @default(0) @map("notification_count")
+  
+  // Verification
+  unsubscribeToken String   @unique @map("unsubscribe_token")
+  isActive        Boolean   @default(true) @map("is_active")
+  
+  // Metadata
+  source          String?   // "property_page", "api", etc.
+  ipAddress       String?   @map("ip_address")
+  userAgent       String?   @map("user_agent")
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  property        Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  @@unique([email, propertyId]) // One subscription per email per property
+  @@index([email])
+  @@index([propertyId])
+  @@index([isActive])
+  @@map("property_price_alert")
 }
 
 model property_blocked_date {
@@ -1567,4 +1659,464 @@ model UrlRedirect {
 
   @@index([oldUrl])
   @@map("url_redirects")
+}
+
+// ============================================
+// Contact Form Submissions
+// ============================================
+
+model ContactSubmission {
+  id          String                  @id @default(cuid())
+  firstName   String                  @map("first_name")
+  lastName    String                  @map("last_name")
+  email       String
+  phone       String?
+  inquiryType String                  @map("inquiry_type") // buy, rent, sell, agent, other
+  message     String                  @db.Text
+  status      ContactSubmissionStatus @default(NEW)
+  notes       String?                 @db.Text
+  ipAddress   String?                 @map("ip_address")
+  userAgent   String?                 @map("user_agent")
+  
+  // UTM tracking parameters for attribution
+  utmSource   String?                 @map("utm_source")
+  utmMedium   String?                 @map("utm_medium")
+  utmCampaign String?                 @map("utm_campaign")
+  utmTerm     String?                 @map("utm_term")
+  utmContent  String?                 @map("utm_content")
+  
+  createdAt   DateTime                @default(now()) @map("created_at")
+  updatedAt   DateTime                @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+  @@index([inquiryType])
+  @@index([utmSource], map: "idx_contact_submission_utm_source")
+  @@map("contact_submission")
+}
+
+enum ContactSubmissionStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  RESOLVED
+  SPAM
+}
+
+// ============================================
+// Owner Portal System
+// ============================================
+
+// Invite codes for property owners to register
+model owner_invite {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  email          String?   // Optional: pre-fill email
+  phone          String?   // Optional: owner phone
+  propertyIds    String[]  @map("property_ids") // Array of property IDs to link
+  listingNumbers String[]  @map("listing_numbers") // Array of listing numbers (for display)
+  
+  // Usage tracking
+  maxUses        Int       @default(1) @map("max_uses")
+  usedCount      Int       @default(0) @map("used_count")
+  usedBy         String?   @map("used_by") // User ID who used the invite
+  usedAt         DateTime? @map("used_at")
+  
+  // Validity
+  expiresAt      DateTime? @map("expires_at")
+  isActive       Boolean   @default(true) @map("is_active")
+  
+  // Audit
+  createdBy      String    @map("created_by") // Admin/Agent who created
+  createdByName  String?   @map("created_by_name") // Name of creator
+  note           String?   // Internal note
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@index([code])
+  @@index([email])
+  @@index([isActive])
+  @@map("owner_invite")
+}
+
+// Track owner login sessions
+model owner_session_log {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id") // FK to User
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  country     String?
+  city        String?
+  action      String   @default("LOGIN") // LOGIN, LOGOUT, SESSION_EXPIRED
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("owner_session_log")
+}
+
+// Price change requests from owners (with approval flow for >10% changes)
+model owner_price_change_request {
+  id                String                  @id @default(cuid())
+  propertyId        String                  @map("property_id")
+  ownerUserId       String                  @map("owner_user_id") // FK to User (owner account)
+  
+  // Price information
+  currentPrice      String                  @map("current_price") // Original price
+  requestedPrice    String                  @map("requested_price") // New requested price
+  percentageChange  Float                   @map("percentage_change") // Calculated percentage change
+  
+  // Contact info (required for >10% changes)
+  ownerPhone        String?                 @map("owner_phone")
+  ownerNote         String?                 @map("owner_note") // Optional note from owner
+  
+  // Approval workflow
+  status            OwnerPriceRequestStatus @default(PENDING)
+  requiresApproval  Boolean                 @default(false) @map("requires_approval") // True if >10% change
+  
+  // Review details
+  reviewedBy        String?                 @map("reviewed_by") // Admin/Agent who reviewed
+  reviewedByName    String?                 @map("reviewed_by_name")
+  reviewedAt        DateTime?               @map("reviewed_at")
+  reviewNote        String?                 @map("review_note") // Note from reviewer
+  
+  // Applied tracking
+  appliedAt         DateTime?               @map("applied_at") // When price was actually applied
+  
+  // Audit
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @updatedAt @map("updated_at")
+
+  @@index([propertyId])
+  @@index([ownerUserId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("owner_price_change_request")
+}
+
+// Status change logs (sold, rented, etc.)
+model owner_status_change_log {
+  id             String   @id @default(cuid())
+  propertyId     String   @map("property_id")
+  ownerUserId    String   @map("owner_user_id") // FK to User (owner account)
+  
+  // Status change
+  previousStatus String   @map("previous_status") // ACTIVE, INACTIVE, SOLD, RENTED
+  newStatus      String   @map("new_status")
+  
+  // Applied immediately (no approval needed for sold/rented)
+  appliedAt      DateTime @default(now()) @map("applied_at")
+  
+  // Audit
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([propertyId])
+  @@index([ownerUserId])
+  @@index([createdAt])
+  @@map("owner_status_change_log")
+}
+
+// General activity log for owner actions
+model owner_activity_log {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id") // FK to User (owner account)
+  propertyId  String?  @map("property_id") // Optional: specific property
+  
+  // Activity details
+  action      String   // PRICE_UPDATE, STATUS_CHANGE, LOGIN, VIEW_PROPERTY
+  description String?  // Human-readable description
+  metadata    Json?    // Additional data (old/new values, etc.)
+  
+  // Audit
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([propertyId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("owner_activity_log")
+}
+
+enum OwnerPriceRequestStatus {
+  PENDING       // Awaiting review (for >10% changes)
+  APPROVED      // Approved and applied
+  REJECTED      // Rejected by admin
+  AUTO_APPLIED  // Applied automatically (<10% change)
+  CANCELLED     // Cancelled by owner
+
+  @@map("owner_price_request_status")
+}
+
+// ============================================
+// Owner Portal - Message Center
+// ============================================
+
+// Messages between owners and agents
+model owner_message {
+  id           String              @id @default(cuid())
+  
+  // Sender
+  senderId     String              @map("sender_id")
+  senderType   OwnerMessageSender  @map("sender_type") // OWNER or AGENT
+  
+  // Recipient
+  recipientId  String              @map("recipient_id")
+  
+  // Property reference (optional - can be general inquiry)
+  propertyId   String?             @map("property_id")
+  
+  // Message content
+  subject      String?
+  message      String              @db.Text
+  
+  // Read status
+  isRead       Boolean             @default(false) @map("is_read")
+  readAt       DateTime?           @map("read_at")
+  
+  // Reply thread
+  parentId     String?             @map("parent_id") // Reference to parent message for threading
+  
+  // Audit
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  parent       owner_message?      @relation("MessageThread", fields: [parentId], references: [id])
+  replies      owner_message[]     @relation("MessageThread")
+  property     Property?           @relation(fields: [propertyId], references: [id])
+
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([propertyId])
+  @@index([parentId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("owner_message")
+}
+
+enum OwnerMessageSender {
+  OWNER
+  AGENT
+  SYSTEM
+
+  @@map("owner_message_sender")
+}
+
+// ============================================
+// Owner Portal - Marketing Subscriptions
+// ============================================
+
+// Marketing packages for property owners
+model owner_marketing_subscription {
+  id                   String                        @id @default(cuid())
+  userId               String                        @map("user_id")
+  propertyId           String                        @map("property_id")
+  
+  // Package details
+  packageType          OwnerMarketingPackageType     @map("package_type")
+  marketingPercentage  Float?                        @map("marketing_percentage") // 0.25 for marketing fee
+  commissionPercentage Float?                        @map("commission_percentage") // 15 for exclusive
+  calculatedAmount     Float?                        @map("calculated_amount") // Actual THB amount
+  propertyPrice        Float                         @map("property_price") // Price at time of signing
+  
+  // Status
+  status               OwnerMarketingStatus          @default(PENDING)
+  signedAt             DateTime?                     @map("signed_at")
+  expiresAt            DateTime?                     @map("expires_at")
+  
+  // Notes
+  ownerNote            String?                       @map("owner_note") @db.Text
+  adminNote            String?                       @map("admin_note") @db.Text
+  
+  // Audit
+  createdAt            DateTime                      @default(now()) @map("created_at")
+  updatedAt            DateTime                      @updatedAt @map("updated_at")
+  
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([propertyId])
+  @@index([packageType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("owner_marketing_subscription")
+}
+
+enum OwnerMarketingPackageType {
+  MARKETING_FEE      // 0.25% marketing budget
+  EXCLUSIVE_CONTRACT // 15% commission exclusivity
+  
+  @@map("owner_marketing_package_type")
+}
+
+enum OwnerMarketingStatus {
+  PENDING    // Awaiting confirmation
+  ACTIVE     // Confirmed and active
+  COMPLETED  // Property sold
+  CANCELLED  // Cancelled by owner or agent
+  EXPIRED    // Contract expired
+  
+  @@map("owner_marketing_status")
+}
+
+// ============================================
+// Property Offers (Bidding System)
+// ============================================
+
+model PropertyOffer {
+  id                    String      @id @default(cuid())
+  propertyId            String      @map("property_id")
+  buyerUserId           String      @map("buyer_user_id")
+  
+  // Offer details
+  offerAmount           Float       @map("offer_amount")
+  offerCurrency         String      @default("THB") @map("offer_currency")
+  askingPriceAtOffer    Float       @map("asking_price_at_offer")
+  percentageOfAsking    Float       @map("percentage_of_asking")
+  
+  // Buyer contact info
+  buyerName             String      @map("buyer_name")
+  buyerEmail            String      @map("buyer_email")
+  buyerPhone            String      @map("buyer_phone")
+  buyerMessage          String?     @map("buyer_message")
+  
+  // Status
+  status                OfferStatus @default(PENDING_PASSPORT)
+  
+  // Passport (secured)
+  passportImageUrl      String?     @map("passport_image_url")
+  passportImagePath     String?     @map("passport_image_path")
+  passportUploadedAt    DateTime?   @map("passport_uploaded_at")
+  passportVerified      Boolean     @default(false) @map("passport_verified")
+  
+  // OCR data from passport
+  ocrConfidence         Float?      @map("ocr_confidence")
+  ocrProcessedAt        DateTime?   @map("ocr_processed_at")
+  passportFirstName     String?     @map("passport_first_name")
+  passportLastName      String?     @map("passport_last_name")
+  passportFullName      String?     @map("passport_full_name")
+  passportNationality   String?     @map("passport_nationality")
+  passportNumber        String?     @map("passport_number")
+  passportDateOfBirth   DateTime?   @map("passport_date_of_birth")
+  passportExpiry        DateTime?   @map("passport_expiry")
+  passportGender        String?     @map("passport_gender")
+  passportCountry       String?     @map("passport_country")
+  
+  // Owner response
+  ownerResponse         String?     @map("owner_response")
+  rejectionReason       String?     @map("rejection_reason")
+  counterOfferAmount    Float?      @map("counter_offer_amount")
+  counterOfferAt        DateTime?   @map("counter_offer_at")
+  respondedAt           DateTime?   @map("responded_at")
+  
+  // Timelines (20 days expiry)
+  expiresAt             DateTime    @map("expires_at")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+  
+  // Relations
+  property              Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  buyer                 User        @relation("BuyerOffers", fields: [buyerUserId], references: [id], onDelete: Cascade)
+  
+  @@index([propertyId])
+  @@index([buyerUserId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@map("property_offer")
+}
+
+enum OfferStatus {
+  PENDING_PASSPORT  // Offer placed, waiting for passport
+  ACTIVE            // Passport received, waiting for owner (20 days)
+  ACCEPTED          // Owner accepted
+  REJECTED          // Owner rejected
+  COUNTERED         // Owner made counter offer
+  WITHDRAWN         // Buyer withdrew
+  EXPIRED           // 20 days expired
+  CANCELLED         // Owner cancelled (under 90%)
+  
+  @@map("offer_status")
+}
+
+// ============================================
+// Task Management System (Agency Afspraken)
+// ============================================
+
+model property_task {
+  id              String           @id @default(cuid())
+  
+  // Task content
+  title           String
+  description     String?          @db.Text
+  
+  // Type categorization
+  taskType        TaskType         @default(GENERAL) @map("task_type")
+  
+  // Property link (optional - can be general task)
+  propertyId      String?          @map("property_id")
+  
+  // Priority & Status
+  priority        TaskPriority     @default(MEDIUM)
+  status          TaskStatus       @default(OPEN)
+  
+  // Scheduling
+  dueDate         DateTime?        @map("due_date")
+  reminderDate    DateTime?        @map("reminder_date")
+  
+  // Assignment
+  assignedToId    String?          @map("assigned_to_id") // User ID of assigned agent
+  createdById     String           @map("created_by_id")  // User ID of creator
+  
+  // Completion tracking
+  completedAt     DateTime?        @map("completed_at")
+  completedById   String?          @map("completed_by_id")
+  
+  // Audit
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  @@index([propertyId])
+  @@index([assignedToId])
+  @@index([createdById])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@index([taskType])
+  @@map("property_task")
+}
+
+enum TaskType {
+  GENERAL         // Algemene taak
+  AGREEMENT       // Afspraak met klant/eigenaar
+  DEVELOPMENT     // Ontwikkel/tech gerelateerd
+  CLIENT          // Klant specifiek
+  IDEA            // Idee voor later
+  FOLLOW_UP       // Follow-up actie
+  MAINTENANCE     // Onderhoud property
+  
+  @@map("task_type")
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+  
+  @@map("task_priority")
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  POSTPONED
+  
+  @@map("task_status")
 }

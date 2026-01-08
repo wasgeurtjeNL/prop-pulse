@@ -237,17 +237,18 @@ export default function InvestorLeadsTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto">
+        <Table className="min-w-[700px] w-full">
           <TableHeader>
             <TableRow>
               <TableHead>Contact</TableHead>
               <TableHead>Budget</TableHead>
-              <TableHead>Goal</TableHead>
-              <TableHead>Timeline</TableHead>
-              <TableHead>Areas</TableHead>
+              <TableHead className="hidden sm:table-cell">Goal</TableHead>
+              <TableHead className="hidden md:table-cell">Timeline</TableHead>
+              <TableHead className="hidden lg:table-cell">Areas</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead className="hidden sm:table-cell">Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -273,7 +274,7 @@ export default function InvestorLeadsTable() {
                       {getBudgetLabel(lead.investmentBudget, lead.currency)}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <div className="flex items-center gap-2">
                       <Icon icon={getGoalIcon(lead.investmentGoal)} className="text-primary" width={20} height={20} />
                       <span className="text-sm capitalize">
@@ -281,10 +282,10 @@ export default function InvestorLeadsTable() {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <span className="text-sm">{lead.timeline.replace(/-/g, " ")}</span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <span className="text-sm">{lead.preferredAreas || "-"}</span>
                   </TableCell>
                   <TableCell>
@@ -342,7 +343,7 @@ export default function InvestorLeadsTable() {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <span className="text-sm text-muted-foreground">
                       {format(new Date(lead.createdAt), "MMM d, yyyy")}
                     </span>
@@ -385,6 +386,7 @@ export default function InvestorLeadsTable() {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Lead Details Dialog */}

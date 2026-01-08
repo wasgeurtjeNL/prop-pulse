@@ -18,7 +18,7 @@ export async function validateInviteCode(code: string, email?: string): Promise<
     return { valid: false, error: "No invite code provided" };
   }
 
-  const invite = await prisma.agentInvite.findUnique({
+  const invite = await prisma.agent_invite.findUnique({
     where: { code: code.toUpperCase().trim() },
   });
 
@@ -52,7 +52,7 @@ export async function validateInviteCode(code: string, email?: string): Promise<
  */
 export async function useInviteCode(code: string, userId: string): Promise<boolean> {
   try {
-    const invite = await prisma.agentInvite.findUnique({
+    const invite = await prisma.agent_invite.findUnique({
       where: { code: code.toUpperCase().trim() },
     });
 
@@ -60,7 +60,7 @@ export async function useInviteCode(code: string, userId: string): Promise<boole
       return false;
     }
 
-    await prisma.agentInvite.update({
+    await prisma.agent_invite.update({
       where: { code: code.toUpperCase().trim() },
       data: {
         usedCount: { increment: 1 },
@@ -108,8 +108,9 @@ export async function generateInviteCode(options: {
       ? new Date(Date.now() + options.expiresInDays * 24 * 60 * 60 * 1000)
       : null;
 
-    await prisma.agentInvite.create({
+    await prisma.agent_invite.create({
       data: {
+        id: nanoid(),
         code,
         email: options.email?.toLowerCase().trim() || null,
         role: options.role || "AGENT",
@@ -158,7 +159,7 @@ export async function getInviteCodes(): Promise<{
   }
 
   try {
-    const invites = await prisma.agentInvite.findMany({
+    const invites = await prisma.agent_invite.findMany({
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -198,7 +199,7 @@ export async function deactivateInviteCode(codeId: string): Promise<{ success: b
   }
 
   try {
-    await prisma.agentInvite.update({
+    await prisma.agent_invite.update({
       where: { id: codeId },
       data: { isActive: false },
     });

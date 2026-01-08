@@ -74,15 +74,15 @@ export function PropertySearch() {
     currentSearch || currentStatus !== "all" || currentType !== "all";
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       {/* Search Input */}
-      <div className="relative flex-1 max-w-md">
+      <div className="relative w-full sm:w-[200px] md:w-[280px] lg:w-[320px]">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search by title, location, listing number (PP-XXXX)..."
+          placeholder="Search title, location..."
           defaultValue={currentSearch}
           onChange={(e) => handleSearch(e.target.value)}
-          className="pl-10 pr-10"
+          className="pl-10 pr-10 text-sm"
         />
         {isPending && (
           <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />

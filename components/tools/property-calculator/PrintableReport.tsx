@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
@@ -342,7 +342,6 @@ export function PrintableReport({
   input,
   t 
 }: PrintableReportProps) {
-  const [showBranding, setShowBranding] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
   
   const lang = detectLanguage(t);
@@ -377,22 +376,9 @@ export function PrintableReport({
           >
           {/* Controls - Hidden in print */}
           <div className="p-4 border-b border-gray-200 flex items-center justify-between print:hidden">
-            <div className="flex items-center gap-4">
-              <h3 className="font-semibold text-gray-900">
-                {rt.title}
-              </h3>
-              
-              {/* Branding Toggle */}
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showBranding}
-                  onChange={(e) => setShowBranding(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                />
-                <span>Show branding</span>
-              </label>
-            </div>
+            <h3 className="font-semibold text-gray-900">
+              {rt.title}
+            </h3>
             
             <div className="flex items-center gap-2">
               <button
@@ -415,13 +401,6 @@ export function PrintableReport({
           <div ref={reportRef} className="p-8 print:p-12" id="printable-report">
             {/* Header */}
             <div className="text-center mb-8 pb-6 border-b-2 border-gray-200">
-              {showBranding && (
-                <div className="flex justify-center mb-4">
-                  <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center">
-                    <Icon icon="solar:home-2-bold" className="w-10 h-10 text-white" />
-                  </div>
-                </div>
-              )}
               <h1 className="text-2xl font-bold text-gray-900 mb-1">
                 {rt.title}
               </h1>
@@ -429,7 +408,7 @@ export function PrintableReport({
                 {rt.subtitle}
               </p>
               
-              <div className="flex justify-center gap-8 mt-4 text-sm">
+              <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-8 mt-4 text-sm">
                 <div>
                   <span className="text-gray-500">{rt.reportDate}:</span>{' '}
                   <span className="font-medium">{reportDate}</span>
@@ -450,27 +429,27 @@ export function PrintableReport({
                 {rt.propertyDetails}
               </h2>
               
-              <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
-                <div className="flex justify-between py-2 border-b border-gray-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 rounded-xl p-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 gap-1">
                   <span className="text-gray-600">{rt.purchasePrice}</span>
                   <span className="font-semibold">{formatCurrency(input.purchasePrice, currency)}</span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 gap-1">
                   <span className="text-gray-600">{rt.registeredValue}</span>
                   <span className="font-semibold">{formatCurrency(input.registeredValue, currency)}</span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 gap-1">
                   <span className="text-gray-600">{rt.yearsOwned}</span>
                   <span className="font-semibold">{input.yearsOwned} {rt.years}</span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-200 gap-1">
                   <span className="text-gray-600">{rt.sellerType}</span>
                   <span className="font-semibold">
                     {input.sellerType === 'individual' ? rt.individual : rt.company}
                   </span>
                 </div>
                 {(input.loanAmount ?? 0) > 0 && (
-                  <div className="flex justify-between py-2 col-span-2">
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-2 col-span-1 sm:col-span-2 gap-1">
                     <span className="text-gray-600">{rt.mortgage}</span>
                     <span className="font-semibold">{formatCurrency(input.loanAmount || 0, currency)}</span>
                   </div>
@@ -478,7 +457,7 @@ export function PrintableReport({
               </div>
             </div>
             
-            {/* Cost Breakdown Table */}
+            {/* Cost Breakdown - Mobile Cards */}
             <div className="mb-8">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <span className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -487,7 +466,48 @@ export function PrintableReport({
                 {rt.costBreakdown}
               </h2>
               
-              <div className="overflow-hidden rounded-xl border border-gray-200">
+              {/* Mobile: Card Layout */}
+              <div className="sm:hidden space-y-3">
+                {Object.values(result.breakdown).map((item) => {
+                  const translatedName = getTaxTypeName(item.name, t);
+                  const paidByLabel = item.paidBy === 'buyer' ? rt.buyer 
+                    : item.paidBy === 'seller' ? rt.seller 
+                    : rt.split;
+                  
+                  return (
+                    <div 
+                      key={item.name}
+                      className={cn(
+                        "p-4 rounded-xl border border-gray-200 bg-white",
+                        !item.isApplicable && "opacity-50"
+                      )}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="font-medium text-gray-900">{translatedName}</span>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded-full text-xs font-medium",
+                          item.paidBy === 'buyer' && "bg-blue-100 text-blue-700",
+                          item.paidBy === 'seller' && "bg-orange-100 text-orange-700",
+                          item.paidBy === 'split' && "bg-purple-100 text-purple-700"
+                        )}>
+                          {paidByLabel}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-xl font-bold text-gray-900">
+                          {item.isApplicable ? formatCurrency(item.amount, currency) : '—'}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {item.isApplicable ? item.rate : rt.na}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Desktop: Table Layout */}
+              <div className="hidden sm:block overflow-hidden rounded-xl border border-gray-200">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gray-50">
@@ -506,7 +526,7 @@ export function PrintableReport({
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.values(result.breakdown).map((item, index) => {
+                    {Object.values(result.breakdown).map((item) => {
                       const translatedName = getTaxTypeName(item.name, t);
                       const paidByLabel = item.paidBy === 'buyer' ? rt.buyer 
                         : item.paidBy === 'seller' ? rt.seller 

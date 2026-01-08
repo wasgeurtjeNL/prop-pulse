@@ -226,8 +226,15 @@ const PropertyDetailPage = async ({ params }: PropertyDetailPageProps) => {
 
     return (
         <>
-            {/* Track page view for analytics */}
-            <TrackPropertyView propertyId={property.id} />
+            {/* Track page view for analytics (internal + Klaviyo) */}
+            <TrackPropertyView 
+              propertyId={property.id}
+              propertyName={property.title}
+              propertyPrice={property.numericPrice}
+              propertyLocation={property.location}
+              propertyType={property.type}
+              listingNumber={property.listingNumber}
+            />
             
             {/* JSON-LD Structured Data - Property */}
             <script

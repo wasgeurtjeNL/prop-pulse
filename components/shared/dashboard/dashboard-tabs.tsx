@@ -11,7 +11,8 @@ import {
   Key, 
   TrendingUp, 
   DollarSign,
-  Facebook
+  Facebook,
+  Mail
 } from "lucide-react";
 
 interface DashboardTabsProps {
@@ -22,6 +23,7 @@ interface DashboardTabsProps {
   pendingRentalLeadsCount?: number;
   pendingInvestorLeadsCount?: number;
   pendingFbMarketplaceLeadsCount?: number;
+  pendingContactSubmissionsCount?: number;
 }
 
 export function DashboardTabs({ 
@@ -32,6 +34,7 @@ export function DashboardTabs({
   pendingRentalLeadsCount = 0,
   pendingInvestorLeadsCount = 0,
   pendingFbMarketplaceLeadsCount = 0,
+  pendingContactSubmissionsCount = 0,
 }: DashboardTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -77,6 +80,12 @@ export function DashboardTabs({
       count: pendingInvestorLeadsCount 
     },
     { 
+      value: "contact-submissions", 
+      label: "Contact Forms", 
+      icon: Mail,
+      count: pendingContactSubmissionsCount 
+    },
+    { 
       value: "fb-marketplace-leads", 
       label: "FB Marketplace", 
       icon: Facebook,
@@ -102,30 +111,60 @@ export function DashboardTabs({
     },
   ];
 
+  // Split tabs into two rows for mobile
+  const firstRowTabs = tabs.slice(0, 5);
+  const secondRowTabs = tabs.slice(5);
+
   return (
     <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <TabsTrigger 
-              key={tab.value}
-              value={tab.value} 
-              className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <Icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-              {tab.count > 0 && (
-                <span className={`ml-1 rounded-full px-2 py-0.5 text-xs font-medium text-white ${
-                  tab.value === "missing-contacts" ? "bg-amber-500" : "bg-green-500"
-                }`}>
-                  {tab.count}
-                </span>
-              )}
-            </TabsTrigger>
-          );
-        })}
-      </TabsList>
+      <div className="space-y-1">
+        {/* First row */}
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1 w-full justify-start">
+          {firstRowTabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <TabsTrigger 
+                key={tab.value}
+                value={tab.value} 
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="hidden sm:inline truncate">{tab.label}</span>
+                {tab.count > 0 && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-white ${
+                    tab.value === "missing-contacts" ? "bg-amber-500" : "bg-green-500"
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+        {/* Second row */}
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1 w-full justify-start">
+          {secondRowTabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <TabsTrigger 
+                key={tab.value}
+                value={tab.value} 
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="hidden sm:inline truncate">{tab.label}</span>
+                {tab.count > 0 && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-white ${
+                    tab.value === "missing-contacts" ? "bg-amber-500" : "bg-green-500"
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+      </div>
     </Tabs>
   );
 }

@@ -67,6 +67,16 @@ const PropertyCalculatorWidget = dynamic(
   { ssr: false, loading: () => <div className="animate-pulse h-48 rounded-2xl bg-slate-100 dark:bg-slate-800" /> }
 );
 
+const PriceAlertButton = dynamic(
+  () => import('@/components/shared/PriceAlertButton').then(mod => ({ default: mod.PriceAlertButton })),
+  { ssr: false }
+);
+
+const PlaceOfferButton = dynamic(
+  () => import('@/components/property/place-offer-button'),
+  { ssr: false }
+);
+
 // Skeleton component for image placeholders with fixed aspect ratio to prevent CLS
 const ImageSkeleton = ({ className = "", aspectRatio = "4/3" }: { className?: string; aspectRatio?: string }) => (
   <div 
@@ -787,6 +797,31 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                                             propertyTitle={item.title}
                                             propertyType={item.category === 'CONDO' ? 'condo' : item.category === 'LAND' ? 'land_only' : 'house_land'}
                                             isForSale={true}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Place Offer Button - Only for sale properties */}
+                                {item?.type === 'FOR_SALE' && item?.id && (
+                                    <div className="mt-6">
+                                        <PlaceOfferButton
+                                            propertyId={item.id}
+                                            propertyTitle={item.title || item.name}
+                                            askingPrice={item.price}
+                                        />
+                                    </div>
+                                )}
+                                
+                                {/* Price Drop Alert Button - Klaviyo integration */}
+                                {item?.id && item?.priceRaw && (
+                                    <div className="mt-6">
+                                        <PriceAlertButton
+                                            propertyId={item.id}
+                                            propertyTitle={item.title || item.name}
+                                            currentPrice={item.priceRaw}
+                                            location={item.location}
+                                            listingNumber={item.listingNumber}
+                                            variant="button"
                                         />
                                     </div>
                                 )}

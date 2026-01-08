@@ -201,17 +201,18 @@ export default function ViewingRequestsTable() {
         </div>
       ) : (
         <div className="rounded-md border overflow-hidden">
-          <Table>
+          <div className="overflow-x-auto">
+            <Table className="min-w-[900px] w-full">
             <TableHeader>
               <TableRow>
                 <TableHead>Type</TableHead>
                 <TableHead>Property</TableHead>
                 <TableHead>Lead Contact</TableHead>
-                <TableHead>Owner/Agency</TableHead>
-                <TableHead>Date/Offer</TableHead>
+                <TableHead className="hidden lg:table-cell">Owner/Agency</TableHead>
+                <TableHead className="hidden md:table-cell">Date/Offer</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Agent</TableHead>
-                <TableHead>Requested</TableHead>
+                <TableHead className="hidden md:table-cell">Agent</TableHead>
+                <TableHead className="hidden sm:table-cell">Requested</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -273,7 +274,7 @@ export default function ViewingRequestsTable() {
                   </TableCell>
                   
                   {/* Owner/Agency Contact */}
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     {request.property?.ownerName ? (
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1">
@@ -316,7 +317,7 @@ export default function ViewingRequestsTable() {
                     )}
                   </TableCell>
                   
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     {request.requestType === 'MAKE_OFFER' && request.offerAmount ? (
                       <div className="flex flex-col gap-1">
                         <span className="font-bold text-green-600 dark:text-green-400">
@@ -342,7 +343,7 @@ export default function ViewingRequestsTable() {
                     {getStatusBadge(request.status)}
                   </TableCell>
                   
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     {request.confirmedByName ? (
                       <div className="flex flex-col gap-1">
                         <span className="text-sm font-medium text-green-700 dark:text-green-400">
@@ -381,7 +382,7 @@ export default function ViewingRequestsTable() {
                     )}
                   </TableCell>
                   
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <span className="text-sm text-muted-foreground">
                       {format(new Date(request.createdAt), 'MMM d, HH:mm')}
                     </span>
@@ -448,6 +449,7 @@ export default function ViewingRequestsTable() {
               ))}
             </TableBody>
           </Table>
+          </div>
         </div>
       )}
 

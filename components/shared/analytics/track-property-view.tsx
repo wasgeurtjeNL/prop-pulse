@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { klaviyoTrack } from "@/lib/klaviyo-tracking";
 
 interface TrackPropertyViewProps {
   propertyId: string;
+  // Optional Klaviyo tracking data
+  propertyName?: string;
+  propertyPrice?: number;
+  propertyLocation?: string;
+  propertyType?: string;
+  listingNumber?: string;
 }
 
 // Generate or get PERSISTENT visitor ID using localStorage
@@ -48,7 +55,14 @@ function getUtmParams(): Record<string, string | null> {
   };
 }
 
-export function TrackPropertyView({ propertyId }: TrackPropertyViewProps) {
+export function TrackPropertyView({ 
+  propertyId,
+  propertyName,
+  propertyPrice,
+  propertyLocation,
+  propertyType,
+  listingNumber,
+}: TrackPropertyViewProps) {
   const hasTracked = useRef(false);
 
   useEffect(() => {
@@ -62,6 +76,7 @@ export function TrackPropertyView({ propertyId }: TrackPropertyViewProps) {
         const sessionId = getSessionId();
         const utmParams = getUtmParams();
         
+        // Internal analytics tracking (existing)
         await fetch(`/api/properties/${propertyId}/view`, {
           method: "POST",
           headers: {
@@ -73,6 +88,18 @@ export function TrackPropertyView({ propertyId }: TrackPropertyViewProps) {
             ...utmParams,
           }),
         });
+
+        // Klaviyo tracking (new)
+        klaviyoTrack('Viewed Property', {
+          'Property ID': propertyId,
+          'Property Name': propertyName || document.title,
+          'Price THB': propertyPrice,
+          'Location': propertyLocation,
+          'Property Type': propertyType,
+          'Listing Number': listingNumber,
+          'Page URL': typeof window !== 'undefined' ? window.location.href : '',
+        });
+        
       } catch (error) {
         // Silently fail - analytics should not break the page
         console.debug("Failed to track property view:", error);
@@ -82,7 +109,7 @@ export function TrackPropertyView({ propertyId }: TrackPropertyViewProps) {
     // Small delay to ensure page is interactive first
     const timer = setTimeout(trackView, 500);
     return () => clearTimeout(timer);
-  }, [propertyId]);
+  }, [propertyId, propertyName, propertyPrice, propertyLocation, propertyType, listingNumber]);
 
   // This component renders nothing
   return null;

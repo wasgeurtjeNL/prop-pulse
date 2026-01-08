@@ -34,6 +34,7 @@ import { BestTimeToBuy } from "./BestTimeToBuy";
 import { BuyersGuide } from "./BuyersGuide";
 import { FeeSplitSelector } from "./FeeSplitSelector";
 import { useCurrencyRates } from "@/hooks/use-currency-rates";
+import { usePageTracking } from "@/hooks/use-page-tracking";
 
 // ============================================
 // COMPONENT: Language Selector
@@ -1052,6 +1053,12 @@ function ForeignerGuideSection({ t }: { t: TranslationStrings }) {
 // ============================================
 
 export default function PropertyTransferCalculator() {
+  // Track page view
+  usePageTracking({
+    pageTitle: "Property Transfer Fee Calculator",
+    pageType: "tool",
+  });
+
   // State
   const [currency, setCurrency] = useState<Currency>('THB');
   const [language, setLanguage] = useState<Language>('en');
@@ -1139,11 +1146,6 @@ export default function PropertyTransferCalculator() {
   
   return (
     <div className="max-w-6xl mx-auto">
-      {/* Language selector - top right */}
-      <div className="flex justify-end mb-4">
-        <LanguageSelector value={language} onChange={setLanguage} />
-      </div>
-      
       {/* Header */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
@@ -1158,15 +1160,19 @@ export default function PropertyTransferCalculator() {
         </p>
       </div>
       
-      {/* Currency selector */}
+      {/* Currency & Language selectors */}
       <div className="flex flex-col items-center mb-8">
-        <CurrencySelector 
-          value={currency} 
-          onChange={setCurrency} 
-          exchangeRates={rates}
-          isLoadingRates={isLoadingRates}
-          t={t}
-        />
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+          <CurrencySelector 
+            value={currency} 
+            onChange={setCurrency} 
+            exchangeRates={rates}
+            isLoadingRates={isLoadingRates}
+            t={t}
+          />
+          <div className="hidden sm:block w-px h-8 bg-gray-200 dark:bg-gray-700" />
+          <LanguageSelector value={language} onChange={setLanguage} />
+        </div>
         
         {/* Rate info badge */}
         {!isLoadingRates && ratesLastUpdated && (
@@ -1219,17 +1225,6 @@ export default function PropertyTransferCalculator() {
                 convertToDisplay={displayAmount}
               />
               
-              <SliderInput
-                label={t.yearsOwned}
-                value={input.yearsOwned}
-                onChange={(v) => updateInput('yearsOwned', v)}
-                min={1}
-                max={10}
-                unit={t.years}
-                icon="solar:calendar-linear"
-                helpText={t.yearsOwnedHelp}
-              />
-              
               <ToggleGroup
                 label={t.sellerType}
                 value={input.sellerType}
@@ -1241,6 +1236,20 @@ export default function PropertyTransferCalculator() {
                 ]}
                 helpText={t.sellerTypeHelp}
               />
+              
+              {/* Years Owned - Only show for Individual/Company sellers (not for Developer/New Build) */}
+              {input.sellerType !== 'developer' && (
+                <SliderInput
+                  label={t.yearsOwned}
+                  value={input.yearsOwned}
+                  onChange={(v) => updateInput('yearsOwned', v)}
+                  min={1}
+                  max={10}
+                  unit={t.years}
+                  icon="solar:calendar-linear"
+                  helpText={t.yearsOwnedHelp}
+                />
+              )}
               
               <NumberInput
                 label={t.mortgageAmount}

@@ -69,6 +69,30 @@ const navLinks = [
     ]
   },
   { 
+    label: 'For Owners', 
+    href: '/for-owners',
+    children: [
+      { 
+        label: 'Owner Portal', 
+        href: '/for-owners',
+        description: 'Your property dashboard',
+        icon: 'ph:chart-line-up'
+      },
+      { 
+        label: 'ROI Calculator', 
+        href: '/for-owners#roi-calculator',
+        description: 'Calculate your savings',
+        icon: 'ph:calculator'
+      },
+      { 
+        label: 'Voor Eigenaren', 
+        href: '/voor-eigenaren',
+        description: 'Dutch version',
+        icon: 'ph:flag'
+      },
+    ]
+  },
+  { 
     label: 'Sell Property', 
     href: '/list-your-property',
     highlight: true,
@@ -85,6 +109,7 @@ const footerLinks = [
   { label: 'Investment Projects', href: '/renovation-projects' },
   { label: 'Rental Services', href: '/rental-services' },
   { label: 'Sell Your Property', href: '/list-your-property' },
+  { label: 'For Property Owners', href: '/for-owners' },
   { label: 'About Us', href: '/about' },
   { label: 'Blog', href: '/blogs' },
   { label: 'Contact Us', href: '/contactus' },

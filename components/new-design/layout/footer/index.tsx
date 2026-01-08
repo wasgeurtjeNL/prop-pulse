@@ -2,10 +2,62 @@
 import Link from "next/link";
 import { Icon } from "@iconify/react"
 import { useLayoutData } from "@/lib/contexts/layout-data-context";
+import { useState } from "react";
+import { toast } from "sonner";
+import { klaviyoSubscribe } from "@/lib/klaviyo-tracking";
 
 const Footer = () => {
   const { data: layoutData } = useLayoutData();
   const footerLinks = layoutData?.footerLinks ?? null;
+  
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate email
+    if (!email || !email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Use Klaviyo Browser API (primary method - no server round-trip needed)
+      const success = await klaviyoSubscribe(email, 'Footer Newsletter');
+      
+      if (success) {
+        toast.success('Successfully subscribed to our newsletter!');
+        setEmail(''); // Clear the input
+      } else {
+        // Fallback to server API if browser API fails
+        const response = await fetch('/api/klaviyo/subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          toast.success(data.message || 'Successfully subscribed to our newsletter!');
+          setEmail('');
+        } else {
+          toast.error(data.error || 'Failed to subscribe. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Subscription error:', error);
+      toast.error('Something went wrong. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <footer className="relative z-10 bg-dark mb-0 pb-0">
       <div className="container mx-auto max-w-8xl pt-14 px-4 sm:px-6 lg:px-0">
@@ -14,15 +66,26 @@ const Footer = () => {
             Stay updated with new property listings,
             market insights, and exclusive investment opportunities in Phuket & Pattaya.
           </p>
-          <div className="flex lg:flex-row flex-col items-center lg:gap-10 gap-3">
-            <div className="flex gap-2 lg:order-1 order-2">
-              <input type="email" placeholder="Enter Your Email" className="rounded-full py-4 px-6 bg-white/10 placeholder:text-white text-white focus-visible:outline-0" />
-              <button className="text-dark bg-white py-4 px-8 font-semibold rounded-full hover:bg-primary hover:text-white duration-300 hover:cursor-pointer">
-                Subscribe
+          <div className="flex lg:flex-row flex-col items-center lg:gap-10 gap-3 w-full lg:w-auto">
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 lg:order-1 order-2 w-full lg:w-auto">
+              <input 
+                type="email" 
+                placeholder="Enter Your Email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting}
+                className="rounded-full py-4 px-6 bg-white/10 placeholder:text-white text-white focus-visible:outline-0 w-full sm:w-auto min-w-0 sm:flex-1 disabled:opacity-50 disabled:cursor-not-allowed" 
+              />
+              <button 
+                type="submit"
+                disabled={isSubmitting}
+                className="text-dark bg-white py-4 px-8 font-semibold rounded-full hover:bg-primary hover:text-white duration-300 hover:cursor-pointer whitespace-nowrap flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Subscribing...' : 'Subscribe'}
               </button>
-            </div>
-            <p className="text-white/40 text-sm lg:max-w-[45%] order-1 lg:order-2">
-              By subscribing, you agree to receive our promotional emails. You can unsubscribe  at any time.
+            </form>
+            <p className="text-white/40 text-sm lg:max-w-[45%] order-1 lg:order-2 text-center lg:text-left">
+              By subscribing, you agree to receive our promotional emails. You can unsubscribe at any time.
             </p>
           </div>
           <div className="flex items-center gap-6" role="list" aria-label="Social media links">
@@ -74,9 +137,39 @@ const Footer = () => {
                     Free Tools
                   </Link>
                 </div>
+                {/* For Property Owners - Highlighted */}
+                <div>
+                  <Link href="/for-owners" prefetch={false} className="text-emerald-400 hover:text-emerald-300 text-xm flex items-center gap-1.5 font-medium">
+                    <Icon icon="ph:crown-simple-fill" width={14} height={14} />
+                    For Property Owners
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+        
+        {/* Owner Portal Banner */}
+        <div className="py-6 border-b border-white/10">
+          <Link 
+            href="/for-owners" 
+            prefetch={false}
+            className="group flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-emerald-900/30 to-teal-900/30 border border-emerald-700/30 hover:border-emerald-500/50 transition-all duration-300"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0">
+                <Icon icon="ph:crown-simple-fill" className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-white font-semibold">Are you a property owner?</p>
+                <p className="text-white/60 text-sm">Discover our Owner Portal with real-time statistics, verified offers & more</p>
+              </div>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 text-emerald-400 group-hover:text-emerald-300 transition-colors">
+              <span className="text-sm font-medium">Learn More</span>
+              <Icon icon="ph:arrow-right" className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
         </div>
         <div className="flex justify-between md:flex-nowrap flex-wrap items-center py-6 gap-6">
           <p className="text-white/40 text-sm ">

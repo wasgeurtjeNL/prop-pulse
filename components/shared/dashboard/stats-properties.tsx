@@ -9,7 +9,8 @@ const StatsProperties = async () => {
     headers: await headers(),
   });
   const userId = session?.user?.id as string;
-  const stats = await getDashboardStats(userId);
+  const isAdmin = session?.user?.role === "ADMIN";
+  const stats = await getDashboardStats(userId, isAdmin);
 
   return (
     <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">

@@ -386,7 +386,7 @@ export default function LandingPagesTable() {
   return (
     <div className="space-y-6">
       {/* SEO Health Stats */}
-      <div className="grid gap-4 md:grid-cols-6">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
         <div className="rounded-lg border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 p-2">
@@ -539,8 +539,9 @@ export default function LandingPagesTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto">
+        <Table className="min-w-[700px] w-full">
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">
@@ -551,10 +552,10 @@ export default function LandingPagesTable() {
                 />
               </TableHead>
               <TableHead className="w-[280px]">Page</TableHead>
-              <TableHead>Category</TableHead>
+              <TableHead className="hidden sm:table-cell">Category</TableHead>
               <TableHead>SEO Status</TableHead>
-              <TableHead>Published</TableHead>
-              <TableHead>Updated</TableHead>
+              <TableHead className="hidden md:table-cell">Published</TableHead>
+              <TableHead className="hidden md:table-cell">Updated</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -595,10 +596,10 @@ export default function LandingPagesTable() {
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell>{getCategoryBadge(page.category)}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{getCategoryBadge(page.category)}</TableCell>
                   <TableCell>{getSeoStatusBadge(page)}</TableCell>
-                  <TableCell>{getPublishedBadge(page.published)}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="hidden md:table-cell">{getPublishedBadge(page.published)}</TableCell>
+                  <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
                     {format(new Date(page.updatedAt), "dd MMM yyyy")}
                   </TableCell>
                   <TableCell className="text-right">
@@ -666,6 +667,7 @@ export default function LandingPagesTable() {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Pagination */}

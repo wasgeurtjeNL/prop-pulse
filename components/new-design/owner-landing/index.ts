@@ -1,0 +1,10 @@
+export { default as OwnerLandingHero } from './owner-landing-hero';
+export { default as OwnerPortalFeatures } from './owner-portal-features';
+export { default as OwnerROICalculator } from './owner-roi-calculator';
+export { default as OwnerComparison } from './owner-comparison';
+export { default as OwnerBiddingSystem } from './owner-bidding-system';
+export { default as OwnerTM30Feature } from './owner-tm30-feature';
+export { default as OwnerWhatsAppBot } from './owner-whatsapp-bot';
+export { default as OwnerTestimonials } from './owner-testimonials';
+export { default as OwnerFAQ } from './owner-faq';
+export { default as OwnerCTA } from './owner-cta';

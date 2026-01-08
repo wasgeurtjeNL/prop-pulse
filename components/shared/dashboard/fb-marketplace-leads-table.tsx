@@ -299,16 +299,17 @@ export default function FbMarketplaceLeadsTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto">
+        <Table className="min-w-[700px] w-full">
           <TableHeader>
             <TableRow>
               <TableHead>Verkoper</TableHead>
               <TableHead>Woning</TableHead>
-              <TableHead>Prijs</TableHead>
-              <TableHead>Locatie</TableHead>
+              <TableHead className="hidden sm:table-cell">Prijs</TableHead>
+              <TableHead className="hidden md:table-cell">Locatie</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Datum</TableHead>
+              <TableHead className="hidden sm:table-cell">Datum</TableHead>
               <TableHead className="text-right">Acties</TableHead>
             </TableRow>
           </TableHeader>
@@ -384,12 +385,12 @@ export default function FbMarketplaceLeadsTable() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <span className="font-semibold text-green-600 dark:text-green-400">
                       {lead.price || "-"}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <span className="text-sm">{lead.location || "-"}</span>
                   </TableCell>
                   <TableCell>
@@ -453,7 +454,7 @@ export default function FbMarketplaceLeadsTable() {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <span className="text-sm text-muted-foreground">
                       {format(new Date(lead.createdAt), "d MMM yyyy", { locale: nl })}
                     </span>
@@ -514,6 +515,7 @@ export default function FbMarketplaceLeadsTable() {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Modals */}

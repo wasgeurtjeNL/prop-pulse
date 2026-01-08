@@ -15,6 +15,7 @@ import Image from "next/image";
 import ContactForm from "@/components/shared/forms/contact-form";
 import { Metadata } from "next";
 import Breadcrumb from "@/components/new-design/breadcrumb";
+import { PageTracker } from "@/hooks/use-page-tracking";
 
 export const metadata: Metadata = {
   title: "Contact Us - Get In Touch with Our Team",
@@ -33,6 +34,8 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 md:py-20">
+      {/* Page view tracking */}
+      <PageTracker pageTitle="Contact Us" pageType="contact" />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
         <div className="mb-8">
@@ -75,7 +78,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-semibold text-lg">Phone</h3>
                   <p className="text-muted-foreground mt-1">
-                    +66 (0)81 234 5678
+                    +66 (0)98 626 1646
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
                     Available 7 days a week, 9am - 7pm Thailand time

@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, X, Sparkles, Star, User, Building, Phone, Mail, FileText, Percent, Home, Image as ImageIcon, Settings, Lightbulb, Trash2 } from "lucide-react";
+import { Loader2, X, Sparkles, Star, User, Building, Phone, Mail, FileText, Percent, Home, Image as ImageIcon, Settings, Lightbulb, Trash2, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { getPropertyUrl } from "@/lib/property-url";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -179,6 +181,38 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
 
   // Watch the property type to conditionally show ownership fields
   const propertyType = form.watch("type");
+  const enableDailyRental = form.watch("enableDailyRental");
+
+  // Helper: Parse price string naar nummer (bijv. "฿55,000/month" → 55000)
+  const parsePriceToNumber = (price: string): number | null => {
+    if (!price) return null;
+    const numericString = price.replace(/[^0-9]/g, '');
+    const num = parseInt(numericString, 10);
+    return isNaN(num) ? null : num;
+  };
+
+  // Helper: Formatteer nummer naar price string (bijv. 55000 → "฿55,000/month")
+  const formatNumberToPrice = (num: number | null, isRental: boolean): string => {
+    if (num === null || num === undefined || num === 0) return '';
+    const formatted = num.toLocaleString('en-US');
+    return isRental ? `฿${formatted}/month` : `฿${formatted}`;
+  };
+
+  // Sync monthlyRentalPrice from price when enabling daily rental
+  useEffect(() => {
+    if (propertyType === "FOR_RENT" && enableDailyRental) {
+      const currentPrice = form.getValues("price");
+      const currentMonthly = form.getValues("monthlyRentalPrice");
+      
+      // Als monthlyRentalPrice nog leeg is maar price heeft een waarde, sync
+      if (!currentMonthly && currentPrice) {
+        const parsed = parsePriceToNumber(currentPrice);
+        if (parsed) {
+          form.setValue("monthlyRentalPrice", parsed);
+        }
+      }
+    }
+  }, [enableDailyRental, propertyType, form]);
 
   // Cleanup object URLs to prevent memory leaks
   useEffect(() => {
@@ -419,9 +453,19 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
                 Basic Information
               </div>
               {initialData?.listingNumber && (
-                <span className="font-mono text-sm font-normal bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-md text-muted-foreground">
+                <Link
+                  href={getPropertyUrl({
+                    provinceSlug: initialData.provinceSlug,
+                    areaSlug: initialData.areaSlug,
+                    slug: initialData.slug,
+                  })}
+                  target="_blank"
+                  className="inline-flex items-center gap-1.5 font-mono text-sm font-normal bg-gradient-to-r from-purple-100 to-purple-50 dark:from-purple-900/30 dark:to-purple-800/20 px-3 py-1 rounded-md text-purple-700 dark:text-purple-300 hover:from-purple-200 hover:to-purple-100 dark:hover:from-purple-800/40 dark:hover:to-purple-700/30 transition-colors border border-purple-200 dark:border-purple-700"
+                  title="View live property"
+                >
                   {initialData.listingNumber}
-                </span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
               )}
             </CardTitle>
           </CardHeader>
@@ -496,7 +540,20 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
                   <FormItem>
                     <FormLabel>Price</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. $1,250,000" {...field} />
+                      <Input 
+                        placeholder={propertyType === "FOR_RENT" ? "e.g. ฿55,000/month" : "e.g. ฿15,000,000"}
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          // Sync to monthlyRentalPrice if it's a rental with daily rental enabled
+                          if (propertyType === "FOR_RENT" && enableDailyRental) {
+                            const parsed = parsePriceToNumber(e.target.value);
+                            if (parsed) {
+                              form.setValue("monthlyRentalPrice", parsed);
+                            }
+                          }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -868,7 +925,7 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
                         <FormLabel className="flex items-center gap-2">
                           Monthly Rental Price (Base)
                           <InfoTooltip 
-                            content="The base monthly rental price. Daily rate is calculated automatically (monthly / 30)."
+                            content="The base monthly rental price. Daily rate is calculated automatically (monthly / 30). This syncs with the Price field."
                             side="right"
                           />
                         </FormLabel>
@@ -881,14 +938,21 @@ export default function AddPropertyForm({ initialData }: PropertyFormProps) {
                               placeholder="e.g. 100000" 
                               {...field}
                               value={field.value || ""}
-                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                              onChange={(e) => {
+                                const newValue = e.target.value ? parseFloat(e.target.value) : null;
+                                field.onChange(newValue);
+                                // Sync to price field
+                                if (newValue) {
+                                  form.setValue("price", formatNumberToPrice(newValue, true));
+                                }
+                              }}
                               className="pr-8" 
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">THB</span>
                           </div>
                         </FormControl>
                         <FormDescription>
-                          Base price for daily rate calculation
+                          Base price for daily rate calculation (synced with Price)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

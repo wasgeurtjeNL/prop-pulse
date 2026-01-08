@@ -332,8 +332,7 @@ Where:
    - 750,001-1,000,000 @ 20% = ฿50,000
    - 1,000,001-1,050,000 @ 25% = ฿12,500
    - **Tax Per Year = ฿135,000**
-5. Total = ฿135,000 × 2 = **฿270,000**
-
+ e 
 *Note: Our expected value of ฿138,600 doesn't match. This needs verification.*
 
 ---

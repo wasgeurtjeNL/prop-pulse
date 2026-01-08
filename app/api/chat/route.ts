@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import prisma from '@/lib/prisma';
-import { SYSTEM_PROMPT, INTENT_DETECTION_PROMPT, PROPERTY_SEARCH_PROMPT } from '@/lib/chatbot/prompts';
+import { 
+  SYSTEM_PROMPT, 
+  OWNER_SYSTEM_PROMPT,
+  INTENT_DETECTION_PROMPT, 
+  PROPERTY_SEARCH_PROMPT 
+} from '@/lib/chatbot/prompts';
 
 // Types
 interface ChatMessage {
@@ -412,9 +417,14 @@ async function generateResponse(
   intent: string,
   properties: PropertyResult[],
   conversationHistory: ChatMessage[],
-  poiContext?: string
+  poiContext?: string,
+  isOwnerContext?: boolean
 ): Promise<string> {
   try {
+    // Determine if this is an owner-related conversation
+    const isOwnerIntent = intent.startsWith('OWNER_');
+    const useOwnerPrompt = isOwnerContext || isOwnerIntent;
+
     // Build context about properties if found
     let propertyContext = '';
     if (properties.length > 0) {
@@ -432,8 +442,16 @@ async function generateResponse(
       propertyContext += `\n\nNEARBY POINTS OF INTEREST:\n${poiContext}`;
     }
 
+    // Add owner context hint
+    if (useOwnerPrompt) {
+      propertyContext += `\n\n🎯 CONTEXT: User is a property OWNER or interested in listing. Focus on owner benefits and guide toward registration. Always include clear call-to-action toward creating an account.`;
+    }
+
+    // Select appropriate system prompt
+    const systemPrompt = useOwnerPrompt ? OWNER_SYSTEM_PROMPT : SYSTEM_PROMPT;
+
     const messages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'system', content: SYSTEM_PROMPT + propertyContext },
+      { role: 'system', content: systemPrompt + propertyContext },
       ...conversationHistory.slice(-6).map(m => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
@@ -448,7 +466,9 @@ async function generateResponse(
       temperature: 0.7,
     });
 
-    return completion.choices[0]?.message?.content || "I'm here to help you find your perfect property! What are you looking for?";
+    return completion.choices[0]?.message?.content || (useOwnerPrompt 
+      ? "I'm here to help you list your property! Would you like to create your free account or calculate your potential ROI first?"
+      : "I'm here to help you find your perfect property! What are you looking for?");
   } catch (error) {
     console.error('Response generation error:', error);
     return "I apologize, but I'm having trouble right now. Please try again or contact us directly at +66 (0)98 626 1646.";
@@ -467,7 +487,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { message, conversationHistory = [], currentPropertySlug } = body;
+    const { message, conversationHistory = [], currentPropertySlug, currentPage } = body;
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(
@@ -476,19 +496,93 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Determine if user is on owner-related pages
+    const isOwnerContext = currentPage === '/for-owners' || 
+                          currentPage === '/voor-eigenaren' ||
+                          currentPage?.includes('owner');
+
     // Rate limiting (simple in-memory, should use Redis in production)
     // For now, just proceed
 
     // Detect intent
     const intent = await detectIntent(message);
-    console.log('Detected intent:', intent);
+    console.log('Detected intent:', intent, '| Owner context:', isOwnerContext);
 
     let properties: PropertyResult[] = [];
     let actions: ChatResponse['actions'] = [];
     let poiContext: string | undefined;
 
+    // Check if this is an owner-related intent
+    const isOwnerIntent = intent.startsWith('OWNER_');
+
     // Handle different intents
     switch (intent) {
+      // ============ OWNER INTENTS ============
+      case 'OWNER_SELL':
+      case 'OWNER_RENT': {
+        actions = [
+          { type: 'owner_register', label: '🚀 Create Free Account' },
+          { type: 'roi_calculator', label: '💰 Calculate Your ROI' },
+          { type: 'owner_whatsapp', label: '💬 List via WhatsApp' },
+        ];
+        break;
+      }
+
+      case 'OWNER_FEES': {
+        actions = [
+          { type: 'roi_calculator', label: '💰 See ROI Calculator' },
+          { type: 'owner_register', label: '🚀 Get Started Free' },
+          { type: 'owner_call', label: '📞 Discuss Pricing' },
+        ];
+        break;
+      }
+
+      case 'OWNER_FEATURES': {
+        actions = [
+          { type: 'owner_demo', label: '📊 See Dashboard Demo' },
+          { type: 'owner_register', label: '🚀 Create Account' },
+          { type: 'owner_learn_more', label: '📖 Learn More' },
+        ];
+        break;
+      }
+
+      case 'OWNER_TM30': {
+        actions = [
+          { type: 'owner_register', label: '🚀 Activate TM30 Automation' },
+          { type: 'owner_learn_more', label: '📖 How TM30 Works' },
+          { type: 'owner_call', label: '📞 Talk to Expert' },
+        ];
+        break;
+      }
+
+      case 'OWNER_BIDDING': {
+        actions = [
+          { type: 'owner_register', label: '🚀 Get Verified Offers' },
+          { type: 'owner_demo', label: '📊 See It In Action' },
+          { type: 'owner_call', label: '📞 Learn More' },
+        ];
+        break;
+      }
+
+      case 'OWNER_COMPARE': {
+        actions = [
+          { type: 'roi_calculator', label: '💰 Calculate Savings' },
+          { type: 'owner_register', label: '🚀 Try Us Free' },
+          { type: 'owner_call', label: '📞 Compare Options' },
+        ];
+        break;
+      }
+
+      case 'OWNER_REGISTER': {
+        actions = [
+          { type: 'owner_register', label: '🚀 Create Account Now' },
+          { type: 'owner_whatsapp', label: '💬 Quick Start via WhatsApp' },
+          { type: 'owner_call', label: '📞 Need Help?' },
+        ];
+        break;
+      }
+
+      // ============ BUYER INTENTS ============
       case 'PROPERTY_SEARCH': {
         const criteria = await extractSearchCriteria(message);
         console.log('Search criteria:', criteria);
@@ -583,17 +677,34 @@ export async function POST(request: NextRequest) {
       }
 
       case 'GREETING': {
-        actions = [
-          { type: 'search', label: '🔍 Find Properties' },
-          { type: 'schedule_viewing', label: '📅 Schedule Viewing' },
-          { type: 'investment', label: '💰 Investment Info' },
-          { type: 'contact', label: '📞 Contact Agent' },
-        ];
+        // Different actions based on context
+        if (isOwnerContext) {
+          actions = [
+            { type: 'owner_features', label: '📊 Platform Features' },
+            { type: 'roi_calculator', label: '💰 ROI Calculator' },
+            { type: 'owner_register', label: '🚀 Create Account' },
+            { type: 'owner_call', label: '📞 Talk to Expert' },
+          ];
+        } else {
+          actions = [
+            { type: 'search', label: '🔍 Find Properties' },
+            { type: 'schedule_viewing', label: '📅 Schedule Viewing' },
+            { type: 'investment', label: '💰 Investment Info' },
+            { type: 'contact', label: '📞 Contact Agent' },
+          ];
+        }
         break;
       }
 
       default:
-        // For FAQ, GENERAL, etc.
+        // For FAQ, GENERAL, etc. - add owner actions if in owner context
+        if (isOwnerContext || isOwnerIntent) {
+          actions = [
+            { type: 'owner_register', label: '🚀 Create Account' },
+            { type: 'roi_calculator', label: '💰 Calculate ROI' },
+            { type: 'owner_call', label: '📞 Contact Us' },
+          ];
+        }
         break;
     }
 
@@ -639,8 +750,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate response with POI context
-    const reply = await generateResponse(message, intent, properties, conversationHistory, poiContext);
+    // Generate response with POI context and owner context
+    const reply = await generateResponse(message, intent, properties, conversationHistory, poiContext, isOwnerContext);
 
     const response: ChatResponse = {
       reply,

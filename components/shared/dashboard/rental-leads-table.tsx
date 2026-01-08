@@ -228,18 +228,19 @@ export default function RentalLeadsTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto">
+        <Table className="min-w-[800px] w-full">
           <TableHeader>
             <TableRow>
               <TableHead>Contact</TableHead>
-              <TableHead>Property</TableHead>
+              <TableHead className="hidden sm:table-cell">Property</TableHead>
               <TableHead>Budget</TableHead>
-              <TableHead>Duration</TableHead>
-              <TableHead>Move-in</TableHead>
-              <TableHead>Areas</TableHead>
+              <TableHead className="hidden md:table-cell">Duration</TableHead>
+              <TableHead className="hidden lg:table-cell">Move-in</TableHead>
+              <TableHead className="hidden lg:table-cell">Areas</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead className="hidden sm:table-cell">Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -262,7 +263,7 @@ export default function RentalLeadsTable() {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <div className="flex items-center gap-2">
                       <Icon 
                         icon={getPropertyTypeIcon(lead.propertyType)} 
@@ -285,17 +286,17 @@ export default function RentalLeadsTable() {
                       {getBudgetLabel(lead.budget)}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <span className="text-sm capitalize">
                       {lead.rentalDuration.replace(/-/g, " ")}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <span className="text-sm capitalize">
                       {lead.moveInDate ? lead.moveInDate.replace(/-/g, " ") : "-"}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <span className="text-sm">{lead.preferredAreas || "-"}</span>
                   </TableCell>
                   <TableCell>
@@ -353,7 +354,7 @@ export default function RentalLeadsTable() {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <span className="text-sm text-muted-foreground">
                       {format(new Date(lead.createdAt), "MMM d, yyyy")}
                     </span>
@@ -396,6 +397,7 @@ export default function RentalLeadsTable() {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Lead Details Dialog */}

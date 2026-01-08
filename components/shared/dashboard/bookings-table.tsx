@@ -246,14 +246,15 @@ export default function BookingsTable() {
             </p>
           </div>
         ) : (
-          <Table>
+          <div className="overflow-x-auto">
+          <Table className="min-w-[800px] w-full">
             <TableHeader>
               <TableRow>
                 <TableHead>Guest</TableHead>
-                <TableHead>Property</TableHead>
+                <TableHead className="hidden sm:table-cell">Property</TableHead>
                 <TableHead>Dates</TableHead>
-                <TableHead>Guests</TableHead>
-                <TableHead>Total</TableHead>
+                <TableHead className="hidden md:table-cell">Guests</TableHead>
+                <TableHead className="hidden sm:table-cell">Total</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -286,7 +287,7 @@ export default function BookingsTable() {
                     </TableCell>
 
                     {/* Property */}
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {booking.property ? (
                         <div className="space-y-1">
                           <Link 
@@ -325,7 +326,7 @@ export default function BookingsTable() {
                     </TableCell>
 
                     {/* Guests */}
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <div className="flex items-center gap-1 text-sm">
                         <Users className="h-3 w-3 text-muted-foreground" />
                         {formatGuests(booking)}
@@ -333,7 +334,7 @@ export default function BookingsTable() {
                     </TableCell>
 
                     {/* Total */}
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <div className="font-medium flex items-center gap-1">
                         <DollarSign className="h-3 w-3 text-muted-foreground" />
                         {formatRentalPrice(booking.totalPrice)}
@@ -418,6 +419,7 @@ export default function BookingsTable() {
               })}
             </TableBody>
           </Table>
+          </div>
         )}
       </div>
 

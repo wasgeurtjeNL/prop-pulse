@@ -478,13 +478,17 @@ export async function getAgentPropertiesPaginated(
   }
 
   const currentUserId = session?.user?.id;
+  const isAdmin = (session?.user as any)?.role === "ADMIN";
   const { search, status, type, page = 1, limit = 10 } = filters;
 
   // Build where clause
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = {
-    userId: currentUserId,
-  };
+  const where: any = {};
+
+  // Only filter by userId for non-admin users (admins see all properties)
+  if (!isAdmin) {
+    where.userId = currentUserId;
+  }
 
   // Search filter - title, location, slug, or listing number
   if (search && search.trim()) {
@@ -555,27 +559,32 @@ export async function getAgentPropertiesPaginated(
 }
 
 // Cached dashboard stats - revalidates every 60 seconds
-export async function getDashboardStats(userId: string) {
+export async function getDashboardStats(userId: string, isAdmin: boolean = false) {
+  const cacheKey = isAdmin ? "dashboard-stats-admin" : `dashboard-stats-${userId}`;
+  
   const getCachedStats = unstable_cache(
-    async (uid: string) => {
+    async (uid: string, adminMode: boolean) => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+      // For admin users, show all properties; for agents, filter by userId
+      const userFilter = adminMode ? {} : { userId: uid };
+
       const [totalListings, activeListings, newInLast30Days] = await Promise.all([
         prisma.property.count({
-          where: { userId: uid },
+          where: userFilter,
         }),
 
         prisma.property.count({
           where: {
-            userId: uid,
+            ...userFilter,
             status: Status.ACTIVE,
           },
         }),
 
         prisma.property.count({
           where: {
-            userId: uid,
+            ...userFilter,
             createdAt: { gte: thirtyDaysAgo },
           },
         }),
@@ -587,11 +596,11 @@ export async function getDashboardStats(userId: string) {
         newInLast30Days,
       };
     },
-    [`dashboard-stats-${userId}`],
+    [cacheKey],
     { revalidate: 60, tags: ["dashboard-stats"] }
   );
 
-  return getCachedStats(userId);
+  return getCachedStats(userId, isAdmin);
 }
 
 type CreatePropertyArgs = z.infer<typeof propertySchema> & { 
@@ -815,7 +824,7 @@ export async function bulkDeleteProperties(propertyIds: string[]): Promise<{
   }
 
   const userId = session.user.id;
-  const userRole = session.user.role;
+  const userRole = (session.user as any).role;
 
   try {
     // For admins, allow deleting any property
@@ -874,11 +883,21 @@ export async function updateProperty(id: string, data: any) {
   try {
     const property = await prisma.property.findUnique({
       where: { id },
+      include: {
+        images: {
+          take: 1,
+          orderBy: { position: 'asc' },
+        },
+      },
     });
 
     if (!property) {
       throw new Error("Property not found");
     }
+
+    // Store old price for price change detection
+    const oldPrice = property.price;
+    const oldNumericPrice = parseFloat(oldPrice.replace(/[^0-9.]/g, '')) || 0;
 
     // Parse location to get URL slugs for hierarchical URLs
     const { provinceSlug, areaSlug } = parseLocationToSlugs(data.location);
@@ -998,6 +1017,26 @@ export async function updateProperty(id: string, data: any) {
       // Trigger background geocoding and POI re-analysis
       geocodeAndAnalyzeProperty(id, data.location, data.mapUrl).catch(err => {
         console.error("Background geocoding/POI analysis error:", err);
+      });
+    }
+
+    // Check for price changes and notify subscribers
+    const newNumericPrice = parseFloat(data.price.replace(/[^0-9.]/g, '')) || 0;
+    if (oldNumericPrice !== newNumericPrice && oldNumericPrice > 0) {
+      // Trigger price change notifications in the background
+      notifyPriceChangeSubscribers({
+        propertyId: id,
+        oldPrice: oldNumericPrice,
+        newPrice: newNumericPrice,
+        propertyTitle: data.title || property.title,
+        propertySlug: updateData.slug || property.slug,
+        provinceSlug: provinceSlug || property.provinceSlug || 'phuket',
+        areaSlug: areaSlug || property.areaSlug || 'other',
+        listingNumber: property.listingNumber || undefined,
+        location: data.location || property.location,
+        imageUrl: property.images[0]?.url || data.imageUrl || property.image,
+      }).catch(err => {
+        console.error("Price change notification error:", err);
       });
     }
 
@@ -1279,5 +1318,48 @@ export async function getRecentlySoldProperties(limit: number = 6) {
   } catch (error) {
     console.error("Error fetching recently sold properties:", error);
     return [];
+  }
+}
+
+/**
+ * Helper function to notify price change subscribers via Klaviyo
+ * Called internally when a property price is updated
+ */
+async function notifyPriceChangeSubscribers(data: {
+  propertyId: string;
+  oldPrice: number;
+  newPrice: number;
+  propertyTitle: string;
+  propertySlug: string;
+  provinceSlug: string;
+  areaSlug: string;
+  listingNumber?: string;
+  location?: string;
+  imageUrl?: string;
+}) {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.psmphuket.com';
+    
+    // Call the internal notification API
+    const response = await fetch(`${baseUrl}/api/property-price-alerts/notify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...data,
+        internalSecret: process.env.INTERNAL_API_SECRET,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Price notification API error:', errorData);
+    } else {
+      const result = await response.json();
+      console.log(`Price change notification sent to ${result.notifiedCount} subscribers`);
+    }
+  } catch (error) {
+    console.error('Error calling price notification API:', error);
   }
 }
