@@ -259,10 +259,12 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
 
     return (
         <>
-        {/* Property Navigation Bar - Shows when coming from filtered search */}
-        {item?.slug && <PropertyNavigationBar currentSlug={item.slug} />}
+        {/* Property Navigation Bar - Fixed height container to prevent CLS */}
+        <div className="property-nav-placeholder">
+            {item?.slug && <PropertyNavigationBar currentSlug={item.slug} />}
+        </div>
         
-        <main className="py-[5px] relative overflow-x-hidden" role="main">
+        <main className="py-[5px] relative overflow-x-hidden contain-layout" role="main">
             <div className="container mx-auto max-w-8xl px-3 sm:px-4 md:px-5 2xl:px-0">
                 {/* Breadcrumbs */}
                 {item && (
@@ -418,9 +420,9 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
                         </div>
                     </div>
                 </div>
-                {/* Image Gallery - Mobile Horizontal Scroll */}
+                {/* Image Gallery - Mobile Horizontal Scroll - Fixed height to prevent CLS */}
                 {item?.images && item.images.length > 0 && (
-                    <div className="sm:hidden mt-6 -mx-3 px-3">
+                    <div className="sm:hidden mt-6 -mx-3 px-3 mobile-carousel">
                         <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2" role="region" aria-label="Property images gallery">
                             {item.images.map((image: any, index: number) => (
                                 <button 
@@ -474,8 +476,8 @@ export default function Details({ initialProperty, initialRelatedProperties }: D
 
                 {/* Image Gallery - Desktop Grid Layout (Hidden on mobile) */}
                 <div className="hidden sm:grid grid-cols-12 mt-6 sm:mt-8 gap-2 sm:gap-4 md:gap-6" role="region" aria-label="Property images gallery">
-                    {/* Main Image - Hero with priority loading */}
-                    <div className="col-span-12 lg:col-span-8 lg:row-span-2">
+                    {/* Main Image - Hero with priority loading - Fixed height for CLS */}
+                    <div className="col-span-12 lg:col-span-8 lg:row-span-2 property-grid-main">
                         {item?.images && item?.images[0] && (
                             <button 
                                 className="w-full cursor-pointer group relative overflow-hidden rounded-xl sm:rounded-2xl border-0 p-0 bg-transparent block" 

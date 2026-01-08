@@ -67,6 +67,10 @@ const nextConfig: NextConfig = {
       "embla-carousel-react",
       "framer-motion",
     ],
+    // ============================================
+    // PERFORMANCE: CSS optimization
+    // ============================================
+    optimizeCss: true,
   },
   
   // ============================================

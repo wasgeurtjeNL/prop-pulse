@@ -1370,3 +1370,17 @@ body {
   @apply text-center text-slate-600 dark:text-slate-400 mb-8;
   @apply max-w-2xl mx-auto;
 }
+
+/* ============================================ */
+/* PERFORMANCE: CLS Prevention Utilities        */
+/* ============================================ */
+
+/* Contain layout for improved rendering performance */
+.contain-layout {
+  contain: layout style;
+}
+
+/* Contain paint for isolated repaint zones */
+.contain-paint {
+  contain: layout paint;
+}

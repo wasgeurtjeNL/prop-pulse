@@ -100,8 +100,8 @@ export const viewport: Viewport = {
 };
 
 /**
- * Critical inline CSS for fastest LCP
- * Contains only styles needed for hero section rendering
+ * Critical inline CSS for fastest LCP and CLS prevention
+ * Contains styles needed for initial render without layout shifts
  */
 const criticalCSS = `
   /* Hero LCP optimization */
@@ -115,6 +115,23 @@ const criticalCSS = `
   svg.iconify,span.iconify{display:inline-block;width:1em;height:1em;vertical-align:-0.125em}
   /* Reduce layout thrashing from header */
   header{contain:layout}
+  /* ============================================ */
+  /* CLS Prevention - Property Pages */
+  /* ============================================ */
+  /* Reserve space for property images with aspect ratio */
+  [style*="aspect-ratio"]{aspect-ratio:var(--aspect-ratio,4/3)}
+  /* Main content container - prevent reflow */
+  main[role="main"]{contain:layout style;min-height:100vh}
+  /* Property navigation bar placeholder */
+  .property-nav-placeholder{min-height:44px}
+  /* Image skeleton with fixed aspect ratio */
+  .img-skeleton{aspect-ratio:4/3;background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);background-size:200% 100%;animation:skeleton-loading 1.5s infinite}
+  @keyframes skeleton-loading{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  /* Prevent mobile carousel shift */
+  .mobile-carousel{min-height:calc(85vw * 0.75)}
+  /* Grid image container heights */
+  .property-grid-main{min-height:400px}
+  @media(min-width:1024px){.property-grid-main{min-height:500px}}
 `;
 
 /**
