@@ -224,8 +224,24 @@ const PropertyDetailPage = async ({ params }: PropertyDetailPageProps) => {
         nearbyPois: nearbyPoisFlat,
     });
 
+    // Generate preload URL for LCP image (main property image)
+    // Must match Next.js Image loader output exactly for browser to use preloaded resource
+    const preloadImageUrl = mainImage 
+        ? `/_next/image?url=${encodeURIComponent(mainImage)}&w=1200&q=75`
+        : null;
+
     return (
         <>
+            {/* Preload LCP image - critical for Core Web Vitals */}
+            {preloadImageUrl && (
+                <link
+                    rel="preload"
+                    as="image"
+                    href={preloadImageUrl}
+                    fetchPriority="high"
+                />
+            )}
+            
             {/* Track page view for analytics (internal + Klaviyo) */}
             <TrackPropertyView 
               propertyId={property.id}
@@ -248,7 +264,6 @@ const PropertyDetailPage = async ({ params }: PropertyDetailPageProps) => {
                     dangerouslySetInnerHTML={renderJsonLd(faqSchema)}
                 />
             )}
-            {/* Note: Image preloading moved to Next.js Image priority prop in Details component */}
             <Details 
                 initialProperty={transformedProperty} 
                 initialRelatedProperties={relatedProperties}

@@ -62,7 +62,22 @@ export default async function PropertyDetailsPage({
     { name: property.title, href: `/listings/${slug}` }
   ];
 
+  // Generate preload URL for LCP image (must match Next.js Image loader output)
+  const preloadImageUrl = property.image 
+    ? `/_next/image?url=${encodeURIComponent(property.image)}&w=1920&q=75`
+    : null;
+
   return (
+    <>
+      {/* Preload LCP image - critical for Core Web Vitals */}
+      {preloadImageUrl && (
+        <link
+          rel="preload"
+          as="image"
+          href={preloadImageUrl}
+          fetchPriority="high"
+        />
+      )}
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
       <div className="bg-white border-b dark:bg-slate-900">
         <div className="container mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -260,5 +275,6 @@ export default async function PropertyDetailsPage({
         </div>
       </div>
     </div>
+    </>
   );
 }
