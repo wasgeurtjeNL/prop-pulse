@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  
+  // ============================================
+  // PERFORMANCE: Remove console.log in production
+  // ============================================
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? {
+      exclude: ["error", "warn"],
+    } : false,
+  },
+  
   images: {
     // Use default Next.js image loader (supports both local and remote images)
     // ImageKit images will be optimized through Next.js proxy
@@ -44,6 +54,47 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+    // ============================================
+    // PERFORMANCE: Tree-shake large icon libraries
+    // Only imports used icons instead of entire library
+    // ============================================
+    optimizePackageImports: [
+      "lucide-react",
+      "@iconify/react",
+      "date-fns",
+      "react-icons",
+      "@radix-ui/react-icons",
+      "embla-carousel-react",
+      "framer-motion",
+    ],
+  },
+  
+  // ============================================
+  // PERFORMANCE: Cache headers for static assets
+  // ============================================
+  async headers() {
+    return [
+      {
+        // Static assets (JS, CSS, fonts)
+        source: "/:all*(svg|jpg|jpeg|png|gif|ico|webp|mp4|js|css|woff|woff2)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        // Next.js static chunks - immutable (hashed filenames)
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
   },
   
   // ============================================
