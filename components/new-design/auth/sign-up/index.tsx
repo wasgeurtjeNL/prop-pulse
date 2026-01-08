@@ -5,7 +5,7 @@ import SocialSignUp from "../SocialSignUp";
 import { useState, useEffect } from "react";
 import { validateEmail, validateName, validatePassword } from "@/lib/validation";
 import { authClient } from "@/lib/auth-client";
-import toast, { Toaster } from 'react-hot-toast';
+import { toast } from "sonner";
 
 const SignUp = () => {
   const router = useRouter();
@@ -203,7 +203,6 @@ const SignUp = () => {
         <span className="text-body-secondary relative z-10 inline-block bg-white px-3 text-base dark:bg-black">
           OR
         </span>
-        <Toaster />
       </span>
 
       <form onSubmit={handleSubmit}>

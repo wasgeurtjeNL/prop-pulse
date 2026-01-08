@@ -1,5 +1,4 @@
 'use client'
-import { Icon } from '@iconify/react'
 import Link from 'next/link'
 import { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react'
 import { useTheme } from 'next-themes'
@@ -30,6 +29,9 @@ import {
   WhatsappFillIcon,
   SunBoldIcon,
   MoonBoldIcon,
+  CalculatorBoldIcon,
+  HeartFillIcon,
+  StaticIcon,
 } from '@/components/icons/StaticIcons'
 
 // Social media links with static SVG components (no Iconify API calls)
@@ -266,7 +268,7 @@ const Header: React.FC = () => {
                             >
                               {child.icon && (
                                 <span className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                                  <Icon icon={child.icon} className="w-5 h-5" />
+                                  <StaticIcon icon={child.icon} className="w-5 h-5" />
                                 </span>
                               )}
                               <div className="min-w-0">
@@ -453,14 +455,14 @@ const Header: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                <Icon icon="solar:calculator-bold" className="w-5 h-5 text-white" />
+                <CalculatorBoldIcon className="w-5 h-5 text-white" />
               </div>
               <div>
                 <span className="text-white font-semibold text-sm">Free Tools</span>
                 <p className="text-white/50 text-xs">Property calculators & more</p>
               </div>
             </div>
-            <Icon icon="ph:arrow-right-bold" className="w-4 h-4 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
+            <ArrowRightBoldIcon className="w-4 h-4 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
           </Link>
 
           {/* Favorites Quick Link - Only show when user has favorites */}
@@ -473,14 +475,14 @@ const Header: React.FC = () => {
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
-                  <Icon icon="ph:heart-fill" className="w-5 h-5 text-white" />
+                  <HeartFillIcon className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <span className="text-white font-semibold text-sm">My Favorites</span>
                   <p className="text-white/50 text-xs">{favoritesCount} saved {favoritesCount === 1 ? 'property' : 'properties'}</p>
                 </div>
               </div>
-              <Icon icon="ph:arrow-right-bold" className="w-4 h-4 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
+              <ArrowRightBoldIcon className="w-4 h-4 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
             </Link>
           )}
 

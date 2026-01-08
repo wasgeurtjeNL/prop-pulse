@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toggleBlogPublished } from "@/lib/actions/blog.actions";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 
 interface BlogPublishToggleProps {
   blogId: string;

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import SocialSignIn from "../SocialSignIn";
-import toast, { Toaster } from 'react-hot-toast';
+import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { validateEmail, validatePassword } from "@/lib/validation";
 import { authClient } from "@/lib/auth-client";
@@ -86,7 +86,6 @@ const Signin = () => {
         <span className="text-body-secondary relative z-10 inline-block bg-white px-3 text-base dark:bg-black">
           OR
         </span>
-        <Toaster />
       </span>
 
       <form onSubmit={handleSubmit}>

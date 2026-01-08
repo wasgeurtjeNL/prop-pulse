@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import Image from "next/image";
 import Link from "next/link";
 import {

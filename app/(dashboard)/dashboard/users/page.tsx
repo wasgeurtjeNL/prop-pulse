@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Users, Shield, UserX, Search, RefreshCw, Pencil, Trash2, Home, UserCheck } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
 interface User {

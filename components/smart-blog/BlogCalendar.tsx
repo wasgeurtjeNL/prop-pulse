@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface ScheduledBlog {

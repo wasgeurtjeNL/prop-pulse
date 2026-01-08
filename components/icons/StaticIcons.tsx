@@ -128,6 +128,18 @@ export const MoonBoldIcon = ({ className, ...props }: IconProps) => (
   </svg>
 );
 
+export const CalculatorBoldIcon = ({ className, ...props }: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" className={className} {...props}>
+    <path fill="currentColor" fillRule="evenodd" d="M7.245 2h9.51c1.159 0 1.738 0 2.206.163a3.05 3.05 0 0 1 1.881 1.936C21 4.581 21 5.177 21 6.37v11.26c0 1.193 0 1.79-.158 2.27a3.05 3.05 0 0 1-1.881 1.937c-.468.163-1.047.163-2.206.163h-9.51c-1.159 0-1.738 0-2.206-.163a3.05 3.05 0 0 1-1.881-1.936C3 19.418 3 18.822 3 17.63V6.37c0-1.193 0-1.79.158-2.27a3.05 3.05 0 0 1 1.881-1.937C5.507 2 6.086 2 7.245 2M7 6.75a.75.75 0 0 0 0 1.5h10a.75.75 0 0 0 0-1.5zm.052 4.5a1.341 1.341 0 1 1 0 2.683a1.341 1.341 0 0 1 0-2.683m0 4.167a1.341 1.341 0 1 1 0 2.683a1.341 1.341 0 0 1 0-2.683m4.948-4.167a1.341 1.341 0 1 1 0 2.683a1.341 1.341 0 0 1 0-2.683m0 4.167a1.341 1.341 0 1 1 0 2.683a1.341 1.341 0 0 1 0-2.683m4.948-4.167a1.341 1.341 0 1 1 0 2.683a1.341 1.341 0 0 1 0-2.683m0 4.167a1.341 1.341 0 1 1 0 2.683a1.341 1.341 0 0 1 0-2.683" clipRule="evenodd"/>
+  </svg>
+);
+
+export const HeartFillIcon = ({ className, ...props }: IconProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 256 256" className={className} {...props}>
+    <path fill="currentColor" d="M240 94c0 70-103.79 126.66-108.21 129a8 8 0 0 1-7.58 0C119.79 220.66 16 164 16 94a62.07 62.07 0 0 1 62-62c20.65 0 38.73 8.88 50 23.89C139.27 40.88 157.35 32 178 32a62.07 62.07 0 0 1 62 62"/>
+  </svg>
+);
+
 /**
  * Icon component that maps icon names to static SVGs
  * Use this as a drop-in replacement for Iconify Icon in critical components
@@ -144,6 +156,7 @@ const iconMap: Record<string, React.FC<IconProps>> = {
   'ph:x': XIcon,
   'ph:map-pin': MapPinIcon,
   'ph:house-simple-fill': HouseSimpleFillIcon,
+  'ph:heart-fill': HeartFillIcon,
   'ri:facebook-fill': FacebookFillIcon,
   'ri:instagram-line': InstagramLineIcon,
   'ri:linkedin-fill': LinkedinFillIcon,
@@ -152,6 +165,7 @@ const iconMap: Record<string, React.FC<IconProps>> = {
   'ri:whatsapp-fill': WhatsappFillIcon,
   'solar:sun-bold': SunBoldIcon,
   'solar:moon-bold': MoonBoldIcon,
+  'solar:calculator-bold': CalculatorBoldIcon,
 };
 
 interface StaticIconProps extends IconProps {

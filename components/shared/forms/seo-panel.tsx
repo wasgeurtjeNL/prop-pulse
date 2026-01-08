@@ -21,7 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 
 interface SEOPanelProps {
   title: string;

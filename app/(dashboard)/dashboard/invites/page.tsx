@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Copy, Plus, Trash2, RefreshCw, Users, Shield, UserPlus } from "lucide-react";
 import { generateInviteCode, getInviteCodes, deactivateInviteCode } from "@/lib/actions/invite.actions";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 interface Invite {
   id: string;

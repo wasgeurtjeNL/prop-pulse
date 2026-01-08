@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import RichTextEditor from "@/components/ui/rich-text-editor";
 import SEOPanel from "./seo-panel";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { ArrowLeft, Save, Eye, Loader2, Upload, X, ImageIcon, Sparkles, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { validateEmail, validateName, validatePassword } from "@/lib/validation";
 import { authClient } from "@/lib/auth-client";
-import toast, { Toaster } from "react-hot-toast";
+import { toast } from "sonner";
 import Image from "next/image";
 import {
   SupportedLanguage,
@@ -243,7 +243,6 @@ const OwnerSignUp = () => {
 
   return (
     <>
-      <Toaster />
 
       {/* Language Selector */}
       <div className="flex justify-end mb-4">

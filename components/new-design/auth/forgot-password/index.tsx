@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import Logo from "../../layout/header/brand-logo/Logo";
 import { validateEmail } from "@/lib/validation";
 import { authClient } from "@/lib/auth-client";
-import toast, { Toaster } from 'react-hot-toast';
+import { toast } from "sonner";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -55,7 +55,6 @@ const ForgotPassword = () => {
 
   return (
     <section>
-      <Toaster />
       <div className="relative w-full pt-32 sm:pt-36 pb-16 sm:pb-28 flex items-center justify-center">
         <div className="container">
           <div className="-mx-4 flex flex-wrap">
