@@ -3,14 +3,11 @@ import Header from "@/components/new-design/layout/header";
 import ChatWidgetLoader from "@/components/chatbot/ChatWidgetLoader";
 
 // Lazy load Footer - not needed for initial page render (below fold)
-const Footer = dynamic(() => import("@/components/new-design/layout/footer"), {
-  ssr: true, // Keep SSR for SEO (footer contains links)
-});
+const Footer = dynamic(() => import("@/components/new-design/layout/footer"));
 
-// Lazy load ScrollToTop - only visible after scrolling
+// Lazy load ScrollToTop - not critical for initial render
 const ScrollToTop = dynamic(
-  () => import("@/components/new-design/scroll-to-top"),
-  { ssr: false }
+  () => import("@/components/new-design/scroll-to-top")
 );
 
 export default function FrontLayout({
