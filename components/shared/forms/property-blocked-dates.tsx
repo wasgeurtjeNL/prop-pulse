@@ -218,6 +218,7 @@ export default function PropertyBlockedDates({ propertyId }: PropertyBlockedDate
                 </div>
                 {range.type === "manual" && (
                   <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -253,6 +254,7 @@ export default function PropertyBlockedDates({ propertyId }: PropertyBlockedDate
                 )}
               </div>
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => {
@@ -271,6 +273,7 @@ export default function PropertyBlockedDates({ propertyId }: PropertyBlockedDate
           <div className="flex flex-col">
             <div className="flex items-center justify-between mb-2">
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
@@ -329,6 +332,7 @@ export default function PropertyBlockedDates({ propertyId }: PropertyBlockedDate
                 {format(secondMonth, "MMMM yyyy", { locale: enUS })}
               </span>
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
